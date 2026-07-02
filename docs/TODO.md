@@ -23,8 +23,10 @@
 - [x] EDGAR 어댑터 → security_financials (US-GAAP + IFRS 폴백, US 7종) (2026-07-02)
 - [x] FIN_SEED 부트스트랩 시드 (source='seed', 어댑터가 덮어씀)
 - [ ] dividend_yield 채우기 (시세 필요 — 마일스톤 5에서 DPS/주가로)
-- [ ] KIS/Finnhub REST 스냅샷 폴링 ← **다음** (KIS 계좌 발급 필요)
-- [ ] FX: KEYSTONE_FX → Frankfurter
+- [x] FX 어댑터: Frankfurter + er-api 폴백 (`check:fx`로 검증, USD/KRW 1558) (2026-07-02)
+- [ ] KIS/Finnhub REST 스냅샷 폴링 ← **다음** — **키 발급 대기** (finnhub.io 무료 키, KIS 계좌+appkey)
+- [ ] GET /fx·/quote 엔드포인트 (서버 런타임 결정 시 — Edge Function 또는 소형 Node)
+- [ ] 클라이언트 초기화에서 setFxRate(fx.rate) 연결 (apps 이식 때)
 
 ## P3 — 마일스톤 6~9
 - [ ] WS 멀티플렉서 + Realtime 팬아웃

@@ -1,12 +1,12 @@
 # NEXT-ACTION
 
 ## 다음 세션 즉시 액션
-1. **마일스톤 5 착수 — 시세 폴링 + FX (MVP 커트라인)**
-   - FX 어댑터: Frankfurter(무료·키없음) → KEYSTONE_FX=1380 상수 대체 경로 (`ARCHITECTURE.md` §6·§7)
-   - Finnhub REST 스냅샷 (US) — 무료 키 발급 (finnhub.io)
+1. **마일스톤 5 계속 — 시세 폴링 (MVP 커트라인)** · FX는 완료(adapters/fx.ts, 폴백 검증)
+   - Finnhub REST 스냅샷 (US) — **무료 키 발급 필요** (finnhub.io) → .env `FINNHUB_API_KEY`
    - KIS REST 스냅샷 (KR) — **KIS 계좌 + appkey/appsecret 발급 필요** (모의투자 가능)
-   - `securities.last_close` 갱신 + dividend_yield 채우기(DPS/주가)
+   - `securities.last_close` 갱신 + dividend_yield 채우기(DART alotMatter DPS ÷ 주가)
 2. 시세 캐시 전략 (apps/server/cache — rate-limit 흡수, §6 한도 참조)
+3. GET /fx·/quote 엔드포인트 — 서버 런타임 결정 (Edge Function vs 소형 Node, §2)
 
 ## 첫 스텝 (구체적)
 ```

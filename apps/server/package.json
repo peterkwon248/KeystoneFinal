@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "sync:financials": "tsx src/sync-financials.ts"
+    "sync:financials": "tsx src/sync-financials.ts",
+    "check:fx": "tsx src/check-fx.ts"
   },
   "dependencies": {
     "@keystone/core": "workspace:*",
