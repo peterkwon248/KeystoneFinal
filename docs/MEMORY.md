@@ -17,8 +17,8 @@
 |---|---|---|
 | 1 | 모노레포 + core 추출 | ✅ 2026-07-02 (커밋 e1e8967, 골든 89/89) |
 | 2 | Supabase 스키마 + Auth | ✅ 2026-07-02 (마이그레이션 4개 + seed, E2E 검증) |
-| 3 | 플랜 데이터 DB화 | ⬅ 다음 |
-| 4 | 재무 어댑터 (DART/EDGAR) | |
+| 3 | 플랜 데이터 DB화 | ✅ 2026-07-02 (롤업 뷰 + 전이 트리거 2종 + 타입 생성, E2E 검증) |
+| 4 | 재무 어댑터 (DART/EDGAR) | ⬅ 다음 |
 | 5 | 시세 폴링 + FX | ← MVP 커트라인 |
 | 6~9 | 실시간 WS / 웹 / 모바일 / 구독 | |
 
@@ -35,3 +35,6 @@
 - **PG17 hardened defaults**: RLS만으론 부족, anon/authenticated에 테이블 GRANT를 마이그레이션으로 명시해야 함 (`20260702000400_grants.sql`)
 - 로컬 스택: API 54321 / DB 54322 / Studio 54323 / Mailpit 54324. 스키마 재적용 = `pnpm supabase db reset` (migrations + seed.sql)
 - 소프트 인증 = `enable_confirmations=false` (가입 즉시 세션, email_verified는 profiles에서 추적) — config.toml 기본값 유지
+- **뷰는 `security_invoker=true` 필수** (기본은 owner 권한 실행 → RLS 우회로 타 유저 데이터 유출) — `plan_positions`에 적용
+- 상태 자동전이는 DB 트리거가 정본: `t_exec_activate`(매수→active), `t_exec_close`(전량매도→closing, 매도 전 보유>0 가드). 시나리오 status는 시세 필요 → 서버 워커 몫(마일스톤 6)
+- DB 타입: `pnpm db:types` → `packages/core/src/types/database.ts` (스키마 변경 시 재생성)

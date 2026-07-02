@@ -5,7 +5,8 @@
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "db:types": "supabase gen types typescript --local > packages/core/src/types/database.ts"
   },
   "devDependencies": {
     "supabase": "^2.109.0",

@@ -37,6 +37,25 @@ insert into exec_categories (id, label, user_id, sort) values
   ('signal', '{"en":"Signal","ko":"시그널"}',        null, 2)
 on conflict (id) do nothing;
 
+-- securities 초기 목록 (DATA_MODEL.md §9 — source/securities.jsx 부트스트랩,
+-- 마일스톤 4에서 DART/EDGAR 실데이터로 덮어씀. last_close = 프로토타입 mock price)
+insert into securities (ticker, name, market, currency, sector, gics, exchange, shares_out, last_close) values
+  ('005930', '{"en":"Samsung Electronics","ko":"삼성전자"}',     'KR', 'KRW', '{"en":"Semiconductors","ko":"반도체"}', '{"en":"Information Technology","ko":"정보기술"}',   'KOSPI',  5969,  71200),
+  ('000660', '{"en":"SK hynix","ko":"SK하이닉스"}',              'KR', 'KRW', '{"en":"Semiconductors","ko":"반도체"}', '{"en":"Information Technology","ko":"정보기술"}',   'KOSPI',  728,   178000),
+  ('035720', '{"en":"Kakao","ko":"카카오"}',                     'KR', 'KRW', '{"en":"Internet","ko":"인터넷"}',       '{"en":"Communication Services","ko":"커뮤니케이션"}','KOSPI',  4434,  41200),
+  ('005380', '{"en":"Hyundai Motor","ko":"현대차"}',             'KR', 'KRW', '{"en":"Autos","ko":"자동차"}',          '{"en":"Consumer Discretionary","ko":"경기소비재"}',  'KOSPI',  209,   248000),
+  ('035420', '{"en":"NAVER","ko":"NAVER"}',                      'KR', 'KRW', '{"en":"Internet","ko":"인터넷"}',       '{"en":"Communication Services","ko":"커뮤니케이션"}','KOSPI',  164,   168500),
+  ('005490', '{"en":"POSCO Holdings","ko":"POSCO홀딩스"}',       'KR', 'KRW', '{"en":"Materials","ko":"소재"}',        '{"en":"Materials","ko":"소재"}',                     'KOSPI',  84,    392000),
+  ('207940', '{"en":"Samsung Biologics","ko":"삼성바이오로직스"}','KR', 'KRW', '{"en":"Bio","ko":"바이오"}',            '{"en":"Health Care","ko":"헬스케어"}',               'KOSPI',  71,    982000),
+  ('AAPL',   '{"en":"Apple","ko":"Apple"}',                      'US', 'USD', '{"en":"Hardware","ko":"하드웨어"}',     '{"en":"Information Technology","ko":"정보기술"}',   'NASDAQ', 15204, 198.50),
+  ('NVDA',   '{"en":"NVIDIA","ko":"NVIDIA"}',                    'US', 'USD', '{"en":"Semiconductors","ko":"반도체"}', '{"en":"Information Technology","ko":"정보기술"}',   'NASDAQ', 2460,  1185.00),
+  ('GOOGL',  '{"en":"Alphabet","ko":"Alphabet"}',                'US', 'USD', '{"en":"Internet","ko":"인터넷"}',       '{"en":"Communication Services","ko":"커뮤니케이션"}','NASDAQ', 12300, 176.20),
+  ('TSLA',   '{"en":"Tesla","ko":"Tesla"}',                      'US', 'USD', '{"en":"Autos","ko":"자동차"}',          '{"en":"Consumer Discretionary","ko":"경기소비재"}',  'NASDAQ', 3180,  242.00),
+  ('MSFT',   '{"en":"Microsoft","ko":"Microsoft"}',              'US', 'USD', '{"en":"Software","ko":"소프트웨어"}',   '{"en":"Information Technology","ko":"정보기술"}',   'NASDAQ', 7430,  448.00),
+  ('AMD',    '{"en":"AMD","ko":"AMD"}',                          'US', 'USD', '{"en":"Semiconductors","ko":"반도체"}', '{"en":"Information Technology","ko":"정보기술"}',   'NASDAQ', 1620,  162.40),
+  ('TSM',    '{"en":"TSMC","ko":"TSMC"}',                        'US', 'USD', '{"en":"Semiconductors","ko":"반도체"}', '{"en":"Information Technology","ko":"정보기술"}',   'NYSE',   5187,  174.30)
+on conflict (ticker) do nothing;
+
 -- exec_strategies (실행 방식) — ex1~ex7
 insert into exec_strategies (id, name, color, category_id, sort) values
   ('ex1', '{"en":"Infinite Buying","ko":"무한매수법"}',          '#BB6BD9', 'accum',  0),

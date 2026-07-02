@@ -1,18 +1,18 @@
 # NEXT-ACTION
 
 ## 다음 세션 즉시 액션
-1. **마일스톤 3 착수 — 플랜 데이터 DB화**
-   - plans/scenarios/executions/rules CRUD 경로 설계 (`ARCHITECTURE.md` §5·§13)
-   - 체결 롤업 (평단/투입/손익 — 저장 안 함, `plan_positions` 뷰는 DATA_MODEL §5 참조)
-   - 상태 자동전이 트리거/RPC (App.jsx 로직 → DATA_MODEL §8 트리거 이관)
-2. saved_views / watchlist / journal_entries CRUD
+1. **마일스톤 4 착수 — 재무 어댑터 (DART/EDGAR)**
+   - `apps/server/adapters/` 스캐폴딩: dart.ts, edgar.ts (`ARCHITECTURE.md` §3·§6)
+   - provider payload → `security_financials` 정규화 (normalize/ — K-IFRS/US-GAAP → 공통 컬럼)
+   - DART API 키 발급 필요 (opendart.fss.or.kr — 무료), EDGAR는 키 없음(UA 헤더만)
+2. FIN_SEED(source/data.jsx) → security_financials 시드 부트스트랩 (`source='seed'`, 실데이터가 덮어씀)
 
 ## 첫 스텝 (구체적)
 ```
 pnpm supabase start    # 로컬 스택 기동 (이미 init 완료)
-pnpm supabase db reset # 마이그레이션 4개 + seed 재적용
+pnpm supabase db reset # 마이그레이션 6개 + seed 재적용
 ```
-스키마는 `supabase/migrations/` 4개 파일에 있음. `DATA_MODEL.md` §5·§8 참조.
+서버 런타임(Node/Hono 등) 선택부터 — `ARCHITECTURE.md` §2·§6 참조.
 
 ## 잊지 말 것 (핵심 결정)
 - **로컬 `supabase start` 기반으로 먼저 완성 → 클라우드 프로젝트 연결은 나중** (2026-07-02 확정)
@@ -24,8 +24,8 @@ pnpm supabase db reset # 마이그레이션 4개 + seed 재적용
 ## Phase 진행 상황
 - [x] 마일스톤 1: 모노레포 + packages/core 추출 (골든 89 테스트, 커밋 e1e8967)
 - [x] 마일스톤 2: Supabase 스키마 + Auth (2026-07-02 — 마이그레이션 4개 + seed + RLS/GRANT E2E 검증)
-- [ ] 마일스톤 3: 플랜 데이터 DB화 (CRUD + 체결 롤업 + 상태 자동전이) ← **여기부터**
-- [ ] 마일스톤 4: 재무 어댑터 (DART/EDGAR)
+- [x] 마일스톤 3: 플랜 데이터 DB화 (2026-07-02 — plan_positions 뷰 + 전이 트리거 + securities 시드 + DB 타입 생성)
+- [ ] 마일스톤 4: 재무 어댑터 (DART/EDGAR) ← **여기부터**
 - [ ] 마일스톤 5: 시세 폴링 (KIS/Finnhub REST + FX)
 - [ ] 마일스톤 6~9: 실시간 WS / 웹 이식 / 모바일 / 구독
 

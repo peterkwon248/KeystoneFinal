@@ -10,10 +10,13 @@
 - [ ] Auth.jsx 로직 → 실제 앱 클라이언트 매핑 (apps/ 생성 시 — 마일스톤 3~7에서)
 
 ## P1 — 마일스톤 3: 플랜 데이터 DB화
-- [ ] plans/scenarios/executions/rules CRUD
-- [ ] 체결 롤업 (평단/투입/손익 파생 — 저장 안 함)
-- [ ] 상태 자동전이 트리거/RPC (App.jsx 로직 이관)
-- [ ] saved_views / watchlist / journal_entries
+- [x] plans/scenarios/executions/rules CRUD (PostgREST 자동 — REST E2E 검증, 2026-07-02)
+- [x] 체결 롤업 `plan_positions` 뷰 (**security_invoker 필수** — 없으면 RLS 우회 유출)
+- [x] 상태 자동전이 트리거 2종 (매수→active, 전량매도→closing — App.jsx:620-622 이관)
+- [x] saved_views / watchlist / journal_entries CRUD (REST 스모크 통과)
+- [x] securities 14종 시드 (프로토타입 부트스트랩 — 마일스톤 4에서 실데이터로 덮어씀)
+- [x] DB 타입 생성 → `packages/core/src/types/database.ts` (재생성 `pnpm db:types`)
+- [ ] 평단/미실현손익 파생 계산은 core(analytics) 클라이언트 몫 — apps 이식 때 연결
 
 ## P2 — 마일스톤 4·5: 실데이터
 - [ ] DART 어댑터 → security_financials (K-IFRS)
