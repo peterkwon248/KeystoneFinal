@@ -1,12 +1,13 @@
 # TODO.md
 
 ## P0 — 마일스톤 2: Supabase 스키마 + Auth (로컬)
-- [ ] Docker Desktop 확인 + `supabase init` + `supabase start`
-- [ ] `DATA_MODEL.md` DDL → `supabase/migrations/` (enum, 테이블 전체)
-- [ ] RLS 정책 (`user_id = auth.uid()`) 전 사용자 테이블
-- [ ] 이메일 가입 → 인증메일 → 소프트 인증 흐름 (Auth.jsx 로직 매핑)
-- [ ] 온보딩 → portfolios 첫 레코드 저장
-- [ ] 참조 데이터 seed (strategies/exec_strategies/exec_categories)
+- [x] Docker Desktop 확인 + `supabase init` + `supabase start` (2026-07-02)
+- [x] `DATA_MODEL.md` DDL → `supabase/migrations/` (enum, 테이블 14개)
+- [x] RLS 정책 전 테이블 + **명시적 GRANT** (PG17 hardened defaults 때문에 필수 — 20260702000400)
+- [x] 이메일 가입(소프트 인증: confirmations off, 즉시 세션) REST로 검증
+- [x] 온보딩 → portfolios 첫 레코드 저장 경로 REST로 검증 (RLS 사용자 격리 확인)
+- [x] 참조 데이터 seed (strategies 8 / exec_strategies 7 / exec_categories 3)
+- [ ] Auth.jsx 로직 → 실제 앱 클라이언트 매핑 (apps/ 생성 시 — 마일스톤 3~7에서)
 
 ## P1 — 마일스톤 3: 플랜 데이터 DB화
 - [ ] plans/scenarios/executions/rules CRUD

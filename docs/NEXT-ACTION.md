@@ -1,19 +1,18 @@
 # NEXT-ACTION
 
 ## 다음 세션 즉시 액션
-1. **마일스톤 2 착수 — Supabase 로컬 기반 스키마 + Auth**
-   - `supabase init` + `supabase start` (Docker 필요 — 데스크톱에서 Docker Desktop 실행 확인)
-   - `DATA_MODEL.md`의 DDL → `supabase/migrations/`로 이관 (enum + 테이블 + RLS 정책)
-2. Auth: 로컬에서는 **이메일 가입 흐름 먼저** (소셜 OAuth 4종은 클라우드 연결 시)
-3. 온보딩 → 첫 레코드(portfolios) 저장 경로 설계 (`Auth.jsx`의 `OB_KEY` localStorage 스텁 대체)
+1. **마일스톤 3 착수 — 플랜 데이터 DB화**
+   - plans/scenarios/executions/rules CRUD 경로 설계 (`ARCHITECTURE.md` §5·§13)
+   - 체결 롤업 (평단/투입/손익 — 저장 안 함, `plan_positions` 뷰는 DATA_MODEL §5 참조)
+   - 상태 자동전이 트리거/RPC (App.jsx 로직 → DATA_MODEL §8 트리거 이관)
+2. saved_views / watchlist / journal_entries CRUD
 
 ## 첫 스텝 (구체적)
 ```
-cd "Desktop\Keystone Final"
-supabase init          # supabase/ 디렉터리 생성
-supabase start         # 로컬 Postgres+Auth+Studio 기동
+pnpm supabase start    # 로컬 스택 기동 (이미 init 완료)
+pnpm supabase db reset # 마이그레이션 4개 + seed 재적용
 ```
-그다음 `DATA_MODEL.md`를 읽고 마이그레이션 파일 작성. `ARCHITECTURE.md` §4·§13 참조.
+스키마는 `supabase/migrations/` 4개 파일에 있음. `DATA_MODEL.md` §5·§8 참조.
 
 ## 잊지 말 것 (핵심 결정)
 - **로컬 `supabase start` 기반으로 먼저 완성 → 클라우드 프로젝트 연결은 나중** (2026-07-02 확정)
@@ -24,8 +23,8 @@ supabase start         # 로컬 Postgres+Auth+Studio 기동
 
 ## Phase 진행 상황
 - [x] 마일스톤 1: 모노레포 + packages/core 추출 (골든 89 테스트, 커밋 e1e8967)
-- [ ] 마일스톤 2: Supabase 스키마 + Auth ← **여기부터**
-- [ ] 마일스톤 3: 플랜 데이터 DB화 (CRUD + 체결 롤업 + 상태 자동전이)
+- [x] 마일스톤 2: Supabase 스키마 + Auth (2026-07-02 — 마이그레이션 4개 + seed + RLS/GRANT E2E 검증)
+- [ ] 마일스톤 3: 플랜 데이터 DB화 (CRUD + 체결 롤업 + 상태 자동전이) ← **여기부터**
 - [ ] 마일스톤 4: 재무 어댑터 (DART/EDGAR)
 - [ ] 마일스톤 5: 시세 폴링 (KIS/Finnhub REST + FX)
 - [ ] 마일스톤 6~9: 실시간 WS / 웹 이식 / 모바일 / 구독
@@ -36,7 +35,8 @@ supabase start         # 로컬 Postgres+Auth+Studio 기동
 - KIS/키움 계좌 발급 (마일스톤 5 직전에)
 
 ## 머신
-집 (Windows, `C:\Users\kwonkyunghun\Desktop\Keystone Final`)
+- 집 (Windows, `C:\Users\kwonkyunghun\Desktop\Keystone Final`)
+- 데스크톱 (Windows, `C:\Users\user\Desktop\KeystoneFinal`) — 마일스톤 2 진행 머신
 
 ## 마지막 갱신
 2026-07-02

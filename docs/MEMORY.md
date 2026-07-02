@@ -16,8 +16,8 @@
 | # | 내용 | 상태 |
 |---|---|---|
 | 1 | 모노레포 + core 추출 | ✅ 2026-07-02 (커밋 e1e8967, 골든 89/89) |
-| 2 | Supabase 스키마 + Auth | ⬅ 다음 |
-| 3 | 플랜 데이터 DB화 | |
+| 2 | Supabase 스키마 + Auth | ✅ 2026-07-02 (마이그레이션 4개 + seed, E2E 검증) |
+| 3 | 플랜 데이터 DB화 | ⬅ 다음 |
 | 4 | 재무 어댑터 (DART/EDGAR) | |
 | 5 | 시세 폴링 + FX | ← MVP 커트라인 |
 | 6~9 | 실시간 WS / 웹 / 모바일 / 구독 | |
@@ -31,3 +31,7 @@
 - i18n 비대칭: `tip_trough_peak` ko 전용 (en 577/ko 578) — 원본 그대로
 - i18n 중복 키 dedup(last-wins): `simulator`, `scThesisPh`
 - format 모듈은 모듈 상태(KEYSTONE_FX=1380, KEYSTONE_DISP) 보유 — 실앱에서 FX API로 교체 지점
+- Supabase CLI = 루트 devDependency(`pnpm supabase ...`, v2.109) — 크로스머신 재현성. `pnpm-workspace.yaml`에 `onlyBuiltDependencies: [esbuild, supabase]`
+- **PG17 hardened defaults**: RLS만으론 부족, anon/authenticated에 테이블 GRANT를 마이그레이션으로 명시해야 함 (`20260702000400_grants.sql`)
+- 로컬 스택: API 54321 / DB 54322 / Studio 54323 / Mailpit 54324. 스키마 재적용 = `pnpm supabase db reset` (migrations + seed.sql)
+- 소프트 인증 = `enable_confirmations=false` (가입 즉시 세션, email_verified는 profiles에서 추적) — config.toml 기본값 유지

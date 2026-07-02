@@ -8,6 +8,7 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "supabase": "^2.109.0",
     "turbo": "^2.5.0"
   }
 }
