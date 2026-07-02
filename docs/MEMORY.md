@@ -18,8 +18,8 @@
 | 1 | 모노레포 + core 추출 | ✅ 2026-07-02 (커밋 e1e8967, 골든 89/89) |
 | 2 | Supabase 스키마 + Auth | ✅ 2026-07-02 (마이그레이션 4개 + seed, E2E 검증) |
 | 3 | 플랜 데이터 DB화 | ✅ 2026-07-02 (롤업 뷰 + 전이 트리거 2종 + 타입 생성, E2E 검증) |
-| 4 | 재무 어댑터 (DART/EDGAR) | ⬅ 다음 |
-| 5 | 시세 폴링 + FX | ← MVP 커트라인 |
+| 4 | 재무 어댑터 (DART/EDGAR) | ✅ 2026-07-02 (apps/server, 14/14 동기화, 실측 교차검증) |
+| 5 | 시세 폴링 + FX | ⬅ 다음 ← MVP 커트라인 |
 | 6~9 | 실시간 WS / 웹 / 모바일 / 구독 | |
 
 ## 커밋/PR 히스토리
@@ -38,3 +38,7 @@
 - **뷰는 `security_invoker=true` 필수** (기본은 owner 권한 실행 → RLS 우회로 타 유저 데이터 유출) — `plan_positions`에 적용
 - 상태 자동전이는 DB 트리거가 정본: `t_exec_activate`(매수→active), `t_exec_close`(전량매도→closing, 매도 전 보유>0 가드). 시나리오 status는 시세 필요 → 서버 워커 몫(마일스톤 6)
 - DB 타입: `pnpm db:types` → `packages/core/src/types/database.ts` (스키마 변경 시 재생성)
+- 재무 동기화: `pnpm --filter @keystone/server sync:financials` (`--market KR|US`, `--tickers`). 시크릿은 루트 `.env`(DART_API_KEY 등, .env.example 참고) — 클라이언트 노출 금지
+- **DART corpCode.xml 함정**: `<list>` 블록 단위로 파싱해야 함 — lazy 정규식은 비상장사(빈 stock_code)의 corp_code를 다음 상장사와 잘못 짝지음
+- EDGAR: fp=FY + 10-K/20-F + duration ≥330일 필터 필수 (10-K 안의 Q4 3개월치가 연간값 오염). ADR(TSM)은 ifrs-full 태그 폴백. 연도 라벨은 보고서 fy가 아니라 기간 종료일 기준
+- dividend_yield는 시세 필요 → 어댑터가 null로 둠, 마일스톤 5에서 채움

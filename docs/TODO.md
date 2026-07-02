@@ -19,9 +19,11 @@
 - [ ] 평단/미실현손익 파생 계산은 core(analytics) 클라이언트 몫 — apps 이식 때 연결
 
 ## P2 — 마일스톤 4·5: 실데이터
-- [ ] DART 어댑터 → security_financials (K-IFRS)
-- [ ] EDGAR 어댑터 → security_financials (US-GAAP)
-- [ ] KIS/Finnhub REST 스냅샷 폴링
+- [x] DART 어댑터 → security_financials (K-IFRS, KR 7종 × 2021-2025) (2026-07-02)
+- [x] EDGAR 어댑터 → security_financials (US-GAAP + IFRS 폴백, US 7종) (2026-07-02)
+- [x] FIN_SEED 부트스트랩 시드 (source='seed', 어댑터가 덮어씀)
+- [ ] dividend_yield 채우기 (시세 필요 — 마일스톤 5에서 DPS/주가로)
+- [ ] KIS/Finnhub REST 스냅샷 폴링 ← **다음** (KIS 계좌 발급 필요)
 - [ ] FX: KEYSTONE_FX → Frankfurter
 
 ## P3 — 마일스톤 6~9

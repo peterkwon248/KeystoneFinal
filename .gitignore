@@ -10,3 +10,6 @@ build/
 .DS_Store
 Thumbs.db
 .claude/settings.local.json
+
+# apps/server 로컬 캐시 (corp codes, CIK 매핑)
+apps/server/.cache/

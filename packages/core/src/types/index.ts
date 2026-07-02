@@ -530,4 +530,4 @@ export interface DispMoney {
 
 /* ============ DB schema types (generated) ============ */
 // supabase/migrations 스키마에서 생성 — 재생성: 루트에서 `pnpm db:types`
-export type { Database, Json } from "./database";
+export type { Database, Json } from "./database.js";
