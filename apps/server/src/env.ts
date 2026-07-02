@@ -18,4 +18,8 @@ export const env = {
   supabaseUrl: () => req("SUPABASE_URL"),
   supabaseServiceRoleKey: () => req("SUPABASE_SERVICE_ROLE_KEY"),
   edgarUserAgent: () => req("EDGAR_USER_AGENT"),
+  finnhubApiKey: () => req("FINNHUB_API_KEY"),
+  kisAppKey: () => req("KIS_APP_KEY"),
+  kisAppSecret: () => req("KIS_APP_SECRET"),
+  kisEnv: () => (process.env.KIS_ENV === "vts" ? "vts" : "real") as "real" | "vts",
 };

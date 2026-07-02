@@ -6,6 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "sync:financials": "tsx src/sync-financials.ts",
+    "sync:quotes": "tsx src/sync-quotes.ts",
     "check:fx": "tsx src/check-fx.ts"
   },
   "dependencies": {

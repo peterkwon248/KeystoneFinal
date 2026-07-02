@@ -106,6 +106,29 @@ export async function fetchDartYear(corpCode: string, year: number): Promise<Raw
   return null;
 }
 
+/** 주당 현금배당금(DPS, 보통주 기준) — alotMatter(배당에 관한 사항). 무배당/미공시는 null. */
+export async function fetchDartDps(corpCode: string, year: number): Promise<number | null> {
+  const url =
+    `${BASE}/alotMatter.json?crtfc_key=${env.dartApiKey()}` +
+    `&corp_code=${corpCode}&bsns_year=${year}&reprt_code=11011`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`DART alotMatter HTTP ${res.status}`);
+  const body = (await res.json()) as {
+    status: string;
+    message: string;
+    list?: { se: string; stock_knd?: string; thstrm: string }[];
+  };
+  if (body.status === "013") return null;
+  if (body.status !== "000") throw new Error(`DART alotMatter ${body.status}: ${body.message}`);
+  const row = (body.list ?? []).find(
+    (r) =>
+      r.se.replace(/\s/g, "").includes("주당현금배당금") &&
+      (!r.stock_knd || r.stock_knd.includes("보통")),
+  );
+  const dps = row ? parseAmount(row.thstrm) : undefined;
+  return dps && dps > 0 ? dps : null;
+}
+
 /** 최근 N개 연도 재무 시계열 (사업보고서 미공시 연도는 건너뜀) */
 export async function fetchDartFinancials(stockCode: string, years: number[]): Promise<RawYear[]> {
   const codes = await corpCodeMap();

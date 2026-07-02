@@ -19,7 +19,7 @@
 | 2 | Supabase 스키마 + Auth | ✅ 2026-07-02 (마이그레이션 4개 + seed, E2E 검증) |
 | 3 | 플랜 데이터 DB화 | ✅ 2026-07-02 (롤업 뷰 + 전이 트리거 2종 + 타입 생성, E2E 검증) |
 | 4 | 재무 어댑터 (DART/EDGAR) | ✅ 2026-07-02 (apps/server, 14/14 동기화, 실측 교차검증) |
-| 5 | 시세 폴링 + FX | ⬅ 다음 ← MVP 커트라인 |
+| 5 | 시세 폴링 + FX | ✅ 2026-07-02 (KIS/Finnhub 14/14 + dividend_yield + FX) ← **MVP 데이터 레이어 완료** |
 | 6~9 | 실시간 WS / 웹 / 모바일 / 구독 | |
 
 ## 커밋/PR 히스토리
@@ -41,4 +41,7 @@
 - 재무 동기화: `pnpm --filter @keystone/server sync:financials` (`--market KR|US`, `--tickers`). 시크릿은 루트 `.env`(DART_API_KEY 등, .env.example 참고) — 클라이언트 노출 금지
 - **DART corpCode.xml 함정**: `<list>` 블록 단위로 파싱해야 함 — lazy 정규식은 비상장사(빈 stock_code)의 corp_code를 다음 상장사와 잘못 짝지음
 - EDGAR: fp=FY + 10-K/20-F + duration ≥330일 필터 필수 (10-K 안의 Q4 3개월치가 연간값 오염). ADR(TSM)은 ifrs-full 태그 폴백. 연도 라벨은 보고서 fy가 아니라 기간 종료일 기준
-- dividend_yield는 시세 필요 → 어댑터가 null로 둠, 마일스톤 5에서 채움
+- 시세 동기화: `pnpm --filter @keystone/server sync:quotes` — KR=KIS, US=Finnhub → securities.last_close + 최신연도 dividend_yield
+- **KIS 토큰은 발급이 분당 1회 제한** → .cache/kis-token.json 디스크 캐시 (24h 유효, 만료 1h 전 갱신). 실전/모의는 KIS_ENV=real|vts
+- KIS REST는 연속 호출 시 간헐 500 → 어댑터가 400ms 백오프 재시도로 흡수
+- 배당: KR = DART alotMatter 주당현금배당금(보통주) ÷ 현재가, US = Finnhub currentDividendYieldTTM. 무배당(삼바/AMD/TSLA)은 null이 정상
