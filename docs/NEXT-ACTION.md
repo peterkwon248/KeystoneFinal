@@ -7,6 +7,12 @@
 
 어느 쪽이든 서버 런타임 결정 겸함 (GET /fx·/quote 엔드포인트 — Edge Function vs 소형 Node, §2·§5B)
 
+## 마일스톤 6 (실시간 WS) 참고 오픈소스 — 2026-07-03 조사
+- **koreainvestment/open-trading-api** (⭐1.5k, 공식): WS 샘플 `examples_user/*_ws.py` (체결/호가 구독). 함정 — "No close frame received"는 HTS ID 오입력, 모의계좌는 REST 한도 낮음, rate limit 코드 `EGW00201`(HTTP 200으로도 옴 — 어댑터에 재시도 반영됨)
+- **Soju06/python-kis** (⭐281): WS 패턴의 정석 — 재연결 시 구독 자동 재등록(데이터 유실 방지), 토큰 발급 thread-safe 락(장기 실행 서버로 갈 때 필요), 구독 수명 관리
+- **unohee/kis-agent** (⭐20, 최신 활발): 실시간 WebSocket 포함 래퍼 — WS 구현 시 교차 참조용
+- Finnhub 공식 python 클라이언트는 단순 HTTP 래퍼 — 특별한 패턴 없음, 우리 구현으로 충분
+
 ## 첫 스텝 (구체적)
 ```
 pnpm supabase start

@@ -70,9 +70,16 @@ export async function fetchKisQuote(stockCode: string, retries = 2): Promise<Quo
     fid_cond_mrkt_div_code: "J", // 주식/ETF/ETN
     fid_input_iscd: stockCode,
   });
-  let res: Response;
+  let body:
+    | {
+        rt_cd: string;
+        msg_cd?: string;
+        msg1?: string;
+        output?: { stck_prpr: string; stck_sdpr: string; prdy_ctrt: string };
+      }
+    | undefined;
   for (let attempt = 0; ; attempt++) {
-    res = await fetch(`${base()}/uapi/domestic-stock/v1/quotations/inquire-price?${qs}`, {
+    const res = await fetch(`${base()}/uapi/domestic-stock/v1/quotations/inquire-price?${qs}`, {
       headers: {
         "content-type": "application/json; charset=utf-8",
         authorization: `Bearer ${token}`,
@@ -82,16 +89,18 @@ export async function fetchKisQuote(stockCode: string, retries = 2): Promise<Quo
         custtype: "P", // 개인
       },
     });
-    if (res.ok || attempt >= retries) break;
+    if (res.ok) {
+      body = (await res.json()) as typeof body;
+      // EGW00201 = 초당 거래건수 초과 (공식 rate-limit 코드) — HTTP 200으로 올 수 있음
+      if (body!.rt_cd === "0" || body!.msg_cd !== "EGW00201") break;
+    } else if (attempt >= retries) {
+      throw new Error(`KIS quote HTTP ${res.status} (${stockCode})`);
+    }
+    if (attempt >= retries) break;
     await sleep(400 * (attempt + 1));
   }
-  if (!res.ok) throw new Error(`KIS quote HTTP ${res.status} (${stockCode})`);
-  const body = (await res.json()) as {
-    rt_cd: string;
-    msg1?: string;
-    output?: { stck_prpr: string; stck_sdpr: string; prdy_ctrt: string };
-  };
-  if (body.rt_cd !== "0" || !body.output) throw new Error(`KIS quote ${stockCode}: ${body.msg1 ?? "no output"}`);
+  if (!body || body.rt_cd !== "0" || !body.output)
+    throw new Error(`KIS quote ${stockCode}: ${body?.msg1 ?? "no output"}`);
   const price = Number(body.output.stck_prpr);
   if (!price) return null;
   return {
