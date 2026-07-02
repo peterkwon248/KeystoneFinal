@@ -1,12 +1,14 @@
 # NEXT-ACTION
 
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
-1단계 완료: apps/web + Auth + 온보딩 + DB 데이터 경로 (브라우저 E2E 검증). 다음:
-1. **앱 셸 이식** — source/Sidebar.jsx + Chrome.jsx → 레이아웃 컴포넌트 (뷰들의 공통 프레임)
-2. **screens/ 6장 뷰 이식** (권장 순서: 03 플랜 리스트 → 04 플랜 상세 → 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산)
+1·2단계 완료: apps/web + Auth/온보딩 + **앱 셸(Sidebar/WorkspaceMenu/라우트)** — 브라우저 E2E 검증. 다음:
+1. **screens/ 6장 뷰 이식** (권장 순서: 03 플랜 리스트(ListView+BoardTimeline) → 04 플랜 상세(DetailView 3065줄, 최대 덩어리) → 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산)
    - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵)
    - screens/*.png이 픽셀 기준 · source/*.jsx가 로직 기준
+   - 전략/관점은 core 프리셋(LIBRARY_LOCKED) — 사이드바가 이미 이 패턴 사용 중
+2. 사이드바 도구 섹션(OPTIONAL_DESTS) + CustomizeModal — profiles.sidebar 연동
 3. GET /fx·/quote Route Handler + 클라이언트 setFxRate 연결
+- ⚠️ dev 서버 캐시 꼬이면(하이드레이션 안 됨/청크 404): `.next` 삭제 후 재시작
 
 ## 실행 명령 (이 머신)
 ```

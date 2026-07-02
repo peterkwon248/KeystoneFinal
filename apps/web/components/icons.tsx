@@ -1,30 +1,31 @@
-// source/icons.jsx의 Lic(lucide CDN 래퍼)·Flag·KeystoneLogo 이식본.
-// Lic는 lucide-react 컴포넌트 매핑으로 대체 (strokeWidth 1.7 = 프로토타입 기본값 유지).
+// source/icons.jsx의 Lic(lucide CDN 래퍼)·Flag·KeystoneLogo·PanelIcon 이식본.
+// Lic는 lucide-react 동적 매핑 — 프로토타입처럼 kebab-case 이름을 그대로 받는다
+// (strokeWidth 1.7 = 프로토타입 기본값 유지).
 "use client";
 import type { CSSProperties } from "react";
-import {
-  Languages, Sun, Moon, Target, GitBranch, NotebookPen, Check, ChevronLeft, Mail,
-  type LucideIcon,
-} from "lucide-react";
+import { icons } from "lucide-react";
 
-const ICONS: Record<string, LucideIcon> = {
-  languages: Languages,
-  sun: Sun,
-  moon: Moon,
-  target: Target,
-  "git-branch": GitBranch,
-  "notebook-pen": NotebookPen,
-  check: Check,
-  "chevron-left": ChevronLeft,
-  mail: Mail,
-};
+const pascal = (name: string) =>
+  name.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
 
 export function Lic({
   name, size = 16, cls = "icon", color, style,
 }: { name: string; size?: number; cls?: string; color?: string; style?: CSSProperties }) {
-  const I = ICONS[name];
+  const I = icons[pascal(name) as keyof typeof icons];
   if (!I) return null;
   return <I className={cls} width={size} height={size} strokeWidth={1.7} color={color} style={style} />;
+}
+
+/** 사이드바 접기 아이콘 (source/icons.jsx PanelIcon 그대로) */
+export function PanelIcon({ side = "left", size = 16, color = "currentColor" }: { side?: "left" | "right"; size?: number; color?: string }) {
+  const railLeft = side === "left";
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" fill="none" style={{ flex: "none" }}>
+      <rect x="2" y="3" width="14" height="12" rx="4" stroke={color} strokeWidth="1.6" />
+      <line x1={railLeft ? "7" : "11"} y1="3.6" x2={railLeft ? "7" : "11"} y2="14.4" stroke={color} strokeWidth="1.6" />
+      <rect x={railLeft ? "2.8" : "11.2"} y="3.8" width="4" height="10.4" rx="2.4" fill={color} opacity="0.18" />
+    </svg>
+  );
 }
 
 /** 시장 뱃지 (source/icons.jsx Flag 그대로) */

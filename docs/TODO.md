@@ -33,8 +33,9 @@
 - [x] Supabase Auth: 이메일 가입/로그인 (Auth.jsx LoginScreen 이식, 소셜 4종은 비활성 UI)
 - [x] 온보딩 3단계 → profiles upsert + portfolios + 첫 plan (브라우저 E2E 검증)
 - [x] 홈: DB 데이터 경로 증명 (플랜 + KIS 실시세 표시)
-- [ ] screens/ 6장 뷰 이식: 01 인박스 / 02 일지 / 03 플랜 리스트 / 04 플랜 상세 / 05 전략 편집기 / 06 청산
-- [ ] 앱 셸 (Sidebar/Chrome.jsx 이식) — 뷰 이식의 선행 작업
+- [x] 앱 셸: Sidebar + WorkspaceMenu/Settings 이식, 라우트 구조(/plans /inbox /journal /strategy/[id] + placeholder), 테마/언어 토글 (2026-07-03)
+- [ ] screens/ 6장 뷰 이식: 03 플랜 리스트(ListView) → 04 플랜 상세 → 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
+- [ ] 사이드바 도구 섹션 (OPTIONAL_DESTS + CustomizeModal — profiles.sidebar 연동)
 - [ ] GET /fx·/quote — Next.js Route Handler로 (서버 런타임 결정 완료: Next 내장으로 시작)
 - [ ] 클라이언트 초기화에서 setFxRate(fx.rate) 연결
 
