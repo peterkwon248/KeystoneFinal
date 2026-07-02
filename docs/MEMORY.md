@@ -20,7 +20,7 @@
 | 3 | 플랜 데이터 DB화 | ✅ 2026-07-02 (롤업 뷰 + 전이 트리거 2종 + 타입 생성, E2E 검증) |
 | 4 | 재무 어댑터 (DART/EDGAR) | ✅ 2026-07-02 (apps/server, 14/14 동기화, 실측 교차검증) |
 | 5 | 시세 폴링 + FX | ✅ 2026-07-02 (KIS/Finnhub 14/14 + dividend_yield + FX) ← **MVP 데이터 레이어 완료** |
-| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 시작 — Auth+온보딩+데이터경로 완료, screens/ 뷰 이식 남음 |
+| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — Auth+온보딩+**앱 셸(Sidebar/메뉴/라우트)** 완료, screens/ 6장 뷰 이식 남음 |
 | 6·8·9 | 실시간 WS / 모바일 / 구독 | |
 
 ## 커밋/PR 히스토리
@@ -46,3 +46,7 @@
 - **KIS 토큰은 발급이 분당 1회 제한** → .cache/kis-token.json 디스크 캐시 (24h 유효, 만료 1h 전 갱신). 실전/모의는 KIS_ENV=real|vts
 - KIS REST는 연속 호출 시 간헐 500 → 어댑터가 400ms 백오프 재시도로 흡수
 - 배당: KR = DART alotMatter 주당현금배당금(보통주) ÷ 현재가, US = Finnhub currentDividendYieldTTM. 무배당(삼바/AMD/TSLA)은 null이 정상
+- **`.env` 키 5종 필요** (git 밖!): DART_API_KEY / FINNHUB_API_KEY / KIS_APP_KEY / KIS_APP_SECRET / KIS_ENV=real. 웹은 apps/web/.env.local (각 .env.example 참고)
+- apps/web: 프로토타입 CSS 통복사(styles/) + reticle 클래스 그대로 → 픽셀 충실. Lic=lucide-react 동적 매핑. 전략/관점은 core 프리셋(LIBRARY_LOCKED)
+- Next dev 함정: 라우트 대량 추가 후 하이드레이션 무반응이면 `.next` 삭제 후 재시작 (상세는 LLM Wiki nextjs-dev)
+- 웹 로컬 테스트 계정: webtest@keystone.local / web-test-password-1 (이 머신 로컬 DB 한정 — 타 머신은 새로 가입)
