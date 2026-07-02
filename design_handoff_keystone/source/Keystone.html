@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keystone — 밸류에이션 트래킹</title>
+<link rel="stylesheet" href="colors_and_type.css?v=1782737775466">
+<link rel="stylesheet" href="reticle.css?v=1782737775466">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="data.jsx?v=1782737775466"></script>
+<script type="text/babel" src="securities.jsx?v=1782737775466"></script>
+<script type="text/babel" src="trajectory.jsx?v=1782737775466"></script>
+<script type="text/babel" src="ledger.jsx?v=1782737775466"></script>
+<script type="text/babel" src="planinsights.jsx?v=1782737775466"></script>
+<script type="text/babel" src="futuretest.jsx?v=1782737775466"></script>
+<script type="text/babel" src="futuretest_view.jsx?v=1782737775466"></script>
+<script type="text/babel" src="futuretest_modes.jsx?v=1782737775466"></script>
+<script type="text/babel" src="valuation.jsx?v=1782737775466"></script>
+<script type="text/babel" src="valuation_view.jsx?v=1782737775466"></script>
+<script type="text/babel" src="icons.jsx?v=1782737775466"></script>
+<script type="text/babel" src="Panels.jsx?v=1782737775466"></script>
+<script type="text/babel" src="Sidebar.jsx?v=1782737775466"></script>
+<script type="text/babel" src="ListView.jsx?v=1782737775466"></script>
+<script type="text/babel" src="DetailView.jsx?v=1782737775466"></script>
+<script type="text/babel" src="BoardTimeline.jsx?v=1782737775466"></script>
+<script type="text/babel" src="Dashboard.jsx?v=1782737775466"></script>
+<script type="text/babel" src="strat_diagram.js?v=1782737775466"></script>
+<script type="text/babel" src="StrategyEditor.jsx?v=1782737775466"></script>
+<script type="text/babel" src="SecurityView.jsx?v=1782737775466"></script>
+<script type="text/babel" src="Chrome.jsx?v=1782737775466"></script>
+<script type="text/babel" src="P4Views.jsx?v=1782737775466"></script>
+<script type="text/babel" src="Insights.jsx?v=1782737775466"></script>
+<script type="text/babel" src="P5Scenarios.jsx?v=1782737775466"></script>
+<script type="text/babel" src="Inbox.jsx?v=1782737775466"></script>
+<script type="text/babel" src="Journal.jsx?v=1782737775466"></script>
+<script type="text/babel" src="Auth.jsx?v=1782737775466"></script>
+<script type="text/babel" src="App.jsx?v=1782737775466"></script>
+<script>
+/* boot guard: the in-browser Babel pipeline compiles 26 modules + CDN libs on
+   every load; a transient hiccup leaves #root empty (black screen). Self-heal:
+   poll for mount, auto-reload up to twice per session, then show a retry notice
+   instead of a blank screen. */
+(function () {
+  var KEY = "keystone-boot-retry";
+  function startWatch() {
+    var tries = 0;
+    var iv = setInterval(function () {
+      var root = document.getElementById("root");
+      if (root && root.children.length > 0) { clearInterval(iv); sessionStorage.removeItem(KEY); return; }
+      if (++tries >= 16) { /* ~8s grace for slow compiles */
+        clearInterval(iv);
+        var n = +(sessionStorage.getItem(KEY) || 0);
+        if (n < 2) { sessionStorage.setItem(KEY, n + 1); location.reload(); return; }
+        if (root) root.innerHTML = '<div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font:500 14px system-ui,sans-serif;color:#9aa0a6;background:#08090a">불러오는 중 문제가 발생했습니다.<button style="font:600 13px system-ui;color:#fff;background:#2a6fdb;border:0;border-radius:6px;padding:8px 16px;cursor:pointer" onclick="sessionStorage.removeItem(\'keystone-boot-retry\');location.reload()">다시 시도</button></div>';
+      }
+    }, 500);
+  }
+  if (document.readyState === "complete") { startWatch(); }
+  else { window.addEventListener("load", startWatch); }
+})();
+</script>
+</body>
+</html>
