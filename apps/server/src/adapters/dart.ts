@@ -1,7 +1,9 @@
 // DART 오픈API 어댑터 (ARCHITECTURE §6 — KR 재무, K-IFRS → security_financials)
 // 흐름: corpCode.xml(zip, 종목코드→corp_code 매핑, 디스크 캐시)
 //   → fnlttSinglAcntAll.json (사업보고서 11011, 연결 CFS 우선/별도 OFS 폴백)
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+// 알려진 한계: 금융업(은행/보험/증권)은 계정 체계가 달라("영업수익" 일부만 매핑)
+//   지표가 부분 결측될 수 있음 — 금융주 추가 시 계정 매핑 보강 필요.
+import { mkdirSync, existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { unzipSync, strFromU8 } from "fflate";
@@ -11,11 +13,13 @@ import type { RawYear } from "../normalize/financials.js";
 const BASE = "https://opendart.fss.or.kr/api";
 const CACHE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../.cache");
 
+const CORP_CODE_TTL = 24 * 60 * 60 * 1000; // 24h — 신규 상장/코드 변경 반영 (OpenDartReader 등 생태계 관행)
+
 /** stock_code(6자리) → corp_code(8자리). 전체 매핑을 받아 캐시. */
 export async function corpCodeMap(): Promise<Map<string, string>> {
   mkdirSync(CACHE_DIR, { recursive: true });
   const cachePath = resolve(CACHE_DIR, "dart-corp-codes.json");
-  if (existsSync(cachePath)) {
+  if (existsSync(cachePath) && Date.now() - statSync(cachePath).mtimeMs < CORP_CODE_TTL) {
     return new Map(Object.entries(JSON.parse(readFileSync(cachePath, "utf8"))));
   }
   const res = await fetch(`${BASE}/corpCode.xml?crtfc_key=${env.dartApiKey()}`);
