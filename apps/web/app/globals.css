@@ -1,0 +1,12 @@
+/* 프로토타입 디자인 시스템 그대로 (source/*.css 이식본 — screens/ 6장이 기준) */
+@import "../styles/colors_and_type.css";
+@import "../styles/reticle.css";
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-app);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}

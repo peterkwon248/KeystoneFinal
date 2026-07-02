@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "serve", "source", "-l", "4173"],
       "port": 4173
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@keystone/web", "dev"],
+      "port": 3000
     }
   ]
 }

@@ -28,11 +28,18 @@
 
 **→ MVP 커트라인(마일스톤 1~5) 데이터 레이어 완료 (2026-07-02)**
 
-## P3 — 마일스톤 6~9
-- [ ] GET /fx·/quote 엔드포인트 (서버 런타임 결정 시 — Edge Function 또는 소형 Node)
-- [ ] 클라이언트 초기화에서 setFxRate(fx.rate) 연결 (apps 이식 때)
-- [ ] WS 멀티플렉서 + Realtime 팬아웃
-- [ ] Next.js 웹 이식 (screens/ 디자인 그대로)
+## P3 — 마일스톤 7 (웹 이식, 6보다 선행 결정 2026-07-03) — 진행 중
+- [x] apps/web 스캐폴딩 (Next.js 15 App Router) + 테마 CSS 이식 (colors_and_type + reticle)
+- [x] Supabase Auth: 이메일 가입/로그인 (Auth.jsx LoginScreen 이식, 소셜 4종은 비활성 UI)
+- [x] 온보딩 3단계 → profiles upsert + portfolios + 첫 plan (브라우저 E2E 검증)
+- [x] 홈: DB 데이터 경로 증명 (플랜 + KIS 실시세 표시)
+- [ ] screens/ 6장 뷰 이식: 01 인박스 / 02 일지 / 03 플랜 리스트 / 04 플랜 상세 / 05 전략 편집기 / 06 청산
+- [ ] 앱 셸 (Sidebar/Chrome.jsx 이식) — 뷰 이식의 선행 작업
+- [ ] GET /fx·/quote — Next.js Route Handler로 (서버 런타임 결정 완료: Next 내장으로 시작)
+- [ ] 클라이언트 초기화에서 setFxRate(fx.rate) 연결
+
+## P4 — 마일스톤 6·8·9
+- [ ] WS 멀티플렉서 + Realtime 팬아웃 (참고 레포 NEXT-ACTION에 정리됨)
 - [ ] Expo 모바일
 - [ ] Stripe/RevenueCat 구독
 

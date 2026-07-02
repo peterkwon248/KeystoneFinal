@@ -1,11 +1,19 @@
 # NEXT-ACTION
 
-## 다음 세션 즉시 액션 — MVP 데이터 레이어 완료, 다음 방향 결정 필요
-**마일스톤 1~5 전부 완료** (2026-07-02). 스펙 순서(§13)상 다음은 6(실시간 WS)이지만 선택지 2개:
-1. **[스펙 순서] 마일스톤 6 — 실시간 WS**: KIS WS + Finnhub WS 멀티플렉서 → Supabase Realtime 팬아웃 (§8). 단, 소비할 앱이 아직 없음
-2. **[추천 검토] 마일스톤 7 선행 — Next.js 웹 이식**: 눈에 보이는 앱을 먼저. `screens/` 6장 그대로 재현, 데이터 소스만 DB로 교체 (§7 이음새 맵). 실시간은 폴링(`sync:quotes`)으로 버티다가 6을 나중에
+## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
+1단계 완료: apps/web + Auth + 온보딩 + DB 데이터 경로 (브라우저 E2E 검증). 다음:
+1. **앱 셸 이식** — source/Sidebar.jsx + Chrome.jsx → 레이아웃 컴포넌트 (뷰들의 공통 프레임)
+2. **screens/ 6장 뷰 이식** (권장 순서: 03 플랜 리스트 → 04 플랜 상세 → 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산)
+   - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵)
+   - screens/*.png이 픽셀 기준 · source/*.jsx가 로직 기준
+3. GET /fx·/quote Route Handler + 클라이언트 setFxRate 연결
 
-어느 쪽이든 서버 런타임 결정 겸함 (GET /fx·/quote 엔드포인트 — Edge Function vs 소형 Node, §2·§5B)
+## 실행 명령 (이 머신)
+```
+pnpm supabase start
+pnpm --filter @keystone/web dev   # localhost:3000 (또는 Claude preview "web")
+```
+로그인 테스트 계정: webtest@keystone.local / web-test-password-1 (로컬 DB)
 
 ## 마일스톤 6 (실시간 WS) 참고 오픈소스 — 2026-07-03 조사
 - **koreainvestment/open-trading-api** (⭐1.5k, 공식): WS 샘플 `examples_user/*_ws.py` (체결/호가 구독). 함정 — "No close frame received"는 HTS ID 오입력, 모의계좌는 REST 한도 낮음, rate limit 코드 `EGW00201`(HTTP 200으로도 옴 — 어댑터에 재시도 반영됨)
