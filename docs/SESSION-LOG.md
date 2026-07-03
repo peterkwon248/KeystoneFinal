@@ -1,5 +1,33 @@
 # SESSION-LOG (append-only, 최신이 위)
 
+## 2026-07-03 밤 (집)
+
+### 완료 — 마일스톤 7: 04 상세 3탭 이식 (전략·투자지표·밸류에이션) → 7/8탭
+- **전략 탭(strategy-tab.tsx)**: 콕핏(다음액션·**6종 전략 오버레이** isTime/isVR/isWeight/isGrid/isMomentum/isPrice 전부·자금배치·스탯·목표·파라미터·실행 타임라인) + 실시간 룰 평가 + 룰 카드. 뮤테이션 2종 기능화: **룰 on/off 토글·목표 설정/제거**(서버액션, DB 영속 검증). 룰 인라인 편집/추가/삭제는 defer
+- **투자지표 탭(indicators-tab.tsx)**: 프레임워크 렌즈 + **5뷰모드**(카드/게이지/히트맵/표/차트) + 카테고리 그룹 + 핵심지표 카드 + 스파크라인/툴팁. 표시전용. mock priceHistory 이음새 `lib/fin-history.ts`(마일스톤6 교체)
+- **밸류에이션 탭(valuation-tab.tsx)**: 적정가 계산기(입력필드·메서드슬롯·적정가카드·판정) + 민감도 히트맵 + 역산기 + **밴드차트 2종** + **적용→시나리오 타겟 뮤테이션**(서버액션, DB 영속 검증, iv 자동파생)
+- **core 승격(골든 89/92→102)**: `evalRule`·`ruleWarn`(analytics) + 룰 카탈로그(RULE_TRIGS/ACTS/LEGACY_DESC/STATE_LABEL·FIELD_TIPS·STRAT_VAL_KO·locStratVal, reference) + Rule 타입 act?/custom?/edited?. 골든 슬라이스 + rules.test.ts. 투자지표/밸류에이션 순수로직(calcValuation·seedFinancials·gradeOf·IND_THRESH·KS_METRIC_DICT 등)은 이미 core에 있었음
+- **데이터 이음새**: plan-mapper에 DB rules(condition/action/last_fired)→리치 Rule 디코드 + custom_fields.goal→plan.goal. dev-seed에 구조화 룰(trig/act 다양)+goal(4플랜). 서버액션 setGoal/toggleRule/applyValuationTargets
+- 브라우저 E2E 전수 검증(KRW+USD, 6종 오버레이·5뷰모드·밴드차트·뮤테이션 DB 왕복). executor-high 4회 위임(전략·투자지표·밸류에이션·밴드재배치), 메인이 검증+SWC버그 직접 수정
+
+### 브레인스토밍 & 큰 결정
+- **⚠️ SWC ≠ tsc 발견(중요)**: `tsc --noEmit` 통과해도 Next(SWC)는 **JSX 안 제네릭 캐스트**(`as Record<A,B>`·`({} as Partial<X>)`)를 파싱 못함(`<A>`를 JSX태그로 오인). 투자지표에서 발생 → 캐스트를 JSX 밖 statement로 hoist. "typecheck 그린 ≠ 실동작"의 교과서 사례 → 브라우저 콘솔/SWC 컴파일 필수 확인. NEXT-ACTION 워치아웃에 기록
+- **밴드차트 배치 오류 발견·수정**: 밴드차트 2종(적정가·역사적 멀티플)은 프로토타입에서 **밸류에이션 탭 전용**(IndicatorsTab 미호출 — grep 확정)인데 투자지표 이식 때 잘못 들어감 → 투자지표에서 제거 + 밸류에이션으로 이동. 양쪽 탭 프로토타입과 일치
+- **우측 디테일바 결정 확정**: 인사이트(마지막 탭) 끝난 뒤 우측바(PropsSidebar) 별도 증분. 우측바는 탭이 아닌 크로스탭 우측레일이라 8탭 카운트에 없었음
+- **뮤테이션 방침**: 각 탭 주요 뮤테이션은 서버액션으로 기능화(전략=룰토글/목표, 밸류=적용), 복잡한 인라인 편집은 defer(시나리오 탭과 동일 display-first)
+
+### 다음
+- **인사이트 탭(planinsights.jsx)** = 04 상세 마지막 8번째 → 그다음 **우측 디테일바(PropsSidebar)** → 04 상세 화면 완성 → 01/02/05/06 스크린
+
+### Watch Out
+- **SWC 제네릭-캐스트-in-JSX 금지** (위 참조) — 인사이트/우측바 이식 때도 주의. dev 서버 stale 에러 물리면 재시작(Windows 파일워처 재컴파일 누락)
+- dev 서버 재시작 시 autoPort로 포트 바뀜(다른 챗이 3000 점유) — `.claude/launch.json`에 `autoPort:true` + `exec next dev`(하드코딩 --port 우회)
+- 밸류에이션 적용 뮤테이션은 scenarios.target을 case_t로 갱신 → iv는 mapper가 base 시나리오에서 자동 파생(별도 iv 필드 없음)
+- 이 세션 apply 테스트로 PLN-001 타겟 변경 후 시드값(92000/78000/58000)으로 복원해둠. 시드 재실행 시 리셋
+
+### 머신
+집
+
 ## 2026-07-03 저녁 (집)
 
 ### 완료 — 마일스톤 7 (웹 이식): 04 플랜 상세 5탭 이식

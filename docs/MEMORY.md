@@ -20,7 +20,7 @@
 | 3 | 플랜 데이터 DB화 | ✅ 2026-07-02 (롤업 뷰 + 전이 트리거 2종 + 타입 생성, E2E 검증) |
 | 4 | 재무 어댑터 (DART/EDGAR) | ✅ 2026-07-02 (apps/server, 14/14 동기화, 실측 교차검증) |
 | 5 | 시세 폴링 + FX | ✅ 2026-07-02 (KIS/Finnhub 14/14 + dividend_yield + FX) ← **MVP 데이터 레이어 완료** |
-| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — Auth+온보딩+앱셸+03 리스트+사이드바 완료. **04 상세 8탭 중 5개**(셸·시나리오·활동·체결·재무제표) 완료, 남은 4: 전략/투자지표/밸류에이션/인사이트 |
+| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — Auth+온보딩+앱셸+03 리스트+사이드바 완료. **04 상세 8탭 중 7개**(셸·시나리오·활동·체결·재무제표·전략·투자지표·밸류에이션) 완료, 남은 것 = **인사이트 탭 + 우측 디테일바(PropsSidebar)** |
 | 6 | 실시간 WS **+ 과거 시세 히스토리 백필** | 차트 실데이터의 전제 (아래 참조) |
 | 8·9 | 모바일 / 구독 | |
 
@@ -60,4 +60,9 @@
 - **사이드바 도구 섹션**: `lib/sidebar-config.ts`(OPTIONAL_DESTS 7종/SB_CFG0/SB_ORDER0/normalizeSidebar/mergedKeys), `components/shell/sidebar-config.tsx`(Context, cfg/order/pinned를 **profiles.sidebar(jsonb)로 서버 동기화**), `customize-modal.tsx`(핀→상단·표시토글·드래그순서·기본값복원). 상단 고정=pinned, 도구 섹션=cfg true & !pinned
 - **⚠️ supabase-js 쿼리 빌더는 lazy thenable** — `.then()`/`await` 호출해야 HTTP 요청 발사됨. `void supabase.from().update().eq()`는 빌더만 만들고 **요청 안 감**(profiles.sidebar 영속이 조용히 실패했던 버그). mutation은 반드시 실행할 것
 - **04 플랜 상세 이식 이음새(2026-07-03)**: `components/plan/`에 mini-dropdown·scenarios-tab·gap-tab·execution-ledger·perf-band·financials-tab·activity-tab. mock 시계열은 `lib/gap-history.ts`(GapTab priceHistory/ivHistory/scenarioHistory)+`lib/trajectory.ts`. 재무는 `lib/fin-mapper.ts`(DB security_financials 완전하면 우선, 아니면 core FIN_SEED 폴백). 헤더 픽커 영속=`app/(shell)/plans/[id]/actions.ts`. core 승격 골든 92: scAutoStatus/scProbOf/computeLedger/buildFinFromSeed(seed 분리)
+- **04 상세 3탭 추가 이식(2026-07-03 밤)**: `components/plan/`에 **strategy-tab·indicators-tab·valuation-tab**. 전략=콕핏 6종 오버레이(isTime/VR/Weight/Grid/Momentum/Price)+룰카드, 투자지표=5뷰모드(카드/게이지/히트맵/표/차트)+프레임워크 렌즈, 밸류에이션=적정가 계산기+민감도+역산+밴드차트2종. mock priceHistory=`lib/fin-history.ts`(밴드차트·스파크라인용, 마일스톤6 교체). 서버액션 추가(actions.ts): setGoal·toggleRule·applyValuationTargets. plan-mapper에 DB rules(condition/action/last_fired)→리치 Rule 디코드 + custom_fields.goal→plan.goal
+- **core 승격 골든 92→102(2026-07-03 밤)**: `evalRule`·`ruleWarn`(analytics, 룰 상태/경고) + 룰 카탈로그(RULE_TRIGS/ACTS/LEGACY_DESC/STATE_LABEL·FIELD_TIPS·STRAT_VAL_KO·locStratVal, reference) + Rule 타입 act?/custom?/edited?. 골든 슬라이스(evalRule/ruleWarn) + tests/rules.test.ts(108 배터리). 밸류에이션/투자지표 순수로직(calcValuation·seedFinancials·seedSlots·gradeOf·IND_THRESH·KS_METRIC_DICT/FORMULA)은 이미 core에 있었음(추가 승격 불필요)
+- **⚠️ SWC ≠ tsc(2026-07-03 밤, 중요)**: `tsc --noEmit` 통과해도 Next(SWC) 파서는 **JSX 자식/표현식 안의 제네릭 캐스트**(`(x as Record<A,B>)`·`({} as Partial<Foo>)`·IIFE-in-JSX)를 파싱 못함 → `<A>`를 JSX 태그로 오인 → `Expected '</', got jsx text`(엉뚱한 줄 지목), 브라우저는 stale/깨진 렌더. **해결: 제네릭 캐스트를 JSX 밖 statement(const)로 hoist**. 단일 타입 캐스트(`as {v?:number}`)는 OK. typecheck 그린만 믿지 말고 브라우저 콘솔/`preview_logs`로 SWC 컴파일 확인. dev 서버가 stale 에러 물리면 **재시작**(Windows 파일워처 재컴파일 누락)
+- **밴드차트 배치 = 밸류에이션 탭 전용**: ValFairBandChart·MultipleBandChart는 프로토타입에서 `valuation_view.jsx`만 호출(IndicatorsTab 미호출 — grep 확정). 투자지표 이식 때 잘못 넣었다가 밸류에이션으로 이전. `fin` prop + `lib/fin-history` mock으로 렌더. 투자지표는 스파크라인 툴팁용으로 fin-history 계속 사용
+- **dev 프리뷰 포트**: 다른 챗이 3000 점유 시 `.claude/launch.json`에 `autoPort:true` + `runtimeArgs`를 `exec next dev`로(package.json dev의 하드코딩 `--port 3000` 우회) → 프리뷰 하네스가 PORT env로 자동 할당
 - **⚠️ 실데이터 전환 필수(2026-07-03 확정, NEXT-ACTION 상세)**: ①**과거 시세 히스토리 백필이 마일스톤 6 핵심**(forward-only 축적은 실사용 불가 — 유저 과거 차트/보유기간 전제). KIS 일봉 + US 대안provider 조사 + `security_price_history` 테이블 신규. 교체 지점=trajectory.ts/gap-history.ts. ②**날짜 앵커** KS_REF=2026-06-26·GapTab new Date(2026,5,..) 하드코딩 → 실제 today 교체. ③재무는 `sync:financials`로 DB 채우면 fin-mapper가 코드변경0으로 자동 실측 전환(공시주기 기준)

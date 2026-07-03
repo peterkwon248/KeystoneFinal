@@ -1,17 +1,20 @@
 # NEXT-ACTION
 
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
-완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 진행 중(8탭 중 5개 완료)** — 전부 브라우저 E2E 검증. 다음:
-1. **04 플랜 상세(DetailView) — 남은 3탭**: ⬜ 전략(StrategyTab 642~1113, 최대 탭·룰/회차) · ⬜ 투자지표(IndicatorsTab, `fin` prop 재사용 가능) · ⬜ 밸류에이션(valuation_view.jsx, core 밸류에이션) · ⬜ 인사이트(planinsights.jsx)
-   - ✅ 완료 탭: 셸(헤더 픽커/메트릭/탭바) · 시나리오(카드·수렴분석·**GapTab 차트**) · 활동 · 체결(회차 장부·성과밴드) · **재무제표(IS/BS/CF + 실연결 이음새)**
+완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 중 7개 완료** — 전부 브라우저 E2E 검증. 다음:
+1. **🎯 04 플랜 상세 — 마지막 8번째 탭: 인사이트(`source/planinsights.jsx`, 가장 작음)**
+   - ✅ 완료 7탭: 셸 · 시나리오(카드·수렴분석·**GapTab 차트**) · 활동 · 체결(장부·성과밴드) · 재무제표(IS/BS/CF 실연결) · **전략**(콕핏 6종 오버레이·룰 카드·목표/룰토글 뮤테이션) · **투자지표**(카드/게이지/히트맵/표/차트 5모드·프레임워크 렌즈) · **밸류에이션**(적정가 계산기·민감도·역산·**밴드차트 2종**·적용→시나리오 뮤테이션)
+   - 인사이트 이식 방법: 위 3탭과 동일 패턴 — 순수 로직은 @keystone/core import(이미 승격됐는지 확인), 데이터는 `plan`(+필요시 `fin` prop, page.tsx가 이미 계산해 넘김), 뮤테이션 있으면 `actions.ts`에 서버액션. screens 픽셀 기준 · source 로직 기준. 첫 스텝: `grep -n "planinsights\|PlanInsights\|Insights" source/DetailView.jsx`로 탭 배선 확인 + `planinsights.jsx` 통독 + core에 필요한 순수 로직/i18n 있는지 확인
+2. **🎯 그다음: 우측 디테일바(PropsSidebar, `source/DetailView.jsx:1143` `.detail-side`)** — 인사이트 끝나면 04 상세 화면의 마지막 조각. 탭이 아니라 모든 탭에 걸치는 우측 레일이라 8탭 카운트에 안 잡혀 별도 증분. 고유 콘텐츠 = 포지션/청산 요약·전략 파라미터·커스텀 필드(추가/편집)·노트(추가/편집/삭제) + 접기 토글(`rightCollapsed`/`onToggleRight`). 상태/포트폴리오/전략 피커는 이미 셸의 `dt-headrow`로 올라가 있음(중복). ⚠️ `screens/04-plan-detail.png`가 펼침/접힘 어느 상태로 캡처됐는지 먼저 확인 후 그대로 재현
    - 이후 다른 스크린: 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산
    - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵). screens/*.png이 픽셀 기준 · source/*.jsx가 로직 기준
-   - 04 이식에서 만든 재사용 이음새(추가): `components/plan/mini-dropdown.tsx`, `scenarios-tab.tsx`, `gap-tab.tsx`, `execution-ledger.tsx`, `perf-band.tsx`, `financials-tab.tsx`, `activity-tab.tsx`; `lib/gap-history.ts`(GapTab mock 시계열), `lib/fin-mapper.ts`(DB재무→Fin, DB우선·시드폴백); 헤더 픽커 영속 `app/(shell)/plans/[id]/actions.ts`
-   - core 승격(골든 92): `scAutoStatus`/`scProbOf`/`computeLedger`/`buildFinFromSeed`(seed 분리)
-2. 상단 필터 패널(FilterPanel) — 지금은 DisplayPanel만 있음
-3. GET /fx·/quote Route Handler + 클라이언트 setFxRate 연결
+   - 04 상세 재사용 이음새(전체): `components/plan/`에 mini-dropdown·scenarios-tab·gap-tab·execution-ledger·perf-band·financials-tab·activity-tab·**strategy-tab·indicators-tab·valuation-tab**; `lib/gap-history.ts`·`lib/fin-mapper.ts`·**`lib/fin-history.ts`**(투자지표/밸류에이션 밴드차트용 mock priceHistory — 마일스톤6 교체). 서버액션 `app/(shell)/plans/[id]/actions.ts`: patchPlan(헤더픽커)·**setGoal·toggleRule·applyValuationTargets**
+   - core 승격: 골든 92(scAutoStatus/scProbOf/computeLedger/buildFinFromSeed) + **골든 102**(evalRule·ruleWarn + 룰 카탈로그 RULE_TRIGS/ACTS/LEGACY_DESC/STATE_LABEL·FIELD_TIPS·locStratVal, Rule 타입에 act?/custom?/edited? 추가). 밸류에이션·투자지표·전략이 쓰는 나머지 순수로직(calcValuation/seedFinancials/gradeOf/IND_THRESH/KS_METRIC_DICT 등)은 이미 core에 있었음
+3. 상단 필터 패널(FilterPanel) — 지금은 DisplayPanel만 있음
+4. GET /fx·/quote Route Handler + 클라이언트 setFxRate 연결
 - ⚠️ dev 서버 캐시 꼬이면(하이드레이션 안 됨/청크 404): `.next` 삭제 후 재시작. **`next build`는 dev 서버 끄고 `.next` 삭제 후** 실행 (동시 접근 시 PageNotFoundError)
 - ⚠️ **supabase-js 쿼리 빌더는 thenable** — `void supabase.from().update()`는 요청이 안 나감. 반드시 `await` 또는 `.then()`으로 실행 (profiles.sidebar 영속 버그였음)
+- ⚠️ **SWC ≠ tsc: JSX 안 제네릭 캐스트 금지** — `tsc --noEmit`는 통과해도 Next(SWC) 파서는 JSX 자식/표현식 안의 `as Record<string,string>`·`({} as Partial<X>)` 같은 제네릭 캐스트에서 `<string>`을 JSX 태그로 오인해 `Expected '</', got jsx text` 에러(엉뚱한 줄 지목). 투자지표 이식 때 발생 → 캐스트를 JSX 밖 본문(statement)으로 hoist해 해결. **밸류에이션/인사이트 이식 때도 IIFE-in-JSX + 제네릭 캐스트 패턴 주의.** typecheck 그린이어도 브라우저 콘솔/`preview_logs`로 SWC 컴파일 확인 필수. dev 서버가 stale 에러에 물리면 **서버 재시작**(파일워처가 Windows에서 재컴파일 놓침)
 - ⚠️ **lucide-react 아이콘 개명** — 프로토타입/core의 옛 kebab 이름이 npm 버전에 없을 수 있음(Filter→Funnel, PieChart→ChartPie). `Lic`가 alias 맵으로 흡수하고 미지 아이콘은 dev 콘솔 경고. 새 뷰 이식 때 `[Lic] 알 수 없는 아이콘` 경고 나오면 `components/icons.tsx` LUCIDE_ALIASES에 추가
 - 로컬 플랜 시드: `node apps/web/scripts/dev-seed-plans.mjs` (webtest 유저 + 프로토타입 11 플랜)
 
@@ -68,7 +71,7 @@ pnpm --filter @keystone/server sync:financials      # DART/EDGAR 실데이터 (.
 - [x] 마일스톤 3: 플랜 데이터 DB화 (2026-07-02 — plan_positions 뷰 + 전이 트리거 + securities 시드 + DB 타입 생성)
 - [x] 마일스톤 4: 재무 어댑터 (2026-07-02 — apps/server + DART/EDGAR 어댑터, 14종 × 5년 동기화 검증)
 - [x] 마일스톤 5: 시세 폴링 (2026-07-02 — KIS/Finnhub 14/14 + dividend_yield + FX) ← **MVP 데이터 레이어 완료** (스냅샷만, 히스토리 없음)
-- [~] 마일스톤 7: 웹 이식 진행 중 (2026-07-03 — Auth/온보딩/앱셸/03 리스트/사이드바 + 04 상세 5/8탭)
+- [~] 마일스톤 7: 웹 이식 진행 중 (2026-07-03 — Auth/온보딩/앱셸/03 리스트/사이드바 + **04 상세 7/8탭**: +전략·투자지표·밸류에이션. 남은 것 = 인사이트 탭 + 우측 디테일바)
 - [ ] 마일스톤 6: 실시간 WS **+ 과거 시세 히스토리 백필** (차트 실데이터 전제 — 위 §1)
 - [ ] 마일스톤 8~9: 모바일 / 구독
 
@@ -82,4 +85,4 @@ pnpm --filter @keystone/server sync:financials      # DART/EDGAR 실데이터 (.
 - 데스크톱 (Windows, `C:\Users\user\Desktop\KeystoneFinal`) — 마일스톤 2 진행 머신
 
 ## 마지막 갱신
-2026-07-03 (집)
+2026-07-03 밤 (집)
