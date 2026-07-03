@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-03T06:14:28.089Z",
+  "lastUpdated": "2026-07-03T06:27:15.692Z",
   "activeFeatures": [
     "core",
     "valuation",
@@ -187,9 +187,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:13:37.588Z",
-        "lastUpdated": "2026-07-03T06:09:52.293Z"
+        "lastUpdated": "2026-07-03T06:27:15.692Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\scenarios-tab.tsx"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\detail-view.tsx"
     },
     "plans": {
       "phase": "do",
@@ -252,7 +252,7 @@
   "session": {
     "startedAt": "2026-07-02T08:00:52.252Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-03T06:14:28.089Z"
+    "lastActivity": "2026-07-03T06:27:15.692Z"
   },
   "history": [
     {
@@ -810,6 +810,24 @@
     {
       "timestamp": "2026-07-03T06:14:28.089Z",
       "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:26:39.900Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:27:08.334Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:27:15.692Z",
+      "feature": "plan",
       "phase": "do",
       "action": "updated"
     }
