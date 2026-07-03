@@ -1,21 +1,24 @@
 # NEXT-ACTION
 
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
-1·2단계 완료: apps/web + Auth/온보딩 + **앱 셸(Sidebar/WorkspaceMenu/라우트)** — 브라우저 E2E 검증. 다음:
-1. **screens/ 6장 뷰 이식** (권장 순서: 03 플랜 리스트(ListView+BoardTimeline) → 04 플랜 상세(DetailView 3065줄, 최대 덩어리) → 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산)
+완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트(ListView/BoardView/TimelineView/DisplayPanel)** + **사이드바 도구 섹션/CustomizeModal(profiles.sidebar 연동)** — 전부 브라우저 E2E 검증. 다음:
+1. **04 플랜 상세(DetailView 3065줄, 최대 덩어리)** ← 다음 작업. 이후 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산
    - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵)
    - screens/*.png이 픽셀 기준 · source/*.jsx가 로직 기준
-   - 전략/관점은 core 프리셋(LIBRARY_LOCKED) — 사이드바가 이미 이 패턴 사용 중
-2. 사이드바 도구 섹션(OPTIONAL_DESTS) + CustomizeModal — profiles.sidebar 연동
+   - 리스트 이식에서 만든 재사용 이음새: `lib/plan-mapper.ts`(DB row→프로토타입 Plan, PLAN_SELECT), `lib/trajectory.ts`(mock 궤적), `components/plan/scenario-gauge.tsx`·`sparkline.tsx`, `components/icons.tsx`(StatusIcon/StrategyBadge)
+2. 상단 필터 패널(FilterPanel) — 지금은 DisplayPanel만 있음
 3. GET /fx·/quote Route Handler + 클라이언트 setFxRate 연결
-- ⚠️ dev 서버 캐시 꼬이면(하이드레이션 안 됨/청크 404): `.next` 삭제 후 재시작
+- ⚠️ dev 서버 캐시 꼬이면(하이드레이션 안 됨/청크 404): `.next` 삭제 후 재시작. **`next build`는 dev 서버 끄고 `.next` 삭제 후** 실행 (동시 접근 시 PageNotFoundError)
+- ⚠️ **supabase-js 쿼리 빌더는 thenable** — `void supabase.from().update()`는 요청이 안 나감. 반드시 `await` 또는 `.then()`으로 실행 (profiles.sidebar 영속 버그였음)
+- ⚠️ **lucide-react 아이콘 개명** — 프로토타입/core의 옛 kebab 이름이 npm 버전에 없을 수 있음(Filter→Funnel, PieChart→ChartPie). `Lic`가 alias 맵으로 흡수하고 미지 아이콘은 dev 콘솔 경고. 새 뷰 이식 때 `[Lic] 알 수 없는 아이콘` 경고 나오면 `components/icons.tsx` LUCIDE_ALIASES에 추가
+- 로컬 플랜 시드: `node apps/web/scripts/dev-seed-plans.mjs` (webtest 유저 + 프로토타입 11 플랜)
 
 ## 실행 명령 (이 머신)
 ```
 pnpm supabase start
 pnpm --filter @keystone/web dev   # localhost:3000 (또는 Claude preview "web")
 ```
-로그인 테스트 계정: webtest@keystone.local / web-test-password-1 (로컬 DB)
+로그인 테스트 계정: webtest@keystone.local / web-test-password-1 (dev-seed-plans.mjs가 생성 — 11 플랜 포함)
 
 ## 마일스톤 6 (실시간 WS) 참고 오픈소스 — 2026-07-03 조사
 - **koreainvestment/open-trading-api** (⭐1.5k, 공식): WS 샘플 `examples_user/*_ws.py` (체결/호가 구독). 함정 — "No close frame received"는 HTS ID 오입력, 모의계좌는 REST 한도 낮음, rate limit 코드 `EGW00201`(HTTP 200으로도 옴 — 어댑터에 재시도 반영됨)
@@ -56,4 +59,4 @@ pnpm --filter @keystone/server sync:financials      # DART/EDGAR 실데이터 (.
 - 데스크톱 (Windows, `C:\Users\user\Desktop\KeystoneFinal`) — 마일스톤 2 진행 머신
 
 ## 마지막 갱신
-2026-07-02
+2026-07-03 (집)

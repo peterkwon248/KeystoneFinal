@@ -34,8 +34,10 @@
 - [x] 온보딩 3단계 → profiles upsert + portfolios + 첫 plan (브라우저 E2E 검증)
 - [x] 홈: DB 데이터 경로 증명 (플랜 + KIS 실시세 표시)
 - [x] 앱 셸: Sidebar + WorkspaceMenu/Settings 이식, 라우트 구조(/plans /inbox /journal /strategy/[id] + placeholder), 테마/언어 토글 (2026-07-03)
-- [ ] screens/ 6장 뷰 이식: 03 플랜 리스트(ListView) → 04 플랜 상세 → 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
-- [ ] 사이드바 도구 섹션 (OPTIONAL_DESTS + CustomizeModal — profiles.sidebar 연동)
+- [x] 03 플랜 리스트: ListView + BoardView + TimelineView + DisplayPanel 이식 (2026-07-03, 브라우저 E2E: 11 플랜 시드, 리스트/보드/타임라인 3뷰 + 상태/포트폴리오 그룹핑 검증)
+- [x] 앱 셸 레이아웃 버그 수정: `.app-row`(가로 flex) 래퍼 누락 → 사이드바+메인 세로 스택 → 복원 (2026-07-03)
+- [x] 사이드바 도구 섹션 (OPTIONAL_DESTS + CustomizeModal — **profiles.sidebar DB 연동**) (2026-07-03, E2E: 핀→상단·숨김·순서·리로드 유지·기본값 복원 검증)
+- [ ] screens/ 나머지 뷰 이식: 04 플랜 상세(DetailView) → 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
 - [ ] GET /fx·/quote — Next.js Route Handler로 (서버 런타임 결정 완료: Next 내장으로 시작)
 - [ ] 클라이언트 초기화에서 setFxRate(fx.rate) 연결
 

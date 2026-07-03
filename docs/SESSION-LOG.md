@@ -1,5 +1,31 @@
 # SESSION-LOG (append-only, 최신이 위)
 
+## 2026-07-03 오후 (집)
+
+### 완료 — 마일스톤 7 (웹 이식) 계속
+- **03 플랜 리스트 이식**: ListView + BoardView + TimelineView + DisplayPanel (source/ListView.jsx·BoardTimeline.jsx·Panels.jsx). 재사용 이음새 신설: `lib/plan-mapper.ts`(DB row→프로토타입 Plan + PLAN_SELECT), `lib/trajectory.ts`(mock 궤적), `components/plan/*`(scenario-gauge/sparkline/group/*-view/display-panel), `components/icons.tsx`에 StatusIcon/StrategyBadge
+- **앱 셸 레이아웃 버그 수정**: `.app-row`(가로 flex) 래퍼 누락 → 사이드바+메인이 세로로 쌓임 → 프로토타입 구조(.app 세로 > .app-row 가로 > 사이드바+main) 복원
+- **사이드바 도구 섹션 + CustomizeModal**: OPTIONAL_DESTS 7종 + 핀/표시/순서/기본값복원, **profiles.sidebar(jsonb) DB 동기화**. `lib/sidebar-config.ts` + `components/shell/sidebar-config.tsx`(Context) + `customize-modal.tsx`
+- **아이콘 버그 수정**: lucide-react가 `Filter→Funnel`, `PieChart→ChartPie`로 개명 → 스크리너·부분합산 SOTP·6:4 자산배분 아이콘이 조용히 null. `Lic`에 개명 alias 맵 + dev 경고 추가 (core는 골든 보호라 클라 래퍼에서 흡수)
+- **로컬 검증 시드**: `apps/web/scripts/dev-seed-plans.mjs` — webtest 유저 + 프로토타입 11 플랜(전 상태 커버)
+- 브라우저 E2E 전부 검증: 3뷰 렌더·그룹핑·핀/숨김/리로드 유지·아이콘 복구. 골든 89/89 + typecheck + next build 그린
+
+### 브레인스토밍 & 큰 결정
+- 사이드바를 스크린샷과 100% 맞추는 작업(도구 섹션)을 04 상세보다 먼저 진행 (사용자 선택)
+- profiles.sidebar를 source of truth로 (localStorage 아님) — ARCHITECTURE §9 "기기 넘어 따라오는 데이터는 서버"
+- **supabase-js 쿼리 빌더 = lazy thenable** 발견: `void supabase...update()`는 요청이 안 나감. mutation은 반드시 await/.then
+
+### 다음
+- 04 플랜 상세(DetailView 3065줄, 최대 덩어리) → 상단 필터 패널(FilterPanel) → 01/02/05/06
+
+### Watch Out
+- `next build`는 dev 서버 끄고 `.next` 삭제 후 (동시 접근 시 dynamic route PageNotFoundError)
+- lucide 아이콘 침묵 null: 새 아이콘 추가 시 dev 콘솔에 `[Lic] 알 수 없는 아이콘` 경고 확인
+- 이 머신(집)에 `.env`(어댑터 키 5종)는 아직 없음 — 뷰 이식만 하면 불필요, 시세 갱신 시 필요
+
+### 머신
+집
+
 ## 2026-07-02 오후 (집)
 
 ### 완료
