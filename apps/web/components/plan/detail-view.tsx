@@ -20,6 +20,7 @@ import { ExecutionsTab } from "./executions-tab";
 import { FinancialsTab } from "./financials-tab";
 import { IndicatorsTab } from "./indicators-tab";
 import { ValuationTab } from "./valuation-tab";
+import { InsightsTab } from "./insights-tab";
 import type { UIPlan } from "@/lib/plan-mapper";
 import type { PfLite } from "@/lib/pf-palette";
 import { applyValuationTargetsAction, patchPlanAction, setGoalAction, toggleRuleAction, type PlanGoal } from "@/app/(shell)/plans/[id]/actions";
@@ -139,6 +140,7 @@ export function PlanDetail({ plan, portfolios, fin }: {
             : tab === "financials" ? <FinancialsTab plan={plan} fin={fin} t={t} lang={lang} />
             : tab === "indicators" ? <IndicatorsTab plan={plan} fin={fin} t={t} lang={lang} />
             : tab === "valuation" ? <ValuationTab plan={plan} fin={fin} t={t} lang={lang} onApplyTargets={onApplyTargets} />
+            : tab === "insights" ? <InsightsTab plan={plan} t={t} lang={lang} />
             : tab === "executions" ? <ExecutionsTab plan={plan} t={t} lang={lang} />
             : tab === "activity" ? <ActivityTab plan={plan} lang={lang} />
             : <TabPlaceholder tab={tab} tabs={tabs} lang={lang} />}

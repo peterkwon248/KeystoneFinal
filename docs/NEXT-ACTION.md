@@ -1,11 +1,9 @@
 # NEXT-ACTION
 
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
-완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 중 7개 완료** — 전부 브라우저 E2E 검증. 다음:
-1. **🎯 04 플랜 상세 — 마지막 8번째 탭: 인사이트(`source/planinsights.jsx`, 가장 작음)**
-   - ✅ 완료 7탭: 셸 · 시나리오(카드·수렴분석·**GapTab 차트**) · 활동 · 체결(장부·성과밴드) · 재무제표(IS/BS/CF 실연결) · **전략**(콕핏 6종 오버레이·룰 카드·목표/룰토글 뮤테이션) · **투자지표**(카드/게이지/히트맵/표/차트 5모드·프레임워크 렌즈) · **밸류에이션**(적정가 계산기·민감도·역산·**밴드차트 2종**·적용→시나리오 뮤테이션)
-   - 인사이트 이식 방법: 위 3탭과 동일 패턴 — 순수 로직은 @keystone/core import(이미 승격됐는지 확인), 데이터는 `plan`(+필요시 `fin` prop, page.tsx가 이미 계산해 넘김), 뮤테이션 있으면 `actions.ts`에 서버액션. screens 픽셀 기준 · source 로직 기준. 첫 스텝: `grep -n "planinsights\|PlanInsights\|Insights" source/DetailView.jsx`로 탭 배선 확인 + `planinsights.jsx` 통독 + core에 필요한 순수 로직/i18n 있는지 확인
-2. **🎯 그다음: 우측 디테일바(PropsSidebar, `source/DetailView.jsx:1143` `.detail-side`)** — 인사이트 끝나면 04 상세 화면의 마지막 조각. 탭이 아니라 모든 탭에 걸치는 우측 레일이라 8탭 카운트에 안 잡혀 별도 증분. 고유 콘텐츠 = 포지션/청산 요약·전략 파라미터·커스텀 필드(추가/편집)·노트(추가/편집/삭제) + 접기 토글(`rightCollapsed`/`onToggleRight`). 상태/포트폴리오/전략 피커는 이미 셸의 `dt-headrow`로 올라가 있음(중복). ⚠️ `screens/04-plan-detail.png`가 펼침/접힘 어느 상태로 캡처됐는지 먼저 확인 후 그대로 재현
+완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 전부 완료** — 전부 브라우저 E2E 검증. 다음:
+1. **🎯 우측 디테일바(PropsSidebar, `source/DetailView.jsx:1143` `.detail-side`)** — 04 상세 화면의 마지막 조각. 탭이 아니라 모든 탭에 걸치는 우측 레일이라 8탭 카운트에 안 잡혀 별도 증분. 고유 콘텐츠 = 포지션/청산 요약·전략 파라미터·커스텀 필드(추가/편집)·노트(추가/편집/삭제) + 접기 토글(`rightCollapsed`/`onToggleRight`). 상태/포트폴리오/전략 피커는 이미 셸의 `dt-headrow`로 올라가 있음(중복). ⚠️ **첫 스텝: `screens/04-plan-detail.png`가 펼침/접힘 어느 상태로 캡처됐는지 확인**(디자인 불변 기준) → 그 상태로 재현. `PropsSidebar` + `detail-wrap` 안에 `.detail-side`를 `.detail-main` 형제로 추가. 커스텀필드/노트는 mutation → custom_fields/notes를 custom_fields(jsonb)에 저장하는 서버액션(전략탭 setGoal 패턴)
+   - ✅ 완료 8탭: 셸 · 시나리오 · 활동 · 체결 · 재무제표 · 전략 · 투자지표 · 밸류에이션 · **인사이트**(실행정확도 게이지·평단추이 차트·시나리오거리·룰이력, 진입전 empty-state — `insights-tab.tsx`, computeLedger 사용)
    - 이후 다른 스크린: 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산
    - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵). screens/*.png이 픽셀 기준 · source/*.jsx가 로직 기준
    - 04 상세 재사용 이음새(전체): `components/plan/`에 mini-dropdown·scenarios-tab·gap-tab·execution-ledger·perf-band·financials-tab·activity-tab·**strategy-tab·indicators-tab·valuation-tab**; `lib/gap-history.ts`·`lib/fin-mapper.ts`·**`lib/fin-history.ts`**(투자지표/밸류에이션 밴드차트용 mock priceHistory — 마일스톤6 교체). 서버액션 `app/(shell)/plans/[id]/actions.ts`: patchPlan(헤더픽커)·**setGoal·toggleRule·applyValuationTargets**
