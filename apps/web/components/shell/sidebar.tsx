@@ -9,10 +9,10 @@ import {
 import { I18N } from "@keystone/core/i18n";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { Lic, KeystoneLogo, PanelIcon } from "@/components/icons";
+import { pfColor } from "@/lib/pf-palette";
+import { OPTIONAL_DESTS, mergedKeys } from "@/lib/sidebar-config";
 import { usePrefs } from "./prefs";
-
-// DB portfolios에는 color가 없어 프로토타입 팔레트를 순환 적용
-const PF_PALETTE = ["#4C8DFF", "#BB6BD9", "#4CB782", "#F2994A", "#2D9CDB", "#9B6BD9", "#2BB3A3"];
+import { useSidebarConfig } from "./sidebar-config";
 
 export interface SidebarPortfolio { id: string; name: string; count: number }
 export interface SidebarView { id: string; name: string }
@@ -32,6 +32,7 @@ export function Sidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { lang } = usePrefs();
+  const { cfg, order, pinned } = useSidebarConfig();
   const t = I18N[lang];
   const view = pathname.split("/")[1] || "plans";
   const activePf = view === "plans" ? searchParams.get("pf") : null;
@@ -140,13 +141,22 @@ export function Sidebar({
         {navItem("inbox", "inbox", t.inbox, { on: view === "inbox", alert: inboxUnread > 0, count: inboxUnread > 0 ? inboxUnread : null, alertTitle: lang === "ko" ? inboxUnread + "개의 새 알림" : inboxUnread + " new", onClick: () => navTo("inbox") })}
         {navItem("journal", "notebook-pen", t.journal, { on: view === "journal", onClick: () => navTo("journal") })}
         {navItem("plans", "crosshair", t.home, { count: plansTotal, on: view === "plans" && !activePf, onClick: () => router.push("/plans") })}
+        {/* 상단 고정된 도구 (핀) — 인박스·일지·플랜 옆 */}
+        {OPTIONAL_DESTS
+          .filter((d) => cfg[d.key] && pinned.includes(d.key))
+          .sort((a, b) => { const ord = order || []; return ord.indexOf(a.key) - ord.indexOf(b.key); })
+          .map((d) => (
+            <Fragment key={d.key}>
+              {navItem(d.key, d.icon, t[d.labelKey], { on: view === d.key, onClick: () => navTo(d.key) })}
+            </Fragment>
+          ))}
 
         <Cap k="pf" label={t.portfolios} onAdd={onNewPf} first />
         {!collapsed.pf && portfolios.map((pf, i) => (
           <div key={pf.id}
             className={"nav-item nav-sub nav-item-row" + (view === "plans" && activePf === pf.id ? " active" : "")}
             onClick={() => router.push("/plans?pf=" + pf.id)}>
-            <span className="pf-dot" style={{ background: PF_PALETTE[i % PF_PALETTE.length] }} />
+            <span className="pf-dot" style={{ background: pfColor(i) }} />
             <span className="nav-item-lab">{pf.name}</span>
             <ItemMenu id={"pf:" + pf.id} items={[
               { icon: "filter", label: lang === "ko" ? "이 포트폴리오만 보기" : "View only this", run: () => router.push("/plans?pf=" + pf.id) },
@@ -214,6 +224,24 @@ export function Sidebar({
             ]} />
           </div>
         ))}
+
+        {/* 도구 섹션 — 켜져 있고 상단 고정 안 된 목적지 (source Sidebar.jsx 하단 블록) */}
+        {(() => {
+          const ordered = mergedKeys(order)
+            .map((k) => OPTIONAL_DESTS.find((d) => d.key === k))
+            .filter((d): d is NonNullable<typeof d> => !!d && cfg[d.key] && !pinned.includes(d.key));
+          if (!ordered.length) return null;
+          return (
+            <>
+              <Cap k="opt" label={t.optionalDest} />
+              {!collapsed.opt && ordered.map((d) => (
+                <div className={"nav-item" + (view === d.key ? " active" : "")} key={d.key} onClick={() => navTo(d.key)}>
+                  <Lic name={d.icon} size={16} cls="icon" color="inherit" /><span>{t[d.labelKey]}</span>
+                </div>
+              ))}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

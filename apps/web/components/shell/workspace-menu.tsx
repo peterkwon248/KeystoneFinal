@@ -4,8 +4,8 @@ import { I18N } from "@keystone/core/i18n";
 import { Lic, KeystoneLogo } from "@/components/icons";
 import { usePrefs } from "./prefs";
 
-export function WorkspaceMenu({ onClose, onSettings, onLogout }: {
-  onClose: () => void; onSettings: () => void; onLogout: () => void;
+export function WorkspaceMenu({ onClose, onSettings, onCustomize, onLogout }: {
+  onClose: () => void; onSettings: () => void; onCustomize: () => void; onLogout: () => void;
 }) {
   const { lang, theme, toggleTheme, toggleLang } = usePrefs();
   const t = I18N[lang];
@@ -27,6 +27,7 @@ export function WorkspaceMenu({ onClose, onSettings, onLogout }: {
       </div>
       <div className="menu-sep" />
       {item("settings-2", t.settings, () => { onClose(); onSettings(); }, "G S")}
+      {item("panel-left", t.customizeSidebar, () => { onClose(); onCustomize(); })}
       <div className="menu-sep" />
       {item(theme === "dark" ? "sun" : "moon", theme === "dark" ? t.light : t.dark, () => toggleTheme(), null)}
       {item("globe", t.lang, () => toggleLang())}

@@ -1,18 +1,31 @@
-// source/icons.jsx의 Lic(lucide CDN 래퍼)·Flag·KeystoneLogo·PanelIcon 이식본.
+// source/icons.jsx의 Lic(lucide CDN 래퍼)·Flag·KeystoneLogo·PanelIcon·StatusIcon·StrategyBadge 이식본.
 // Lic는 lucide-react 동적 매핑 — 프로토타입처럼 kebab-case 이름을 그대로 받는다
 // (strokeWidth 1.7 = 프로토타입 기본값 유지).
 "use client";
 import type { CSSProperties } from "react";
 import { icons } from "lucide-react";
+import type { ExecStrategy, Lang, PlanStatus } from "@keystone/core/types";
+import { PLAN_STATUS } from "@keystone/core/reference";
 
 const pascal = (name: string) =>
   name.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
 
+// lucide-react가 개명한 아이콘 — 프로토타입/core(골든 보호라 수정 불가)의 옛 kebab 이름을 현행 이름으로 매핑.
+// 새 항목은 렌더 시 dev 경고(아래)를 보고 추가한다.
+const LUCIDE_ALIASES: Record<string, string> = {
+  filter: "Funnel",       // Filter → Funnel
+  "pie-chart": "ChartPie", // PieChart → ChartPie
+};
+
 export function Lic({
   name, size = 16, cls = "icon", color, style,
 }: { name: string; size?: number; cls?: string; color?: string; style?: CSSProperties }) {
-  const I = icons[pascal(name) as keyof typeof icons];
-  if (!I) return null;
+  const key = LUCIDE_ALIASES[name] ?? pascal(name);
+  const I = icons[key as keyof typeof icons];
+  if (!I) {
+    if (process.env.NODE_ENV !== "production") console.warn(`[Lic] 알 수 없는 아이콘 "${name}" (→ ${key}). LUCIDE_ALIASES에 추가 필요.`);
+    return null;
+  }
   return <I className={cls} width={size} height={size} strokeWidth={1.7} color={color} style={style} />;
 }
 
@@ -67,6 +80,42 @@ export function KeystoneLogo({ size = 22, tile = false }: { size?: number; tile?
       <path d={left} fill="#4C8DFF" />
       <path d={right} fill="#2C66CC" />
     </svg>
+  );
+}
+
+/** 플랜 라이프사이클 상태 아이콘 (source/icons.jsx StatusIcon 그대로) —
+ * 링 + 단계별로 자라는 파이 웨지 */
+export function StatusIcon({ status = "research", size = 15 }: { status?: PlanStatus; size?: number }) {
+  const meta = PLAN_STATUS[status] || PLAN_STATUS.research;
+  const c = meta.color;
+  const common = { width: size, height: size, viewBox: "0 0 14 14" };
+  const ring = <circle cx="7" cy="7" r="5.5" fill="none" stroke={c} strokeWidth="1.5" />;
+  const wedge = (len: number) => (
+    <circle cx="7" cy="7" r="3" fill="none" stroke={c} strokeWidth="6" strokeDasharray={len + " 100"} transform="rotate(-90 7 7)" />
+  );
+  if (status === "research")
+    return <svg {...common}><circle cx="7" cy="7" r="5.5" fill="none" stroke={c} strokeWidth="1.5" strokeDasharray="1.7 1.9" /></svg>;
+  if (status === "planning") return <svg {...common}>{ring}{wedge(4.7)}</svg>;
+  if (status === "active") return <svg {...common}>{ring}{wedge(9.4)}</svg>;
+  if (status === "paused") return <svg {...common}>{ring}{wedge(9.4)}</svg>;
+  if (status === "closing") return <svg {...common}>{ring}{wedge(14.5)}</svg>;
+  // closed
+  return (
+    <svg {...common}>
+      <circle cx="7" cy="7" r="6" fill={c} />
+      <path d="M4.3 7.1l1.8 1.8 3.4-3.6" stroke="var(--bg-app)" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** 전략 뱃지 — 색점 + 이름 (source/icons.jsx StrategyBadge 그대로) */
+export function StrategyBadge({ strategy, lang }: { strategy: ExecStrategy | null | undefined; lang: Lang }) {
+  if (!strategy) return <span className="strat-badge" style={{ color: "var(--fg-4)" }}>—</span>;
+  return (
+    <span className="strat-badge">
+      <span className="strat-dot" style={{ background: strategy.color }} />
+      {strategy.name[lang]}
+    </span>
   );
 }
 

@@ -20,7 +20,7 @@
 | 3 | 플랜 데이터 DB화 | ✅ 2026-07-02 (롤업 뷰 + 전이 트리거 2종 + 타입 생성, E2E 검증) |
 | 4 | 재무 어댑터 (DART/EDGAR) | ✅ 2026-07-02 (apps/server, 14/14 동기화, 실측 교차검증) |
 | 5 | 시세 폴링 + FX | ✅ 2026-07-02 (KIS/Finnhub 14/14 + dividend_yield + FX) ← **MVP 데이터 레이어 완료** |
-| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — Auth+온보딩+**앱 셸(Sidebar/메뉴/라우트)** 완료, screens/ 6장 뷰 이식 남음 |
+| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — Auth+온보딩+앱 셸+**03 플랜 리스트+사이드바 도구/CustomizeModal** 완료, 04 상세부터 남음 |
 | 6·8·9 | 실시간 WS / 모바일 / 구독 | |
 
 ## 커밋/PR 히스토리
@@ -50,3 +50,11 @@
 - apps/web: 프로토타입 CSS 통복사(styles/) + reticle 클래스 그대로 → 픽셀 충실. Lic=lucide-react 동적 매핑. 전략/관점은 core 프리셋(LIBRARY_LOCKED)
 - Next dev 함정: 라우트 대량 추가 후 하이드레이션 무반응이면 `.next` 삭제 후 재시작 (상세는 LLM Wiki nextjs-dev)
 - 웹 로컬 테스트 계정: webtest@keystone.local / web-test-password-1 (이 머신 로컬 DB 한정 — 타 머신은 새로 가입)
+- 플랜 뷰 이식 이음새(재사용): `apps/web/lib/plan-mapper.ts`(DB row→프로토타입 Plan + PLAN_SELECT 쿼리절 + toMonD/toRelToken 날짜변환), `lib/trajectory.ts`(planTrajectory mock 궤적 — 마일스톤 6에서 실데이터로 교체), `components/plan/`(scenario-gauge·sparkline·list/board/timeline-view·display-panel·group). StatusIcon/StrategyBadge는 `components/icons.tsx`로 이동
+- **프로토타입 리스트/보드 전략 뱃지 비대칭 그대로 이식**: ListView는 `plan.execId`→EXEC_STRATEGIES(전략), BoardCard는 `plan.strategyId`→STRATEGIES(관점). 원본 버그성 비대칭이나 골든 원칙상 보존
+- 로컬 플랜 시드: `node apps/web/scripts/dev-seed-plans.mjs` — webtest 유저 + 프로토타입 11 플랜(전 상태 커버). service_role로 RLS 우회, idempotent(재실행 시 유저 플랜 삭제 후 재생성)
+- **tsconfig `allowImportingTsExtensions:true` 필요** (core가 `../reference/index.ts`처럼 .ts 확장자로 import — 소스 배포 방식)
+- **`next build`는 dev 서버 끄고 `.next` 삭제 후** 실행 — 동시 접근 시 dynamic route에서 PageNotFoundError(캐시 충돌)
+- **앱 셸 레이아웃**: 프로토타입 App.jsx 구조 = `.app`(flex column) > banner + `.app-row`(flex row) > 사이드바 + main. `.app-row` 래퍼 빼먹으면 사이드바+메인이 세로로 쌓임(2026-07-03 버그 수정)
+- **사이드바 도구 섹션**: `lib/sidebar-config.ts`(OPTIONAL_DESTS 7종/SB_CFG0/SB_ORDER0/normalizeSidebar/mergedKeys), `components/shell/sidebar-config.tsx`(Context, cfg/order/pinned를 **profiles.sidebar(jsonb)로 서버 동기화**), `customize-modal.tsx`(핀→상단·표시토글·드래그순서·기본값복원). 상단 고정=pinned, 도구 섹션=cfg true & !pinned
+- **⚠️ supabase-js 쿼리 빌더는 lazy thenable** — `.then()`/`await` 호출해야 HTTP 요청 발사됨. `void supabase.from().update().eq()`는 빌더만 만들고 **요청 안 감**(profiles.sidebar 영속이 조용히 실패했던 버그). mutation은 반드시 실행할 것

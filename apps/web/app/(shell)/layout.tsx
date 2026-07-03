@@ -11,7 +11,7 @@ export default async function ShellLayout({ children }: { children: React.ReactN
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase
-    .from("profiles").select("onboarded, email_verified").eq("id", user.id).maybeSingle();
+    .from("profiles").select("onboarded, email_verified, sidebar").eq("id", user.id).maybeSingle();
   if (!profile?.onboarded) redirect("/onboarding");
 
   const [{ data: portfolios }, { data: plans }, { data: views }] = await Promise.all([
@@ -31,6 +31,8 @@ export default async function ShellLayout({ children }: { children: React.ReactN
 
   return (
     <AppShell
+      userId={user.id}
+      sidebarPrefs={profile.sidebar}
       portfolios={sbPortfolios}
       plansTotal={plansList.length}
       activeCount={plansList.filter((p) => p.status === "active").length}

@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-02T08:26:23.879Z",
+  "lastUpdated": "2026-07-03T03:20:17.886Z",
   "activeFeatures": [
     "core",
     "valuation",
@@ -12,7 +12,13 @@
     "format",
     "screener",
     "seed",
-    "analytics"
+    "analytics",
+    "web",
+    "plan",
+    "plans",
+    "[id]",
+    "shell",
+    "(shell)"
   ],
   "primaryFeature": "core",
   "features": {
@@ -158,6 +164,84 @@
         "lastUpdated": "2026-07-02T08:26:23.878Z"
       },
       "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\packages\\core\\src\\analytics\\index.ts"
+    },
+    "web": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-03T00:11:47.377Z",
+        "lastUpdated": "2026-07-03T03:20:17.886Z"
+      },
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\icons.tsx"
+    },
+    "plan": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-03T00:13:37.588Z",
+        "lastUpdated": "2026-07-03T00:18:50.973Z"
+      },
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\board-view.tsx"
+    },
+    "plans": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-03T00:17:23.677Z",
+        "lastUpdated": "2026-07-03T00:17:23.677Z"
+      },
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\app\\(shell)\\plans\\page.tsx"
+    },
+    "[id]": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-03T00:17:29.770Z",
+        "lastUpdated": "2026-07-03T00:17:29.770Z"
+      },
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\app\\(shell)\\plans\\[id]\\page.tsx"
+    },
+    "shell": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-03T00:17:35.754Z",
+        "lastUpdated": "2026-07-03T03:03:43.151Z"
+      },
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\shell\\sidebar-config.tsx"
+    },
+    "(shell)": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-03T02:59:38.363Z",
+        "lastUpdated": "2026-07-03T02:59:47.374Z"
+      },
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\app\\(shell)\\layout.tsx"
     }
   },
   "pipeline": {
@@ -168,7 +252,7 @@
   "session": {
     "startedAt": "2026-07-02T08:00:52.252Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-02T08:26:23.879Z"
+    "lastActivity": "2026-07-03T03:20:17.886Z"
   },
   "history": [
     {
@@ -300,6 +384,240 @@
     {
       "timestamp": "2026-07-02T08:26:23.878Z",
       "feature": "analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:11:47.377Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:12:23.634Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:12:45.050Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:12:55.100Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:13:07.420Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:13:37.588Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:13:43.643Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:14:01.418Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:14:19.545Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:14:53.813Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:16:03.661Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:16:34.409Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:17:10.601Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:17:23.677Z",
+      "feature": "plans",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:17:29.770Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:17:35.754Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:17:42.939Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:18:40.756Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:18:43.140Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:18:49.080Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T00:18:50.973Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:39:50.523Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:57:42.973Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:57:56.796Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:58:19.967Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:58:27.503Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:58:33.430Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:58:41.960Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:58:52.223Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:59:00.016Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:59:06.511Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:59:17.568Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:59:26.624Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:59:38.363Z",
+      "feature": "(shell)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T02:59:47.374Z",
+      "feature": "(shell)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T03:00:17.898Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T03:00:23.927Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T03:03:43.151Z",
+      "feature": "shell",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T03:20:17.886Z",
+      "feature": "web",
       "phase": "do",
       "action": "updated"
     }
