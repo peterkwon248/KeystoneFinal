@@ -12,8 +12,10 @@ import type {
   Plan,
   PlanExecState,
   PlanReturn,
+  Rule,
 } from "../types/index.ts";
 import { EXEC_STRATEGIES, STRATEGIES } from "../reference/index.ts";
+import { fmtMoney } from "../format/index.ts";
 
 // return rate from avg & current
 export function planReturn(p: Plan): PlanReturn | null {
@@ -396,4 +398,65 @@ export function gaugeData(p: Plan): GaugeData | null {
     isExit: p.status === "closed" && exitPrice != null,
     dim: p.status === "closed",
   };
+}
+
+// evalRule / ruleWarn — WHEN→THEN 룰의 실시간 상태 평가, promoted VERBATIM from source/DetailView.jsx.
+// state ∈ fired(발동)/armed(대기)/event(체결·이벤트성). meta = 짧은 조건 요약 문자열.
+// Structured `trig` rules first; else legacy name-pattern rules (VR band / LOC / take-profit / round).
+// In the prototype EXEC_STRATEGIES/fmtMoney were globals guarded with `typeof … !== "undefined"`;
+// here they are imported (always defined) — the guard was only for the browser realm, so behavior
+// is byte-identical to the golden vm where both are also in scope.
+export type RuleState = "fired" | "armed" | "event";
+export interface RuleEval {
+  state: RuleState;
+  meta: string;
+}
+export function evalRule(plan: Plan, r: Rule, ko: boolean): RuleEval {
+  const px = plan.currentPrice, avg = plan.avgPrice || 0;
+  const ret = avg > 0 ? (px - avg) / avg * 100 : null;
+  const ex = (typeof EXEC_STRATEGIES !== "undefined") ? EXEC_STRATEGIES.find(s => s.id === plan.execId) : null;
+  const fdNum = (k: string, d: number) => { const f = ex && ex.fields ? ex.fields.find(x => x.key === k) : null; const n = f ? parseFloat(String(f.default).replace(/[^0-9.\-]/g, "")) : NaN; return isNaN(n) ? d : n; };
+  const locPx = avg > 0 ? avg * (1 + fdNum("loc_pct", -5) / 100) : null;
+  const tpPct = fdNum("tp_pct", 10);
+  const bull = (plan.scenarios || []).find(s => s.label && s.label.en === "Bull");
+  const fired = (on: boolean, meta: string): RuleEval => ({ state: on ? "fired" : "armed", meta });
+  const ev = (meta: string): RuleEval => ({ state: "event", meta });
+  // custom (structured) rules
+  if (r.trig) {
+    const v = parseFloat(String(r.trigVal).replace(/[^0-9.\-]/g, ""));
+    switch (r.trig) {
+      case "price_le": return fired(px <= v, (ko ? "현재가 " : "Price ") + fmtMoney(px, plan.cur) + (px <= v ? " ≤ " : " > ") + fmtMoney(v, plan.cur));
+      case "price_ge": return fired(px >= v, (ko ? "현재가 " : "Price ") + fmtMoney(px, plan.cur) + (px >= v ? " ≥ " : " < ") + fmtMoney(v, plan.cur));
+      case "ret_ge": return ret == null ? ev(ko ? "보유 없음" : "no position") : fired(ret >= v, (ko ? "수익률 " : "Return ") + ret.toFixed(1) + "% " + (ret >= v ? "≥" : "<") + " " + v + "%");
+      case "ret_le": return ret == null ? ev(ko ? "보유 없음" : "no position") : fired(ret <= v, (ko ? "수익률 " : "Return ") + ret.toFixed(1) + "% " + (ret <= v ? "≤" : ">") + " " + v + "%");
+      case "loc_hit": return locPx == null ? ev(ko ? "보유 없음" : "no position") : fired(px <= locPx, (ko ? "현재가 " : "Price ") + fmtMoney(px, plan.cur) + (px <= locPx ? " ≤ " : " > ") + "LOC " + fmtMoney(locPx, plan.cur));
+      case "target_hit": return !bull ? ev("—") : fired(px >= bull.target, (ko ? "현재가 " : "Price ") + fmtMoney(px, plan.cur) + (px >= bull.target ? " ≥ " : " < ") + fmtMoney(bull.target, plan.cur));
+      case "buy_exec": return ev(ko ? "체결 시 발동" : "on fill");
+      default: return ev("—");
+    }
+  }
+  // legacy strategy rules by name
+  const nm = (r.name && (r.name.en || r.name.ko)) || "";
+  const isVRex = ex && ex.fields && ex.fields.some(f => f.key === "vr_vline");
+  if (isVRex) {
+    const vW = plan.totalInvested || (avg * (plan.totalShares || 0));
+    const valW = (plan.totalShares || 0) * px;
+    if (!vW) return ev(ko ? "진입 전" : "no position");
+    if (/상단|upper|매도|trim|초과/i.test(nm)) { const hiW = vW * (1 + Math.abs(fdNum("vr_upper", 15)) / 100); return fired(valW >= hiW, (ko ? "평가액 " : "Value ") + fmtMoney(valW, plan.cur) + (valW >= hiW ? " ≥ " : " < ") + (ko ? "상단 " : "upper ") + fmtMoney(hiW, plan.cur)); }
+    if (/하단|lower|매수|add|이탈/i.test(nm)) { const loW = vW * (1 - Math.abs(fdNum("vr_lower", 15)) / 100); return fired(valW <= loW, (ko ? "평가액 " : "Value ") + fmtMoney(valW, plan.cur) + (valW <= loW ? " ≤ " : " > ") + (ko ? "하단 " : "lower ") + fmtMoney(loW, plan.cur)); }
+  }
+  if (/LOC|loc/i.test(nm)) return locPx == null ? ev(ko ? "보유 없음" : "no position") : fired(px <= locPx, (ko ? "현재가 " : "Price ") + fmtMoney(px, plan.cur) + (px <= locPx ? " ≤ " : " > ") + "LOC " + fmtMoney(locPx, plan.cur));
+  if (/익절|take|profit/i.test(nm)) return ret == null ? ev(ko ? "보유 없음" : "no position") : fired(ret >= tpPct, (ko ? "수익률 " : "Return ") + ret.toFixed(1) + "% " + (ret >= tpPct ? "≥" : "<") + " " + tpPct + "%");
+  if (/회차|round|증가|increment/i.test(nm)) return ev(ko ? "체결 시 발동" : "on fill");
+  return ev("—");
+}
+export function ruleWarn(plan: Plan, r: Rule, ko: boolean): string | null {
+  const ex = (typeof EXEC_STRATEGIES !== "undefined") ? EXEC_STRATEGIES.find(s => s.id === plan.execId) : null;
+  const hasField = (k: string) => ex && ex.fields && ex.fields.some(f => f.key === k);
+  const needs = (k: string, label: string) => !hasField(k) ? (ko ? `이 규칙은 '${label}' 필드가 필요해요` : `Needs the '${label}' field`) : null;
+  const trig = r.trig || "";
+  const nm = (r.name && (r.name.en || r.name.ko)) || "";
+  if (trig === "loc_hit" || /LOC/i.test(nm)) return needs("loc_pct", ko ? "LOC 기준" : "LOC %");
+  if ((trig === "ret_ge" || /익절|take|profit/i.test(nm)) && !((plan.avgPrice as number) > 0)) return ko ? "보유(평단)가 없어 평가할 수 없어요" : "No position to evaluate";
+  return null;
 }

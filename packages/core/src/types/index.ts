@@ -46,6 +46,12 @@ export interface Rule {
   trigVal?: string;
   when: L10n;
   then: L10n;
+  /** action id (RULE_ACTS) for structured rules — read by the StrategyTab editor */
+  act?: string;
+  /** user-created (not a preset) rule */
+  custom?: boolean;
+  /** rule has been edited from its preset default */
+  edited?: boolean;
 }
 
 export interface PlanNote {

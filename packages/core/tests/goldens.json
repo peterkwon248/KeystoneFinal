@@ -8918,7 +8918,331 @@
     "ko": "현재 보유 중인 주식 수.",
     "en": "Shares currently held."
    }
-  }
+  },
+  "RULE_TRIGS": [
+   {
+    "id": "price_le",
+    "ko": "현재가 ≤",
+    "en": "Price ≤",
+    "hasValue": true,
+    "unit": "",
+    "descKo": "현재가가 입력한 가격 이하로 내려가면 발동합니다. 저가 매수 타이밍에 씁니다.",
+    "descEn": "Fires when price drops to or below your value — a buy-the-dip trigger."
+   },
+   {
+    "id": "price_ge",
+    "ko": "현재가 ≥",
+    "en": "Price ≥",
+    "hasValue": true,
+    "unit": "",
+    "descKo": "현재가가 입력한 가격 이상으로 오르면 발동합니다.",
+    "descEn": "Fires when price rises to or above your value."
+   },
+   {
+    "id": "ret_ge",
+    "ko": "수익률 ≥",
+    "en": "Return ≥",
+    "hasValue": true,
+    "unit": "%",
+    "descKo": "내 평단가 대비 수익률이 목표% 이상이면 발동합니다. 익절 신호로 자주 씁니다.",
+    "descEn": "Fires when return vs your avg cost reaches the target %. Common for take-profit."
+   },
+   {
+    "id": "ret_le",
+    "ko": "수익률 ≤",
+    "en": "Return ≤",
+    "hasValue": true,
+    "unit": "%",
+    "descKo": "수익률이 입력% 이하로 떨어지면 발동합니다. 손절·추가매수 검토에 씁니다.",
+    "descEn": "Fires when return falls to or below the value. For stop-loss or add-on review."
+   },
+   {
+    "id": "loc_hit",
+    "ko": "LOC 가격 도달",
+    "en": "LOC price hit",
+    "hasValue": false,
+    "unit": "",
+    "descKo": "LOC(Limit-On-Close)는 장 마감가(종가)로 자동 매수하는 주문 방식이에요. 현재가가 ‘LOC 기준 %’로 계산된 LOC 가격에 닿으면 발동해요.",
+    "descEn": "LOC (Limit-On-Close) auto-buys at the closing price. Fires when price reaches the LOC price from the 'LOC %' field."
+   },
+   {
+    "id": "target_hit",
+    "ko": "상단 목표가 도달",
+    "en": "Bull target hit",
+    "hasValue": false,
+    "unit": "",
+    "descKo": "상단(낙관) 시나리오 목표가에 도달하면 발동합니다.",
+    "descEn": "Fires when price reaches the bull-case target."
+   },
+   {
+    "id": "buy_exec",
+    "ko": "매수 체결됨",
+    "en": "Buy filled",
+    "hasValue": false,
+    "unit": "",
+    "descKo": "매수 체결이 입력될 때마다 발동합니다. 회차 자동 증가 등에 씁니다.",
+    "descEn": "Fires whenever a buy fill is logged. Used for auto round-counting."
+   }
+  ],
+  "RULE_ACTS": [
+   {
+    "id": "notify",
+    "ko": "알림 보내기",
+    "en": "Notify",
+    "descKo": "푸시·인앱 알림을 보냅니다.",
+    "descEn": "Sends a notification."
+   },
+   {
+    "id": "notify_buy",
+    "ko": "매수 알림",
+    "en": "Buy alert",
+    "descKo": "매수 신호 알림과 함께 1회 매수금을 표시합니다.",
+    "descEn": "Buy-signal alert with the per-round amount."
+   },
+   {
+    "id": "notify_sell",
+    "ko": "청산 제안",
+    "en": "Suggest exit",
+    "descKo": "청산(매도)을 제안하는 알림을 보냅니다.",
+    "descEn": "Alerts you to consider exiting."
+   },
+   {
+    "id": "round_inc",
+    "ko": "회차 +1",
+    "en": "Round +1",
+    "descKo": "분할 매수 회차를 +1 하고 평단가를 재계산합니다.",
+    "descEn": "Increments the round and recalculates avg cost."
+   },
+   {
+    "id": "note",
+    "ko": "메모 남기기",
+    "en": "Log note",
+    "descKo": "활동 로그에 자동으로 메모를 남깁니다.",
+    "descEn": "Logs a note to the activity feed."
+   }
+  ],
+  "RULE_LEGACY_DESC": {
+   "LOC 매수 알림": {
+    "ko": "현재가가 LOC 가격(‘LOC 기준 %’로 계산된 매수 기준가) 이하로 떨어지면 매수 알림과 1회 매수금을 보여줘요.",
+    "en": "Shows a buy alert and the per-round amount when price drops to the LOC price."
+   },
+   "회차 증가": {
+    "ko": "매수 체결이 입력되면 분할 매수 회차를 +1 하고 평단가를 다시 계산합니다.",
+    "en": "On a buy fill, increment the round and recalculate the average cost."
+   },
+   "익절 알림": {
+    "ko": "수익률이 익절 기준(예: 10%) 이상이면 청산(매도)을 제안하는 알림을 보냅니다.",
+    "en": "When return reaches the take-profit threshold, suggest exiting."
+   }
+  },
+  "RULE_STATE_LABEL": {
+   "fired": {
+    "ko": "발동 중",
+    "en": "Firing"
+   },
+   "armed": {
+    "ko": "대기",
+    "en": "Armed"
+   },
+   "event": {
+    "ko": "이벤트",
+    "en": "Event"
+   }
+  },
+  "FIELD_TIPS": {
+   "divisions": {
+    "ko": "전체 투자금을 몇 번에 나눠 매수할지 (예: 40 = 40회 분할).",
+    "en": "How many buys the budget is split into."
+   },
+   "loc_pct": {
+    "ko": "직전 평단 대비 이만큼 내려간 지정가(LOC)에 다음 매수를 겁니다.",
+    "en": "Next buy is placed this far below the current avg cost."
+   },
+   "unit_buy": {
+    "ko": "1회분 매수 금액 = 전체 투자금 ÷ 분할 수. 자동 계산.",
+    "en": "Per-round amount = budget ÷ divisions. Auto."
+   },
+   "tp_pct": {
+    "ko": "평단 대비 이만큼 오르면 1회분(또는 전량) 익절합니다.",
+    "en": "Take profit when price rises this far above avg cost."
+   },
+   "round": {
+    "ko": "현재까지 진행된 매수 회차. 체결에서 자동 집계.",
+    "en": "Rounds bought so far. Auto from fills."
+   },
+   "loc_price": {
+    "ko": "다음 매수가 = 평단 × (1 + LOC 기준). 자동 계산.",
+    "en": "Next-buy price = avg × (1 + LOC%). Auto."
+   },
+   "amount": {
+    "ko": "매 주기마다 고정으로 매수하는 금액.",
+    "en": "Fixed amount bought each period."
+   },
+   "interval": {
+    "ko": "매수 주기 (매일·매주·격주·매월).",
+    "en": "How often the fixed buy happens."
+   },
+   "avg_cost": {
+    "ko": "현재까지의 평균 매수 단가. 체결에서 자동 집계.",
+    "en": "Average cost so far. Auto from fills."
+   },
+   "target_path": {
+    "ko": "포지션 평가액이 매월 이만큼씩 커지도록 목표선을 설정합니다.",
+    "en": "Target value the position should grow by each month."
+   },
+   "gap": {
+    "ko": "현재 평가액과 목표선의 차이 — 부족하면 매수, 초과하면 매도.",
+    "en": "Distance from the target path — buy if below, sell if above."
+   },
+   "upper": {
+    "ko": "그리드 매매의 상단 가격. 이 위로는 격자 매도.",
+    "en": "Top of the grid band."
+   },
+   "lower": {
+    "ko": "그리드 매매의 하단 가격. 이 아래로는 격자 매수.",
+    "en": "Bottom of the grid band."
+   },
+   "grids": {
+    "ko": "상단~하단을 몇 칸으로 나눌지. 칸마다 매수·매도.",
+    "en": "How many steps the band is divided into."
+   },
+   "vr_vline": {
+    "ko": "매년 커지는 목표 가치선(V). 평가액을 이 선에 맞춥니다. 자동.",
+    "en": "Target value line that grows yearly. Auto."
+   },
+   "vr_upper": {
+    "ko": "가치선 위로 이만큼 넘으면 초과분을 매도(현금풀로).",
+    "en": "Trim above this % over the value line."
+   },
+   "vr_lower": {
+    "ko": "가치선 아래로 이만큼 이탈하면 현금풀로 매수.",
+    "en": "Add below this % under the value line."
+   },
+   "vr_growth": {
+    "ko": "목표 가치선이 매년 커지는 비율.",
+    "en": "Yearly growth rate of the value line."
+   },
+   "vr_pool": {
+    "ko": "전체 자본 중 매수 대기 현금풀로 두는 비율 한도.",
+    "en": "Cap on the cash pool reserved for buys."
+   },
+   "equity_w": {
+    "ko": "주식 목표 비중 (나머지는 방어자산).",
+    "en": "Target equity weight (rest is defensive)."
+   },
+   "rebal": {
+    "ko": "비중을 다시 맞추는 주기.",
+    "en": "How often weights are rebalanced."
+   },
+   "lookback": {
+    "ko": "상대강도를 측정하는 조회 기간.",
+    "en": "Lookback window for relative strength."
+   },
+   "stop": {
+    "ko": "고점 대비 이만큼 하락하면 추세 이탈로 보고 정리.",
+    "en": "Exit when price falls this far from the peak."
+   }
+  },
+  "STRAT_VAL_KO": {
+   "Monthly": "매월",
+   "Quarterly": "분기별",
+   "Weekly": "매주",
+   "Daily": "매일",
+   "Annually": "연 1회",
+   "Yearly": "연 1회"
+  },
+  "locStratVal": [
+   {
+    "v": "auto",
+    "lang": "ko",
+    "out": "—"
+   },
+   {
+    "v": "auto",
+    "lang": "en",
+    "out": "—"
+   },
+   {
+    "v": "Monthly",
+    "lang": "ko",
+    "out": "매월"
+   },
+   {
+    "v": "Monthly",
+    "lang": "en",
+    "out": "Monthly"
+   },
+   {
+    "v": "Quarterly",
+    "lang": "ko",
+    "out": "분기별"
+   },
+   {
+    "v": "Quarterly",
+    "lang": "en",
+    "out": "Quarterly"
+   },
+   {
+    "v": "Weekly",
+    "lang": "ko",
+    "out": "매주"
+   },
+   {
+    "v": "Weekly",
+    "lang": "en",
+    "out": "Weekly"
+   },
+   {
+    "v": "Daily",
+    "lang": "ko",
+    "out": "매일"
+   },
+   {
+    "v": "Daily",
+    "lang": "en",
+    "out": "Daily"
+   },
+   {
+    "v": "Annually",
+    "lang": "ko",
+    "out": "연 1회"
+   },
+   {
+    "v": "Annually",
+    "lang": "en",
+    "out": "Annually"
+   },
+   {
+    "v": "Yearly",
+    "lang": "ko",
+    "out": "연 1회"
+   },
+   {
+    "v": "Yearly",
+    "lang": "en",
+    "out": "Yearly"
+   },
+   {
+    "v": "Unknown",
+    "lang": "ko",
+    "out": "Unknown"
+   },
+   {
+    "v": "Unknown",
+    "lang": "en",
+    "out": "Unknown"
+   },
+   {
+    "v": "",
+    "lang": "ko",
+    "out": ""
+   },
+   {
+    "v": "",
+    "lang": "en",
+    "out": ""
+   }
+  ]
  },
  "screener": {
   "IND_THRESH": {
@@ -26531,6 +26855,3742 @@
    }
   }
  ],
+ "rules": {
+  "inputs": [
+   {
+    "key": "PLN-001|r1|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "LOC buy alert",
+      "ko": "LOC 매수 알림"
+     },
+     "on": true,
+     "last": "Today 09:01",
+     "when": {
+      "en": "Price ≤ LOC price",
+      "ko": "현재가 ≤ LOC 가격"
+     },
+     "then": {
+      "en": "Notify + show unit buy",
+      "ko": "매수 알림 + 1회 매수금 표시"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-001|r1|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "LOC buy alert",
+      "ko": "LOC 매수 알림"
+     },
+     "on": true,
+     "last": "Today 09:01",
+     "when": {
+      "en": "Price ≤ LOC price",
+      "ko": "현재가 ≤ LOC 가격"
+     },
+     "then": {
+      "en": "Notify + show unit buy",
+      "ko": "매수 알림 + 1회 매수금 표시"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-001|rgoal|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "rgoal",
+     "name": {
+      "en": "Goal return alert",
+      "ko": "목표 수익률 도달 알림"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "25%",
+     "when": {
+      "en": "Return ≥ goal 25%",
+      "ko": "수익률 ≥ 목표 25%"
+     },
+     "then": {
+      "en": "Goal reached (alert)",
+      "ko": "목표 도달 알림"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-001|rgoal|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "rgoal",
+     "name": {
+      "en": "Goal return alert",
+      "ko": "목표 수익률 도달 알림"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "25%",
+     "when": {
+      "en": "Return ≥ goal 25%",
+      "ko": "수익률 ≥ 목표 25%"
+     },
+     "then": {
+      "en": "Goal reached (alert)",
+      "ko": "목표 도달 알림"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-001|r2|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "r2",
+     "name": {
+      "en": "Round increment",
+      "ko": "회차 증가"
+     },
+     "on": true,
+     "last": "Jun 5",
+     "when": {
+      "en": "Buy execution added",
+      "ko": "매수 체결 입력됨"
+     },
+     "then": {
+      "en": "Round +1, recompute avg",
+      "ko": "회차 +1, 평단가 재계산"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-001|r2|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "r2",
+     "name": {
+      "en": "Round increment",
+      "ko": "회차 증가"
+     },
+     "on": true,
+     "last": "Jun 5",
+     "when": {
+      "en": "Buy execution added",
+      "ko": "매수 체결 입력됨"
+     },
+     "then": {
+      "en": "Round +1, recompute avg",
+      "ko": "회차 +1, 평단가 재계산"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-001|r3|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "r3",
+     "name": {
+      "en": "Take-profit alert",
+      "ko": "익절 알림"
+     },
+     "on": true,
+     "last": "Never",
+     "when": {
+      "en": "Return ≥ 10%",
+      "ko": "수익률 ≥ 10%"
+     },
+     "then": {
+      "en": "Alert + suggest Closing",
+      "ko": "익절 알림 + 청산 제안"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-001|r3|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "r3",
+     "name": {
+      "en": "Take-profit alert",
+      "ko": "익절 알림"
+     },
+     "on": true,
+     "last": "Never",
+     "when": {
+      "en": "Return ≥ 10%",
+      "ko": "수익률 ≥ 10%"
+     },
+     "then": {
+      "en": "Alert + suggest Closing",
+      "ko": "익절 알림 + 청산 제안"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-002|r1|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "LOC buy alert",
+      "ko": "LOC 매수 알림"
+     },
+     "on": true,
+     "last": "Today 04:00",
+     "when": {
+      "en": "Price ≤ LOC price",
+      "ko": "현재가 ≤ LOC 가격"
+     },
+     "then": {
+      "en": "Notify + show unit buy",
+      "ko": "매수 알림 + 1회 매수금 표시"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-002|r1|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "LOC buy alert",
+      "ko": "LOC 매수 알림"
+     },
+     "on": true,
+     "last": "Today 04:00",
+     "when": {
+      "en": "Price ≤ LOC price",
+      "ko": "현재가 ≤ LOC 가격"
+     },
+     "then": {
+      "en": "Notify + show unit buy",
+      "ko": "매수 알림 + 1회 매수금 표시"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-002|r3|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "r3",
+     "name": {
+      "en": "Take-profit alert",
+      "ko": "익절 알림"
+     },
+     "on": false,
+     "last": "Never",
+     "when": {
+      "en": "Return ≥ 10%",
+      "ko": "수익률 ≥ 10%"
+     },
+     "then": {
+      "en": "Alert + suggest Closing",
+      "ko": "익절 알림 + 청산 제안"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-002|r3|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "r3",
+     "name": {
+      "en": "Take-profit alert",
+      "ko": "익절 알림"
+     },
+     "on": false,
+     "last": "Never",
+     "when": {
+      "en": "Return ≥ 10%",
+      "ko": "수익률 ≥ 10%"
+     },
+     "then": {
+      "en": "Alert + suggest Closing",
+      "ko": "익절 알림 + 청산 제안"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-005|r3|ko",
+    "planId": "PLN-005",
+    "rule": {
+     "id": "r3",
+     "name": {
+      "en": "Take-profit alert",
+      "ko": "익절 알림"
+     },
+     "on": true,
+     "last": "Jun 7 14:20",
+     "when": {
+      "en": "Return ≥ 10%",
+      "ko": "수익률 ≥ 10%"
+     },
+     "then": {
+      "en": "Alert + suggest Closing",
+      "ko": "익절 알림 + 청산 제안"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-005|r3|en",
+    "planId": "PLN-005",
+    "rule": {
+     "id": "r3",
+     "name": {
+      "en": "Take-profit alert",
+      "ko": "익절 알림"
+     },
+     "on": true,
+     "last": "Jun 7 14:20",
+     "when": {
+      "en": "Return ≥ 10%",
+      "ko": "수익률 ≥ 10%"
+     },
+     "then": {
+      "en": "Alert + suggest Closing",
+      "ko": "익절 알림 + 청산 제안"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-005|r4|ko",
+    "planId": "PLN-005",
+    "rule": {
+     "id": "r4",
+     "name": {
+      "en": "Completion badge",
+      "ko": "매수 완료 뱃지"
+     },
+     "on": true,
+     "last": "Never",
+     "when": {
+      "en": "Round = divisions",
+      "ko": "회차 = 분할수"
+     },
+     "then": {
+      "en": "Badge + wait mode",
+      "ko": "완료 뱃지 + 대기 모드"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-005|r4|en",
+    "planId": "PLN-005",
+    "rule": {
+     "id": "r4",
+     "name": {
+      "en": "Completion badge",
+      "ko": "매수 완료 뱃지"
+     },
+     "on": true,
+     "last": "Never",
+     "when": {
+      "en": "Round = divisions",
+      "ko": "회차 = 분할수"
+     },
+     "then": {
+      "en": "Badge + wait mode",
+      "ko": "완료 뱃지 + 대기 모드"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-004|r1|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "Scheduled buy alert",
+      "ko": "정기 매수 알림"
+     },
+     "on": true,
+     "last": "Jun 16",
+     "when": {
+      "en": "Weekly interval reached",
+      "ko": "매주 정기 주기 도래"
+     },
+     "then": {
+      "en": "Buy alert (fixed amount)",
+      "ko": "정액 매수 알림"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-004|r1|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "Scheduled buy alert",
+      "ko": "정기 매수 알림"
+     },
+     "on": true,
+     "last": "Jun 16",
+     "when": {
+      "en": "Weekly interval reached",
+      "ko": "매주 정기 주기 도래"
+     },
+     "then": {
+      "en": "Buy alert (fixed amount)",
+      "ko": "정액 매수 알림"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-006|r3|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "r3",
+     "name": {
+      "en": "Take-profit alert",
+      "ko": "익절 알림"
+     },
+     "on": false,
+     "last": "Never",
+     "when": {
+      "en": "Return ≥ 10%",
+      "ko": "수익률 ≥ 10%"
+     },
+     "then": {
+      "en": "Alert + suggest Closing",
+      "ko": "익절 알림 + 청산 제안"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-006|r3|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "r3",
+     "name": {
+      "en": "Take-profit alert",
+      "ko": "익절 알림"
+     },
+     "on": false,
+     "last": "Never",
+     "when": {
+      "en": "Return ≥ 10%",
+      "ko": "수익률 ≥ 10%"
+     },
+     "then": {
+      "en": "Alert + suggest Closing",
+      "ko": "익절 알림 + 청산 제안"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-007|r5|ko",
+    "planId": "PLN-007",
+    "rule": {
+     "id": "r5",
+     "name": {
+      "en": "Value upper trim",
+      "ko": "가치선 상단 매도 알림"
+     },
+     "on": true,
+     "last": "Jun 5",
+     "when": {
+      "en": "Value above upper band",
+      "ko": "평가액이 가치선 상단 밴드 초과"
+     },
+     "then": {
+      "en": "Trim to value line (alert)",
+      "ko": "가치선까지 매도 알림"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-007|r5|en",
+    "planId": "PLN-007",
+    "rule": {
+     "id": "r5",
+     "name": {
+      "en": "Value upper trim",
+      "ko": "가치선 상단 매도 알림"
+     },
+     "on": true,
+     "last": "Jun 5",
+     "when": {
+      "en": "Value above upper band",
+      "ko": "평가액이 가치선 상단 밴드 초과"
+     },
+     "then": {
+      "en": "Trim to value line (alert)",
+      "ko": "가치선까지 매도 알림"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-010|r1|ko",
+    "planId": "PLN-010",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "LOC buy alert",
+      "ko": "LOC 매수 알림"
+     },
+     "on": true,
+     "last": "Today 04:00",
+     "when": {
+      "en": "Price ≤ LOC price",
+      "ko": "현재가 ≤ LOC 가격"
+     },
+     "then": {
+      "en": "Notify + show unit buy",
+      "ko": "매수 알림 + 1회 매수금 표시"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-010|r1|en",
+    "planId": "PLN-010",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "LOC buy alert",
+      "ko": "LOC 매수 알림"
+     },
+     "on": true,
+     "last": "Today 04:00",
+     "when": {
+      "en": "Price ≤ LOC price",
+      "ko": "현재가 ≤ LOC 가격"
+     },
+     "then": {
+      "en": "Notify + show unit buy",
+      "ko": "매수 알림 + 1회 매수금 표시"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-011|r1|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "Grid step buy",
+      "ko": "그리드 하단 매수 알림"
+     },
+     "on": true,
+     "last": "Jun 9",
+     "when": {
+      "en": "Price drops one grid step",
+      "ko": "현재가가 한 칸 하락"
+     },
+     "then": {
+      "en": "Buy one rung (alert)",
+      "ko": "한 칸 매수 알림"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-011|r1|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "r1",
+     "name": {
+      "en": "Grid step buy",
+      "ko": "그리드 하단 매수 알림"
+     },
+     "on": true,
+     "last": "Jun 9",
+     "when": {
+      "en": "Price drops one grid step",
+      "ko": "현재가가 한 칸 하락"
+     },
+     "then": {
+      "en": "Buy one rung (alert)",
+      "ko": "한 칸 매수 알림"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "PLN-011|r2|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "r2",
+     "name": {
+      "en": "Grid step sell",
+      "ko": "그리드 상단 매도 알림"
+     },
+     "on": true,
+     "last": "May 2",
+     "when": {
+      "en": "Price rises one grid step",
+      "ko": "현재가가 한 칸 상승"
+     },
+     "then": {
+      "en": "Sell one rung (alert)",
+      "ko": "한 칸 매도 알림"
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "PLN-011|r2|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "r2",
+     "name": {
+      "en": "Grid step sell",
+      "ko": "그리드 상단 매도 알림"
+     },
+     "on": true,
+     "last": "May 2",
+     "when": {
+      "en": "Price rises one grid step",
+      "ko": "현재가가 한 칸 상승"
+     },
+     "then": {
+      "en": "Sell one rung (alert)",
+      "ko": "한 칸 매도 알림"
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-001|s_price_le|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-001|s_price_le|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-001|s_price_ge|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-001|s_price_ge|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_ge|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_ge|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_le|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_le|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-001|s_loc_hit|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-001|s_loc_hit|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-001|s_target_hit|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-001|s_target_hit|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-001|s_buy_exec|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-001|s_buy_exec|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-001|s_unknown|ko",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-001|s_unknown|en",
+    "planId": "PLN-001",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-002|s_price_le|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-002|s_price_le|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-002|s_price_ge|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-002|s_price_ge|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_ge|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_ge|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_le|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_le|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-002|s_loc_hit|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-002|s_loc_hit|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-002|s_target_hit|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-002|s_target_hit|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-002|s_buy_exec|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-002|s_buy_exec|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-002|s_unknown|ko",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-002|s_unknown|en",
+    "planId": "PLN-002",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-004|s_price_le|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-004|s_price_le|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-004|s_price_ge|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-004|s_price_ge|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_ge|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_ge|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_le|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_le|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-004|s_loc_hit|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-004|s_loc_hit|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-004|s_target_hit|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-004|s_target_hit|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-004|s_buy_exec|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-004|s_buy_exec|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-004|s_unknown|ko",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-004|s_unknown|en",
+    "planId": "PLN-004",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-006|s_price_le|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-006|s_price_le|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-006|s_price_ge|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-006|s_price_ge|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_ge|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_ge|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_le|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_le|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-006|s_loc_hit|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-006|s_loc_hit|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-006|s_target_hit|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-006|s_target_hit|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-006|s_buy_exec|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-006|s_buy_exec|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-006|s_unknown|ko",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-006|s_unknown|en",
+    "planId": "PLN-006",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-011|s_price_le|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-011|s_price_le|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_price_le",
+     "name": {
+      "en": "px≤",
+      "ko": "px≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_le",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-011|s_price_ge|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-011|s_price_ge|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_price_ge",
+     "name": {
+      "en": "px≥",
+      "ko": "px≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "price_ge",
+     "trigVal": "60000",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_ge|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_ge|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_ret_ge",
+     "name": {
+      "en": "ret≥",
+      "ko": "ret≥"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_ge",
+     "trigVal": "10%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_le|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_le|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_ret_le",
+     "name": {
+      "en": "ret≤",
+      "ko": "ret≤"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "ret_le",
+     "trigVal": "-5%",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-011|s_loc_hit|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-011|s_loc_hit|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_loc_hit",
+     "name": {
+      "en": "loc",
+      "ko": "loc"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "loc_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-011|s_target_hit|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-011|s_target_hit|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_target_hit",
+     "name": {
+      "en": "tgt",
+      "ko": "tgt"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "target_hit",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-011|s_buy_exec|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-011|s_buy_exec|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_buy_exec",
+     "name": {
+      "en": "buy",
+      "ko": "buy"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "buy_exec",
+     "trigVal": "",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   },
+   {
+    "key": "SYN:PLN-011|s_unknown|ko",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": true
+   },
+   {
+    "key": "SYN:PLN-011|s_unknown|en",
+    "planId": "PLN-011",
+    "rule": {
+     "id": "s_unknown",
+     "name": {
+      "en": "zzz",
+      "ko": "zzz"
+     },
+     "on": true,
+     "last": "Never",
+     "trig": "nope",
+     "trigVal": "1",
+     "when": {
+      "en": "",
+      "ko": ""
+     },
+     "then": {
+      "en": "",
+      "ko": ""
+     }
+    },
+    "ko": false
+   }
+  ],
+  "evalOut": [
+   {
+    "key": "PLN-001|r1|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩71,200 > LOC ₩65,075"
+    }
+   },
+   {
+    "key": "PLN-001|r1|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩71,200 > LOC ₩65,075"
+    }
+   },
+   {
+    "key": "PLN-001|rgoal|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 3.9% < 25%"
+    }
+   },
+   {
+    "key": "PLN-001|rgoal|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return 3.9% < 25%"
+    }
+   },
+   {
+    "key": "PLN-001|r2|ko",
+    "out": {
+     "state": "event",
+     "meta": "체결 시 발동"
+    }
+   },
+   {
+    "key": "PLN-001|r2|en",
+    "out": {
+     "state": "event",
+     "meta": "on fill"
+    }
+   },
+   {
+    "key": "PLN-001|r3|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 3.9% < 10%"
+    }
+   },
+   {
+    "key": "PLN-001|r3|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return 3.9% < 10%"
+    }
+   },
+   {
+    "key": "PLN-002|r1|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 $198.50 > LOC $194.94"
+    }
+   },
+   {
+    "key": "PLN-002|r1|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price $198.50 > LOC $194.94"
+    }
+   },
+   {
+    "key": "PLN-002|r3|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 -3.3% < 10%"
+    }
+   },
+   {
+    "key": "PLN-002|r3|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return -3.3% < 10%"
+    }
+   },
+   {
+    "key": "PLN-005|r3|ko",
+    "out": {
+     "state": "fired",
+     "meta": "수익률 28.7% ≥ 10%"
+    }
+   },
+   {
+    "key": "PLN-005|r3|en",
+    "out": {
+     "state": "fired",
+     "meta": "Return 28.7% ≥ 10%"
+    }
+   },
+   {
+    "key": "PLN-005|r4|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "PLN-005|r4|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "PLN-004|r1|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "PLN-004|r1|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "PLN-006|r3|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 -15.1% < 10%"
+    }
+   },
+   {
+    "key": "PLN-006|r3|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return -15.1% < 10%"
+    }
+   },
+   {
+    "key": "PLN-007|r5|ko",
+    "out": {
+     "state": "fired",
+     "meta": "평가액 ₩7,440,000 ≥ 상단 ₩7,072,500"
+    }
+   },
+   {
+    "key": "PLN-007|r5|en",
+    "out": {
+     "state": "fired",
+     "meta": "Value ₩7,440,000 ≥ upper ₩7,072,500"
+    }
+   },
+   {
+    "key": "PLN-010|r1|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 $176.20 > LOC $154.66"
+    }
+   },
+   {
+    "key": "PLN-010|r1|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price $176.20 > LOC $154.66"
+    }
+   },
+   {
+    "key": "PLN-011|r1|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "PLN-011|r1|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "PLN-011|r2|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "PLN-011|r2|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_price_le|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩71,200 > ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_price_le|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩71,200 > ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_price_ge|ko",
+    "out": {
+     "state": "fired",
+     "meta": "현재가 ₩71,200 ≥ ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_price_ge|en",
+    "out": {
+     "state": "fired",
+     "meta": "Price ₩71,200 ≥ ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_ge|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 3.9% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_ge|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return 3.9% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_le|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 3.9% > -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_le|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return 3.9% > -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_loc_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩71,200 > LOC ₩65,075"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_loc_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩71,200 > LOC ₩65,075"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_target_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩71,200 < ₩92,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_target_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩71,200 < ₩92,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_buy_exec|ko",
+    "out": {
+     "state": "event",
+     "meta": "체결 시 발동"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_buy_exec|en",
+    "out": {
+     "state": "event",
+     "meta": "on fill"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_unknown|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-001|s_unknown|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_price_le|ko",
+    "out": {
+     "state": "fired",
+     "meta": "현재가 $198.50 ≤ $60,000.00"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_price_le|en",
+    "out": {
+     "state": "fired",
+     "meta": "Price $198.50 ≤ $60,000.00"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_price_ge|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 $198.50 < $60,000.00"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_price_ge|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price $198.50 < $60,000.00"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_ge|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 -3.3% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_ge|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return -3.3% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_le|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 -3.3% > -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_le|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return -3.3% > -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_loc_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 $198.50 > LOC $194.94"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_loc_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price $198.50 > LOC $194.94"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_target_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 $198.50 < $260.00"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_target_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price $198.50 < $260.00"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_buy_exec|ko",
+    "out": {
+     "state": "event",
+     "meta": "체결 시 발동"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_buy_exec|en",
+    "out": {
+     "state": "event",
+     "meta": "on fill"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_unknown|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-002|s_unknown|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_price_le|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩178,000 > ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_price_le|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩178,000 > ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_price_ge|ko",
+    "out": {
+     "state": "fired",
+     "meta": "현재가 ₩178,000 ≥ ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_price_ge|en",
+    "out": {
+     "state": "fired",
+     "meta": "Price ₩178,000 ≥ ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_ge|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 4.6% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_ge|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return 4.6% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_le|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 4.6% > -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_le|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return 4.6% > -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_loc_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩178,000 > LOC ₩161,690"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_loc_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩178,000 > LOC ₩161,690"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_target_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩178,000 < ₩240,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_target_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩178,000 < ₩240,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_buy_exec|ko",
+    "out": {
+     "state": "event",
+     "meta": "체결 시 발동"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_buy_exec|en",
+    "out": {
+     "state": "event",
+     "meta": "on fill"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_unknown|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-004|s_unknown|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_price_le|ko",
+    "out": {
+     "state": "fired",
+     "meta": "현재가 ₩41,200 ≤ ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_price_le|en",
+    "out": {
+     "state": "fired",
+     "meta": "Price ₩41,200 ≤ ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_price_ge|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩41,200 < ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_price_ge|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩41,200 < ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_ge|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 -15.1% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_ge|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return -15.1% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_le|ko",
+    "out": {
+     "state": "fired",
+     "meta": "수익률 -15.1% ≤ -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_le|en",
+    "out": {
+     "state": "fired",
+     "meta": "Return -15.1% ≤ -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_loc_hit|ko",
+    "out": {
+     "state": "fired",
+     "meta": "현재가 ₩41,200 ≤ LOC ₩46,075"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_loc_hit|en",
+    "out": {
+     "state": "fired",
+     "meta": "Price ₩41,200 ≤ LOC ₩46,075"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_target_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩41,200 < ₩62,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_target_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩41,200 < ₩62,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_buy_exec|ko",
+    "out": {
+     "state": "event",
+     "meta": "체결 시 발동"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_buy_exec|en",
+    "out": {
+     "state": "event",
+     "meta": "on fill"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_unknown|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-006|s_unknown|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_price_le|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩71,200 > ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_price_le|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩71,200 > ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_price_ge|ko",
+    "out": {
+     "state": "fired",
+     "meta": "현재가 ₩71,200 ≥ ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_price_ge|en",
+    "out": {
+     "state": "fired",
+     "meta": "Price ₩71,200 ≥ ₩60,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_ge|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 4.1% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_ge|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return 4.1% < 10%"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_le|ko",
+    "out": {
+     "state": "armed",
+     "meta": "수익률 4.1% > -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_le|en",
+    "out": {
+     "state": "armed",
+     "meta": "Return 4.1% > -5%"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_loc_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩71,200 > LOC ₩64,980"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_loc_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩71,200 > LOC ₩64,980"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_target_hit|ko",
+    "out": {
+     "state": "armed",
+     "meta": "현재가 ₩71,200 < ₩90,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_target_hit|en",
+    "out": {
+     "state": "armed",
+     "meta": "Price ₩71,200 < ₩90,000"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_buy_exec|ko",
+    "out": {
+     "state": "event",
+     "meta": "체결 시 발동"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_buy_exec|en",
+    "out": {
+     "state": "event",
+     "meta": "on fill"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_unknown|ko",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   },
+   {
+    "key": "SYN:PLN-011|s_unknown|en",
+    "out": {
+     "state": "event",
+     "meta": "—"
+    }
+   }
+  ],
+  "warnOut": [
+   {
+    "key": "PLN-001|r1|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-001|r1|en",
+    "out": null
+   },
+   {
+    "key": "PLN-001|rgoal|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-001|rgoal|en",
+    "out": null
+   },
+   {
+    "key": "PLN-001|r2|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-001|r2|en",
+    "out": null
+   },
+   {
+    "key": "PLN-001|r3|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-001|r3|en",
+    "out": null
+   },
+   {
+    "key": "PLN-002|r1|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-002|r1|en",
+    "out": null
+   },
+   {
+    "key": "PLN-002|r3|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-002|r3|en",
+    "out": null
+   },
+   {
+    "key": "PLN-005|r3|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-005|r3|en",
+    "out": null
+   },
+   {
+    "key": "PLN-005|r4|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-005|r4|en",
+    "out": null
+   },
+   {
+    "key": "PLN-004|r1|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-004|r1|en",
+    "out": null
+   },
+   {
+    "key": "PLN-006|r3|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-006|r3|en",
+    "out": null
+   },
+   {
+    "key": "PLN-007|r5|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-007|r5|en",
+    "out": null
+   },
+   {
+    "key": "PLN-010|r1|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-010|r1|en",
+    "out": null
+   },
+   {
+    "key": "PLN-011|r1|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-011|r1|en",
+    "out": null
+   },
+   {
+    "key": "PLN-011|r2|ko",
+    "out": null
+   },
+   {
+    "key": "PLN-011|r2|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_price_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_price_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_price_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_price_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_ret_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_loc_hit|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_loc_hit|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_target_hit|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_target_hit|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_buy_exec|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_buy_exec|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_unknown|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-001|s_unknown|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_price_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_price_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_price_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_price_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_ret_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_loc_hit|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_loc_hit|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_target_hit|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_target_hit|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_buy_exec|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_buy_exec|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_unknown|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-002|s_unknown|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_price_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_price_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_price_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_price_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_ret_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_loc_hit|ko",
+    "out": "이 규칙은 'LOC 기준' 필드가 필요해요"
+   },
+   {
+    "key": "SYN:PLN-004|s_loc_hit|en",
+    "out": "Needs the 'LOC %' field"
+   },
+   {
+    "key": "SYN:PLN-004|s_target_hit|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_target_hit|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_buy_exec|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_buy_exec|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_unknown|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-004|s_unknown|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_price_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_price_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_price_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_price_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_ret_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_loc_hit|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_loc_hit|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_target_hit|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_target_hit|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_buy_exec|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_buy_exec|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_unknown|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-006|s_unknown|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_price_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_price_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_price_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_price_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_ge|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_ge|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_le|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_ret_le|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_loc_hit|ko",
+    "out": "이 규칙은 'LOC 기준' 필드가 필요해요"
+   },
+   {
+    "key": "SYN:PLN-011|s_loc_hit|en",
+    "out": "Needs the 'LOC %' field"
+   },
+   {
+    "key": "SYN:PLN-011|s_target_hit|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_target_hit|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_buy_exec|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_buy_exec|en",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_unknown|ko",
+    "out": null
+   },
+   {
+    "key": "SYN:PLN-011|s_unknown|en",
+    "out": null
+   }
+  ]
+ },
  "fin": [
   {
    "ticker": "207940",

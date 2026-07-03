@@ -6,6 +6,7 @@
 import type {
   ExecCat,
   ExecStrategy,
+  L10n,
   Lang,
   PlanStatus,
   Portfolio,
@@ -172,6 +173,96 @@ export const MARKETS = [
   { key: "KR", label: { en: "Korea", ko: "한국" }, flag: "🇰🇷" },
   { key: "US", label: { en: "US", ko: "미국" }, flag: "🇺🇸" },
 ];
+
+/* ============ Rules tab catalogs (from DetailView.jsx) ============ */
+// WHEN→THEN 자동화 룰의 트리거·액션 카탈로그. UI가 룰 편집기 드롭다운을 그리는 데 쓴다.
+// evalRule/ruleWarn 로직은 analytics 모듈에 있음. 여기는 순수 데이터 + locStratVal 룩업만.
+
+/** 룰 트리거 정의 — id/ko/en/hasValue/unit/descKo/descEn (source verbatim) */
+export interface RuleTrig {
+  id: string;
+  ko: string;
+  en: string;
+  hasValue: boolean;
+  unit: string;
+  descKo: string;
+  descEn: string;
+}
+export const RULE_TRIGS: readonly RuleTrig[] = [
+  { id: "price_le", ko: "현재가 ≤", en: "Price ≤", hasValue: true, unit: "", descKo: "현재가가 입력한 가격 이하로 내려가면 발동합니다. 저가 매수 타이밍에 씁니다.", descEn: "Fires when price drops to or below your value — a buy-the-dip trigger." },
+  { id: "price_ge", ko: "현재가 ≥", en: "Price ≥", hasValue: true, unit: "", descKo: "현재가가 입력한 가격 이상으로 오르면 발동합니다.", descEn: "Fires when price rises to or above your value." },
+  { id: "ret_ge", ko: "수익률 ≥", en: "Return ≥", hasValue: true, unit: "%", descKo: "내 평단가 대비 수익률이 목표% 이상이면 발동합니다. 익절 신호로 자주 씁니다.", descEn: "Fires when return vs your avg cost reaches the target %. Common for take-profit." },
+  { id: "ret_le", ko: "수익률 ≤", en: "Return ≤", hasValue: true, unit: "%", descKo: "수익률이 입력% 이하로 떨어지면 발동합니다. 손절·추가매수 검토에 씁니다.", descEn: "Fires when return falls to or below the value. For stop-loss or add-on review." },
+  { id: "loc_hit", ko: "LOC 가격 도달", en: "LOC price hit", hasValue: false, unit: "", descKo: "LOC(Limit-On-Close)는 장 마감가(종가)로 자동 매수하는 주문 방식이에요. 현재가가 ‘LOC 기준 %’로 계산된 LOC 가격에 닿으면 발동해요.", descEn: "LOC (Limit-On-Close) auto-buys at the closing price. Fires when price reaches the LOC price from the 'LOC %' field." },
+  { id: "target_hit", ko: "상단 목표가 도달", en: "Bull target hit", hasValue: false, unit: "", descKo: "상단(낙관) 시나리오 목표가에 도달하면 발동합니다.", descEn: "Fires when price reaches the bull-case target." },
+  { id: "buy_exec", ko: "매수 체결됨", en: "Buy filled", hasValue: false, unit: "", descKo: "매수 체결이 입력될 때마다 발동합니다. 회차 자동 증가 등에 씁니다.", descEn: "Fires whenever a buy fill is logged. Used for auto round-counting." },
+];
+
+/** 룰 액션 정의 — id/ko/en/descKo/descEn (source verbatim) */
+export interface RuleAct {
+  id: string;
+  ko: string;
+  en: string;
+  descKo: string;
+  descEn: string;
+}
+export const RULE_ACTS: readonly RuleAct[] = [
+  { id: "notify", ko: "알림 보내기", en: "Notify", descKo: "푸시·인앱 알림을 보냅니다.", descEn: "Sends a notification." },
+  { id: "notify_buy", ko: "매수 알림", en: "Buy alert", descKo: "매수 신호 알림과 함께 1회 매수금을 표시합니다.", descEn: "Buy-signal alert with the per-round amount." },
+  { id: "notify_sell", ko: "청산 제안", en: "Suggest exit", descKo: "청산(매도)을 제안하는 알림을 보냅니다.", descEn: "Alerts you to consider exiting." },
+  { id: "round_inc", ko: "회차 +1", en: "Round +1", descKo: "분할 매수 회차를 +1 하고 평단가를 재계산합니다.", descEn: "Increments the round and recalculates avg cost." },
+  { id: "note", ko: "메모 남기기", en: "Log note", descKo: "활동 로그에 자동으로 메모를 남깁니다.", descEn: "Logs a note to the activity feed." },
+];
+
+/** 프리셋 레거시 룰(구조화 trig 없는 이름 기반 룰)의 설명 — 이름으로 룩업 (source verbatim) */
+export const RULE_LEGACY_DESC: Record<string, L10n> = {
+  "LOC 매수 알림": { ko: "현재가가 LOC 가격(‘LOC 기준 %’로 계산된 매수 기준가) 이하로 떨어지면 매수 알림과 1회 매수금을 보여줘요.", en: "Shows a buy alert and the per-round amount when price drops to the LOC price." },
+  "회차 증가": { ko: "매수 체결이 입력되면 분할 매수 회차를 +1 하고 평단가를 다시 계산합니다.", en: "On a buy fill, increment the round and recalculate the average cost." },
+  "익절 알림": { ko: "수익률이 익절 기준(예: 10%) 이상이면 청산(매도)을 제안하는 알림을 보냅니다.", en: "When return reaches the take-profit threshold, suggest exiting." },
+};
+
+/** 룰 평가 상태 라벨 — evalRule().state 를 사람이 읽는 라벨로 (source verbatim) */
+export const RULE_STATE_LABEL: Record<"fired" | "armed" | "event", L10n> = {
+  fired: { ko: "발동 중", en: "Firing" },
+  armed: { ko: "대기", en: "Armed" },
+  event: { ko: "이벤트", en: "Event" },
+};
+
+/** 전략 필드 도움말(툴팁) — 필드 key 로 룩업 (source verbatim) */
+export const FIELD_TIPS: Record<string, L10n> = {
+  divisions: { ko: "전체 투자금을 몇 번에 나눠 매수할지 (예: 40 = 40회 분할).", en: "How many buys the budget is split into." },
+  loc_pct: { ko: "직전 평단 대비 이만큼 내려간 지정가(LOC)에 다음 매수를 겁니다.", en: "Next buy is placed this far below the current avg cost." },
+  unit_buy: { ko: "1회분 매수 금액 = 전체 투자금 ÷ 분할 수. 자동 계산.", en: "Per-round amount = budget ÷ divisions. Auto." },
+  tp_pct: { ko: "평단 대비 이만큼 오르면 1회분(또는 전량) 익절합니다.", en: "Take profit when price rises this far above avg cost." },
+  round: { ko: "현재까지 진행된 매수 회차. 체결에서 자동 집계.", en: "Rounds bought so far. Auto from fills." },
+  loc_price: { ko: "다음 매수가 = 평단 × (1 + LOC 기준). 자동 계산.", en: "Next-buy price = avg × (1 + LOC%). Auto." },
+  amount: { ko: "매 주기마다 고정으로 매수하는 금액.", en: "Fixed amount bought each period." },
+  interval: { ko: "매수 주기 (매일·매주·격주·매월).", en: "How often the fixed buy happens." },
+  avg_cost: { ko: "현재까지의 평균 매수 단가. 체결에서 자동 집계.", en: "Average cost so far. Auto from fills." },
+  target_path: { ko: "포지션 평가액이 매월 이만큼씩 커지도록 목표선을 설정합니다.", en: "Target value the position should grow by each month." },
+  gap: { ko: "현재 평가액과 목표선의 차이 — 부족하면 매수, 초과하면 매도.", en: "Distance from the target path — buy if below, sell if above." },
+  upper: { ko: "그리드 매매의 상단 가격. 이 위로는 격자 매도.", en: "Top of the grid band." },
+  lower: { ko: "그리드 매매의 하단 가격. 이 아래로는 격자 매수.", en: "Bottom of the grid band." },
+  grids: { ko: "상단~하단을 몇 칸으로 나눌지. 칸마다 매수·매도.", en: "How many steps the band is divided into." },
+  vr_vline: { ko: "매년 커지는 목표 가치선(V). 평가액을 이 선에 맞춥니다. 자동.", en: "Target value line that grows yearly. Auto." },
+  vr_upper: { ko: "가치선 위로 이만큼 넘으면 초과분을 매도(현금풀로).", en: "Trim above this % over the value line." },
+  vr_lower: { ko: "가치선 아래로 이만큼 이탈하면 현금풀로 매수.", en: "Add below this % under the value line." },
+  vr_growth: { ko: "목표 가치선이 매년 커지는 비율.", en: "Yearly growth rate of the value line." },
+  vr_pool: { ko: "전체 자본 중 매수 대기 현금풀로 두는 비율 한도.", en: "Cap on the cash pool reserved for buys." },
+  equity_w: { ko: "주식 목표 비중 (나머지는 방어자산).", en: "Target equity weight (rest is defensive)." },
+  rebal: { ko: "비중을 다시 맞추는 주기.", en: "How often weights are rebalanced." },
+  lookback: { ko: "상대강도를 측정하는 조회 기간.", en: "Lookback window for relative strength." },
+  stop: { ko: "고점 대비 이만큼 하락하면 추세 이탈로 보고 정리.", en: "Exit when price falls this far from the peak." },
+};
+
+/* ============ Strategy-field value localization (from DetailView.jsx) ============ */
+// 알려진 영문 전략-필드 값(Select/Text 기본값)을 한글로, "auto"는 "—"로 (source verbatim).
+export const STRAT_VAL_KO: Record<string, string> = { Monthly: "매월", Quarterly: "분기별", Weekly: "매주", Daily: "매일", Annually: "연 1회", Yearly: "연 1회" };
+export function locStratVal(v: string, lang: Lang): string {
+  if (v === "auto") return "—";
+  if (lang === "ko" && STRAT_VAL_KO[v]) return STRAT_VAL_KO[v];
+  return v;
+}
 
 // Shared metric dictionary (name + plain-language concept) + formula — SINGLE SOURCE OF TRUTH
 // so the screener row tooltips match the security-detail indicator cards exactly (no drift).

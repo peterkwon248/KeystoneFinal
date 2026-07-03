@@ -54,6 +54,28 @@ run(read("valuation.jsx"), "valuation.jsx");
   const a2 = lg.indexOf("function computeLedger"), b2 = lg.indexOf("function ExecutionLedger");
   if (a2 < 0 || b2 < 0) throw new Error("ledger.jsx: computeLedger slice markers not found");
   run(lg.slice(a2, b2), "ledger.computeLedger.pure.jsx");
+  // rule evaluation — evalRule / ruleWarn (DetailView.jsx). Depend on EXEC_STRATEGIES + fmtMoney,
+  // both defined in data.jsx (loaded first), so they eval in scope. TS ports must match.
+  const e = dv.indexOf("function evalRule"), f = dv.indexOf("const RULE_STATE_LABEL");
+  if (e < 0 || f < 0) throw new Error("DetailView.jsx: evalRule slice markers not found");
+  run(dv.slice(e, f), "detailview.evalRule.pure.jsx");
+  const w = dv.indexOf("function ruleWarn"), x = dv.indexOf("const FIELD_TIPS");
+  if (w < 0 || x < 0) throw new Error("DetailView.jsx: ruleWarn slice markers not found");
+  run(dv.slice(w, x), "detailview.ruleWarn.pure.jsx");
+  // rule reference catalogs + strat-value localization — static data copied verbatim into
+  // src/reference. Slice each out of DetailView.jsx and eval so we can dump them for equivalence.
+  const rt = dv.indexOf("const RULE_TRIGS"), rtEnd = dv.indexOf("function evalRule");
+  if (rt < 0 || rtEnd < 0) throw new Error("DetailView.jsx: RULE_TRIGS slice markers not found");
+  run(dv.slice(rt, rtEnd), "detailview.ruleCatalogs.pure.jsx"); // RULE_TRIGS/RULE_ACTS/RULE_LEGACY_DESC
+  const rsl = dv.indexOf("const RULE_STATE_LABEL"), rslEnd = dv.indexOf("function ruleWarn");
+  if (rsl < 0 || rslEnd < 0) throw new Error("DetailView.jsx: RULE_STATE_LABEL slice markers not found");
+  run(dv.slice(rsl, rslEnd), "detailview.ruleStateLabel.pure.jsx"); // RULE_STATE_LABEL
+  const ft = dv.indexOf("const FIELD_TIPS"), ftEnd = dv.indexOf("function StrategyTab");
+  if (ft < 0 || ftEnd < 0) throw new Error("DetailView.jsx: FIELD_TIPS slice markers not found");
+  run(dv.slice(ft, ftEnd), "detailview.fieldTips.pure.jsx"); // FIELD_TIPS
+  const sv = dv.indexOf("const STRAT_VAL_KO"), svEnd = dv.indexOf("function MiniDropdown");
+  if (sv < 0 || svEnd < 0) throw new Error("DetailView.jsx: STRAT_VAL_KO slice markers not found");
+  run(dv.slice(sv, svEnd), "detailview.stratVal.pure.jsx"); // STRAT_VAL_KO + locStratVal (+ holdingPeriod, unused)
 }
 
 // ---- extraction runs INSIDE the vm (same realm), returns a JSON string ----
@@ -71,6 +93,10 @@ const json = run(`
     STRATEGIES, EXEC_STRATEGIES, EXEC_CATS, MARKETS,
     KS_METRIC_DICT_ko: KS_METRIC_DICT(true), KS_METRIC_DICT_en: KS_METRIC_DICT(false),
     KS_METRIC_FORMULA, KS_METRIC_DEFS,
+    // rule tab catalogs promoted to src/reference (DetailView.jsx)
+    RULE_TRIGS, RULE_ACTS, RULE_LEGACY_DESC, RULE_STATE_LABEL, FIELD_TIPS, STRAT_VAL_KO,
+    locStratVal: ["auto", "Monthly", "Quarterly", "Weekly", "Daily", "Annually", "Yearly", "Unknown", ""]
+      .flatMap(v => ["ko", "en"].map(lang => ({ v, lang, out: locStratVal(v, lang) }))),
   };
 
   /* screener */
@@ -212,6 +238,51 @@ const json = run(`
   /* ledger — computeLedger per plan (회차별 누적 장부) */
   out.ledger = PLANS.map(p => ({ id: p.id, out: computeLedger(p) }));
 
+  /* rules — evalRule / ruleWarn battery. For every real plan rule (both langs) + a set of
+     synthetic structured rules covering each trig id, run against a couple of representative
+     plans. Store INPUTS (planId + rule + ko) alongside OUTPUTS so the TS test replays identically. */
+  {
+    // synthetic structured rules — one per trig id (values chosen to exercise both branches)
+    const synthRules = [
+      { id: "s_price_le", name: { en: "px≤", ko: "px≤" }, on: true, last: "Never", trig: "price_le", trigVal: "60000", when: { en: "", ko: "" }, then: { en: "", ko: "" } },
+      { id: "s_price_ge", name: { en: "px≥", ko: "px≥" }, on: true, last: "Never", trig: "price_ge", trigVal: "60000", when: { en: "", ko: "" }, then: { en: "", ko: "" } },
+      { id: "s_ret_ge", name: { en: "ret≥", ko: "ret≥" }, on: true, last: "Never", trig: "ret_ge", trigVal: "10%", when: { en: "", ko: "" }, then: { en: "", ko: "" } },
+      { id: "s_ret_le", name: { en: "ret≤", ko: "ret≤" }, on: true, last: "Never", trig: "ret_le", trigVal: "-5%", when: { en: "", ko: "" }, then: { en: "", ko: "" } },
+      { id: "s_loc_hit", name: { en: "loc", ko: "loc" }, on: true, last: "Never", trig: "loc_hit", trigVal: "", when: { en: "", ko: "" }, then: { en: "", ko: "" } },
+      { id: "s_target_hit", name: { en: "tgt", ko: "tgt" }, on: true, last: "Never", trig: "target_hit", trigVal: "", when: { en: "", ko: "" }, then: { en: "", ko: "" } },
+      { id: "s_buy_exec", name: { en: "buy", ko: "buy" }, on: true, last: "Never", trig: "buy_exec", trigVal: "", when: { en: "", ko: "" }, then: { en: "", ko: "" } },
+      { id: "s_unknown", name: { en: "zzz", ko: "zzz" }, on: true, last: "Never", trig: "nope", trigVal: "1", when: { en: "", ko: "" }, then: { en: "", ko: "" } },
+    ];
+    // representative plans: run synthetic rules against a few with different execIds / positions
+    const synthPlanIds = ["PLN-001", "PLN-002", "PLN-004", "PLN-006", "PLN-011"];
+    const inputs = [], evalOut = [], warnOut = [];
+    // every real plan rule, both langs
+    for (const p of PLANS) {
+      for (const r of (p.rules || [])) {
+        for (const ko of [true, false]) {
+          const key = p.id + "|" + r.id + "|" + (ko ? "ko" : "en");
+          inputs.push({ key, planId: p.id, rule: r, ko });
+          evalOut.push({ key, out: evalRule(p, r, ko) });
+          warnOut.push({ key, out: ruleWarn(p, r, ko) });
+        }
+      }
+    }
+    // synthetic structured rules against representative plans, both langs
+    for (const pid of synthPlanIds) {
+      const p = PLANS.find(x => x.id === pid);
+      if (!p) throw new Error("rules battery: plan not found " + pid);
+      for (const r of synthRules) {
+        for (const ko of [true, false]) {
+          const key = "SYN:" + pid + "|" + r.id + "|" + (ko ? "ko" : "en");
+          inputs.push({ key, planId: pid, rule: r, ko });
+          evalOut.push({ key, out: evalRule(p, r, ko) });
+          warnOut.push({ key, out: ruleWarn(p, r, ko) });
+        }
+      }
+    }
+    out.rules = { inputs, evalOut, warnOut };
+  }
+
   /* seed financials */
   {
     out.fin = Object.keys(FIN_SEED).map(tk => {
@@ -241,4 +312,5 @@ console.log(
   "| analytics:", data.analytics.perPlan.length,
   "| fin:", data.fin.length,
   "| format cases:", data.format.cases.length,
+  "| rules:", data.rules.inputs.length,
 );

@@ -5,6 +5,8 @@ import {
   LIBRARY_LOCKED, PLAN_STATUS, STATUS_ORDER, WF_TYPE, PORTFOLIOS,
   STRATEGIES, EXEC_STRATEGIES, EXEC_CATS, MARKETS,
   KS_METRIC_DICT, KS_METRIC_FORMULA,
+  RULE_TRIGS, RULE_ACTS, RULE_LEGACY_DESC, RULE_STATE_LABEL, FIELD_TIPS,
+  STRAT_VAL_KO, locStratVal,
 } from "../src/reference/index.ts";
 import { KS_METRIC_DEFS } from "../src/analytics/index.ts";
 
@@ -34,4 +36,13 @@ describe("reference data", () => {
   });
   it("KS_METRIC_FORMULA", () => expect(J(KS_METRIC_FORMULA)).toEqual(r.KS_METRIC_FORMULA));
   it("KS_METRIC_DEFS", () => expect(J(KS_METRIC_DEFS)).toEqual(r.KS_METRIC_DEFS));
+  it("RULE_TRIGS (7 triggers)", () => expect(J(RULE_TRIGS)).toEqual(r.RULE_TRIGS));
+  it("RULE_ACTS (5 actions)", () => expect(J(RULE_ACTS)).toEqual(r.RULE_ACTS));
+  it("RULE_LEGACY_DESC", () => expect(J(RULE_LEGACY_DESC)).toEqual(r.RULE_LEGACY_DESC));
+  it("RULE_STATE_LABEL", () => expect(J(RULE_STATE_LABEL)).toEqual(r.RULE_STATE_LABEL));
+  it("FIELD_TIPS", () => expect(J(FIELD_TIPS)).toEqual(r.FIELD_TIPS));
+  it("STRAT_VAL_KO", () => expect(J(STRAT_VAL_KO)).toEqual(r.STRAT_VAL_KO));
+  it("locStratVal", () => {
+    for (const c of r.locStratVal) expect(locStratVal(c.v, c.lang), `locStratVal(${c.v}, ${c.lang})`).toBe(c.out);
+  });
 });
