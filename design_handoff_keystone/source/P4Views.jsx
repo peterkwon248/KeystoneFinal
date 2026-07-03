@@ -871,20 +871,19 @@ function ScreenerView({ t, lang, plans, onOpenSecurity, panel, setPanel, filterA
 /* ---- Research browser (종목 리서치) — recent + picker → opens the security detail,
    which already carries 개요·재무제표·투자지표·밸류에이션 tabs. Reuses SecurityPicker,
    getSecRecents, securityOf, Flag, fmtCompact, .sec-planrow (zero new UI). ---- */
-function ResearchBrowser({ t, lang, plans, onOpenSecurity }) {
+function ResearchBrowser({ t, lang, plans, onOpenSecurity, onOpenPlan }) {
   const ko = lang === "ko";
   const recents = (typeof getSecRecents === "function" ? getSecRecents() : []).map(securityOf).filter(Boolean);
   const recentSet = new Set(recents.map(s => s.ticker));
   const watched = SECURITIES.filter(s => s.watched && !recentSet.has(s.ticker));
   const row = (s) => {
     const up = (s.change || 0) >= 0;
-    const hasPlan = (typeof plansForTicker === "function" ? plansForTicker(plans, s.ticker) : []).length > 0;
     return (
       <div className="sec-planrow" key={s.ticker} onClick={() => onOpenSecurity(s.ticker)}>
         <Flag market={s.market} size={13} />
         <span className="mono" style={{ color: "var(--fg-4)", fontSize: 12, width: 62 }}>{s.ticker}</span>
         <span style={{ flex: 1, minWidth: 0, font: "var(--fw-medium) 13px var(--font-sans)", color: "var(--fg)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name[lang]}</span>
-        {hasPlan && <span className="fl-auto" style={{ fontSize: 10.5 }}>{ko ? "플랜" : "Plan"}</span>}
+        <NPlansBadge plans={plans} ticker={s.ticker} lang={lang} t={t} onOpenPlan={onOpenPlan} />
         <span className="mono" style={{ fontSize: 12.5, color: "var(--fg-2)", width: 92, textAlign: "right" }}>{fmtCompact(s.price, s.cur)}</span>
         <span className={"mono " + (up ? "pos" : "neg")} style={{ fontSize: 12.5, width: 58, textAlign: "right", fontWeight: 600 }}>{up ? "+" : ""}{(s.change || 0).toFixed(1)}%</span>
       </div>

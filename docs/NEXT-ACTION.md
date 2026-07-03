@@ -1,19 +1,20 @@
 # NEXT-ACTION
 
+## ⚠️⚠️ 새 디자인 핸드오프 도입 (2026-07-03) — 참조 교체됨, core 재조정 미결
+`Downloads/키스톤파이널.zip` = **갱신·확장된 디자인 핸드오프** 도입. 사용자 결정 = **"참조만 교체 + core 재조정은 별도"**.
+- **교체 완료(참조):** `design_handoff_keystone/` 번들 전체 + root `screens/`(6→**22장**) + root 스펙 5종(ARCHITECTURE/DATA_MODEL/API/HANDOFF/README) = 전부 신버전. 새 스크린 22장 = 07 대시보드/08 보드/09 타임라인 + 10 시나리오모니터 + 11~13 스크리너 + 14 관심종목 + 15 리서치 + 16 인사이트 + 17 보관함 + 18 휴지통 + 19/19b/21/22 종목상세.
+- **불변(의도적):** root `source/`(=구 프로토타입, 골든 원본) + `packages/core` + 골든 102 — **건드리지 않음**. 즉 지금 `screens/`(신) ↔ root `source/`(구) 사이에 의도된 임시 불일치 존재.
+- **🔴 미결 태스크 — source/core 재조정:** 새 핸드오프 `source/*.jsx`가 순수로직(`data.jsx`/`ledger.jsx`/`valuation.jsx` 등)까지 전부 바뀜. root `source/`를 신버전으로 올리려면 **core를 신 로직에 맞춰 갱신 + 골든 재생성**을 순수로직 diff와 함께 신중히 해야 함(그냥 덮으면 골든 깨짐). 뷰 이식 더 진행하기 전에 이 재조정을 먼저 할지 결정 필요.
+- **🟡 새 핸드오프가 명시한 설계 변경(이식 시 반영):** ① **인박스 스누즈(나중에) 제거** → 트리아지 처리완료·음소거·기록만, 탭 전체/안읽음 (01 인박스 이식 전 필수) ② **종목 리서치 통합** — Statements+Simulator 폐기, 보안상세 진입. 사이드바 도구 = 관심종목·인사이트·종목리서치·시나리오·스크리너·보관함·휴지통 ③ 밸류에이션 멀티메서드 밴드차트·종목 월별 히트맵·크로스뷰 필터팝오버(GICS+KR/US)·스탯 스트립.
+- 참고: 새 README 규칙 = **"스크린샷 vs 라이브 프로토타입 불일치 시 프로토타입(source/) 승리"**. 01-06 캡처는 구버전(스누즈 등 옛 UI 잔존) — 07~ 및 프로토타입이 최신.
+
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
-완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 전부 완료** — 전부 브라우저 E2E 검증. 다음:
-1. **🎯 우측 디테일바(PropsSidebar, `source/DetailView.jsx:1143` `.detail-side`)** — 04 상세 화면의 마지막 조각. 탭이 아니라 모든 탭에 걸치는 우측 레일이라 8탭 카운트에 안 잡혀 별도 증분. 고유 콘텐츠 = 포지션/청산 요약·전략 파라미터·커스텀 필드(추가/편집)·노트(추가/편집/삭제) + 접기 토글(`rightCollapsed`/`onToggleRight`). 상태/포트폴리오/전략 피커는 이미 셸의 `dt-headrow`로 올라가 있음(중복). **조사 완료(다음 세션 바로 시작 가능)**:
-   - ⚠️ **펼침/접힘 결정**: `screens/04-plan-detail.png`엔 우측바 안 보임(메인이 우측 끝까지)=**접힘으로 보임**. BUT 프로토타입 `App.jsx:420 useState(false)`=**기본 펼침**. 충돌 → screens=불변기준이니 **접힘 기본 + 토글로 펼침** 채택 권장(재확인만). rightCollapsed는 프로토타입 세션상태(비영속) → 웹 영속 방식(profiles.sidebar 같은 jsonb? or 세션) 결정
-   - 레이아웃: `detail-wrap` 안에 `.detail-side`를 `.detail-main` 형제로 추가(접힘 시 `.detail-main`의 `rp-toggle` 버튼 노출). 앱셸 `.app-row`와 별개(상세 내부)
-   - 헬퍼: `closeoutSummary`(`source/ledger.jsx:196` — computeLedger처럼 이미 core 승격됐는지 먼저 확인, 안 됐으면 골든 승격)·`holdingPeriod`(`DetailView.jsx:6`, 로컬 view 헬퍼로 이식)
-   - CSS: detail-side/ds-toolbar/side-group/side-cap/prop-line/pl-label/pl-value/rp-toggle **존재 ✓**. 커스텀필드/노트 sub-row 클래스는 실제 클래스명 확인(cf-row/note-row 추정은 web CSS에 0 — 소스에서 실클래스 확인)
-   - 뮤테이션: 노트·커스텀필드 → `custom_fields`(jsonb)에 저장하는 서버액션(전략탭 `setGoal` 패턴, supabase-js await 필수)
-   - ✅ 완료 8탭: 셸 · 시나리오 · 활동 · 체결 · 재무제표 · 전략 · 투자지표 · 밸류에이션 · **인사이트**(실행정확도 게이지·평단추이 차트·시나리오거리·룰이력, 진입전 empty-state — `insights-tab.tsx`, computeLedger 사용)
-   - 이후 다른 스크린: 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산
+완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 + 우측 디테일바 완료** — 전부 브라우저 E2E 검증. 다음:
+1. **🎯 01 인박스(screens/01, `source/InboxScreen`)** ← 다음 작업. 이후 02 일지 → 05 전략 편집기 → 06 청산.
    - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵). screens/*.png이 픽셀 기준 · source/*.jsx가 로직 기준
-   - 04 상세 재사용 이음새(전체): `components/plan/`에 mini-dropdown·scenarios-tab·gap-tab·execution-ledger·perf-band·financials-tab·activity-tab·**strategy-tab·indicators-tab·valuation-tab**; `lib/gap-history.ts`·`lib/fin-mapper.ts`·**`lib/fin-history.ts`**(투자지표/밸류에이션 밴드차트용 mock priceHistory — 마일스톤6 교체). 서버액션 `app/(shell)/plans/[id]/actions.ts`: patchPlan(헤더픽커)·**setGoal·toggleRule·applyValuationTargets**
-   - core 승격: 골든 92(scAutoStatus/scProbOf/computeLedger/buildFinFromSeed) + **골든 102**(evalRule·ruleWarn + 룰 카탈로그 RULE_TRIGS/ACTS/LEGACY_DESC/STATE_LABEL·FIELD_TIPS·locStratVal, Rule 타입에 act?/custom?/edited? 추가). 밸류에이션·투자지표·전략이 쓰는 나머지 순수로직(calcValuation/seedFinancials/gradeOf/IND_THRESH/KS_METRIC_DICT 등)은 이미 core에 있었음
-3. 상단 필터 패널(FilterPanel) — 지금은 DisplayPanel만 있음
+   - ✅ **04 상세 완료(2026-07-03)**: 8탭(시나리오·전략·재무제표·투자지표·밸류에이션·인사이트·체결·활동) + **우측 디테일바(PropsSidebar)** — 포지션/청산요약·속성(종목/생성/수정)·현황·메모(CRUD)·시나리오요약 + 접기토글(**기본 접힘**, `rightCollapsed` 로컬 state 비영속). closeoutSummary는 웹 lib(`lib/closeout.ts`)로 core computeLedger 재사용 → 골든 무손상
+   - ⚠️ **커스텀 필드는 이식 안 함(교훈)**: source `PropsSidebar`에 `CF_TYPES`/`addCf` **핸들러만 남은 vestigial 코드**(JSX 렌더엔 없음)라 디자인에서 제거된 것. 처음 잘못 이식했다가 유저 지적으로 제거. **다음 뷰 이식 때도 "핸들러 정의됨 ≠ 실제 렌더됨" 확인 — source의 return(JSX)에 실제로 그려지는지 grep으로 검증할 것**
+2. 상단 필터 패널(FilterPanel) — 지금은 DisplayPanel만 있음
 4. GET /fx·/quote Route Handler + 클라이언트 setFxRate 연결
 - ⚠️ dev 서버 캐시 꼬이면(하이드레이션 안 됨/청크 404): `.next` 삭제 후 재시작. **`next build`는 dev 서버 끄고 `.next` 삭제 후** 실행 (동시 접근 시 PageNotFoundError)
 - ⚠️ **supabase-js 쿼리 빌더는 thenable** — `void supabase.from().update()`는 요청이 안 나감. 반드시 `await` 또는 `.then()`으로 실행 (profiles.sidebar 영속 버그였음)

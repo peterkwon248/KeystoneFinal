@@ -820,7 +820,7 @@ function App() {
             : view === "inbox" ? <InboxScreen t={t} lang={lang} plans={plans} onOpen={openPlan} addExecution={addExecution} setStatus={setStatus} fire={fire} onPatchPlan={patchPlan} read={inboxRead} onMarkRead={inboxMarkRead} onMarkAll={inboxMarkAll} />
             : view === "journal" ? <JournalScreen t={t} lang={lang} plans={plans} onOpen={openPlan} onPatchPlan={patchPlan} onOpenSecurity={openSecurityFull} />
             : view === "watchlist" ? <WatchlistView t={t} lang={lang} plans={plans} onOpenSecurity={openSecurity} panel={panel} setPanel={setPanel} filterAnchor={filterAnchor} />
-            : view === "research" ? <ResearchBrowser t={t} lang={lang} plans={plans} onOpenSecurity={openSecurityFull} />
+            : view === "research" ? <ResearchBrowser t={t} lang={lang} plans={plans} onOpenSecurity={openSecurityFull} onOpenPlan={openPlan} />
             : view === "screener" ? <ScreenerView t={t} lang={lang} plans={plans} onOpenSecurity={openSecurity} panel={panel} setPanel={setPanel} filterAnchor={filterAnchor} setFilterAnchor={setFilterAnchor} />
             : view === "insights" ? <InsightsView plans={plans} t={t} lang={lang} onOpenPlan={openPlan} />
             : view === "scenarios" ? <ScenariosMonitor t={t} lang={lang} plans={plans} onOpenPlan={openPlan} onNewScenario={(ticker) => setScAuthor({ ticker: typeof ticker === "string" ? ticker : null })} panel={panel} setPanel={setPanel} filterAnchor={filterAnchor} />

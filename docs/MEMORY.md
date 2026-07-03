@@ -4,7 +4,7 @@
 **Keystone** — 투자 플랜 관리 SaaS. React 프로토타입(`source/`)을 멀티유저 SaaS(웹+모바일, 추후 월구독)로 전환.
 - 레포: `peterkwon248/KeystoneFinal` (public) · 로컬: `Desktop\Keystone Final` (Plot-V3 홈레포 안의 중첩 독립 레포)
 - 스펙: `ARCHITECTURE.md`(오케스트레이터) + `DATA_MODEL.md`(DDL) + `API.md`(계약) + `HANDOFF.md`(디자인 히스토리)
-- **디자인 기준: `screens/` 스크린샷 6장 그대로 구현** (Linear 스타일 다크 UI)
+- **디자인 기준: `screens/` 스크린샷 그대로 구현** (Linear 스타일 다크 UI). **2026-07-03 새 핸드오프로 6→22장 확장**(07 대시보드~22 종목상세). ⚠️ root `source/`(골든 원본)는 아직 구버전 — **screens(신)↔source(구) 의도적 임시 불일치**, source/core 재조정은 미결 태스크(NEXT-ACTION 상단 참조)
 
 ## 확정 방향
 - 스택: 모노레포(pnpm+Turborepo) / packages-core / Next.js / Expo / Supabase / 서버 어댑터
