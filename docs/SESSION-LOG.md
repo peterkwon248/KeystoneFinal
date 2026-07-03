@@ -1,5 +1,30 @@
 # SESSION-LOG (append-only, 최신이 위)
 
+## 2026-07-03 (데스크톱) — 우측 디테일바 + 새 핸드오프 도입 + 01 인박스
+
+### ⚠️ 세션 시작 사고 — before-work가 12커밋 뒤처진 로컬로 브리핑
+- 집 머신 after-work 후 push한 12커밋을 데스크톱이 pull 안 한 상태에서 before-work가 문서만 보고 "04 상세 미이식"으로 오판 → 유저 지적으로 `git fetch` 후 발견. **교훈: before-work는 반드시 `git fetch`로 origin 대조부터.** ff merge로 `d080834` 동기화.
+
+### 완료 — 마일스톤 7: 우측 디테일바(PropsSidebar)
+- `components/plan/props-sidebar.tsx` + `lib/closeout.ts`(core computeLedger 재사용, 골든 무손상). 포지션/청산요약·속성·현황·메모(CRUD)·시나리오요약 + 접기토글(**기본 접힘**=screens/04 기준). 헤더 중복 픽커 제외. 브라우저 E2E(노트 CRUD DB왕복·청산요약). 커밋 d6173de
+- **커스텀 필드 오이식→제거**: source PropsSidebar에 핸들러(CF_TYPES/addCf)만 남은 vestigial(JSX 렌더 없음)인데 잘못 이식. 유저 지적으로 5파일에서 제거. **교훈: "핸들러 정의됨≠렌더됨" — source의 return(JSX) grep 확인**
+
+### 완료 — 새 디자인 핸드오프 도입 (참조만 교체, 커밋 6e3ea0b)
+- `Downloads/키스톤파이널.zip` = 갱신·확장 핸드오프. **참조만 교체**(유저 결정): design_handoff_keystone/ 번들 + root screens/(6→22장) + 스펙 5종. root `source/`·core·골든은 불변 → **screens(신)↔source(구) 임시 불일치, source/core 재조정 미결(칩 task_8aa778fc)**
+- 새 핸드오프 설계 변경: 인박스 스누즈 제거·종목리서치 통합·대시보드 뷰 확정(07)·스크리너/관심종목/시나리오모니터 등 새 스크린
+
+### 완료 — 마일스톤 7: 01 인박스 (커밋 방금)
+- 3-pane(리스트+리더+읽기전용 속성). `lib/inbox.ts`(buildInboxNotes/scenarioAlerts, UIPlan)·`lib/inbox-triage.ts`(localStorage)·`components/inbox/*`·`app/(shell)/inbox/page.tsx`·`addExecutionAction`(executions insert→DB트리거 상태전이). **스누즈 제거 반영**(새 핸드오프 Inbox.jsx 기준)
+- 브라우저 E2E: 매수폼→체결 **DB 영속(카카오 Jul3 ₩35,250)**·처리완료→undo+리로드 유지·탭·시간버킷팅(오늘5·이전11). tsc 0·core 102·next build 성공
+- **버킷팅 버그 수정**: executor가 ibxBucket을 lib에 두고 inbox-screen에 인라인(`/^today/`)해 웹 토큰 미인식 → 전부 "이전". ibxBucket이 now/Nh/오늘"Mon D" 인식하게 고치고 배선
+
+### 미결/후속
+- **push 대기**: 로컬이 origin/main보다 앞섬(우측바·핸드오프·인박스 커밋). 자동승인이 main 직푸시 차단 → **유저가 `git push origin main` 수동 실행 필요**
+- 사이드바 인박스 unread 뱃지 + 트리아지 DB 동기화(묶음), source/core 재조정(칩)
+
+### 머신
+데스크톱 (`C:\Users\user\Desktop\KeystoneFinal`)
+
 ## 2026-07-03 심야 (집) — 인사이트 탭 → 04 상세 8탭 완료
 
 ### 완료 — 마일스톤 7: 04 상세 인사이트 탭 이식 (마지막 8번째 탭)

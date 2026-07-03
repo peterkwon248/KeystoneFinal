@@ -1,58 +1,43 @@
 ---
-session_date: "2026-07-03 08:10"
+session_date: "2026-07-03 (데스크톱)"
 project: "KeystoneFinal"
 working_directory: "C:/Users/user/Desktop/KeystoneFinal"
 ---
 
-## Completed Work
-- (전반부는 2026-07-02 아카이브 참고: 마일스톤 2·3·4 + FX)
-- **마일스톤 5 완결** (759d7cf, 0038956): KIS/Finnhub 시세 폴링 14/14 → securities.last_close, dividend_yield(KR=DART alotMatter DPS÷현재가, US=Finnhub TTM). KIS 함정 흡수: 토큰 분당1회→디스크캐시, 간헐 500+EGW00201→백오프 재시도. **MVP 데이터 레이어(1~5) 완성**
-- 참고 레포 4곳 조사 (공식 open-trading-api ⭐1.5k 등) → EGW00201 발견·반영, 마일스톤 6 WS 참고 목록 NEXT-ACTION에 기록
-- **마일스톤 7 (웹 이식) 1·2단계** (4d0e851, 310275f):
-  - apps/web Next.js 15 + @supabase/ssr + 프로토타입 CSS 통이식(colors_and_type/reticle)
-  - Auth.jsx 이식: 로그인/가입(즉시 세션) + 온보딩 3단계 → profiles/portfolios/plans 저장 (브라우저 E2E: 가입→온보딩→PLN-001 삼성전자 생성→₩286,000 실시세 렌더)
-  - 앱 셸: Sidebar(포트폴리오 CRUD + core 전략/관점 프리셋) + WorkspaceMenu/Settings(테마·언어 토글, 실제 로그아웃) + 라우트((shell) 그룹, /plans, /strategy/[id], placeholder들)
-- LLM Wiki: nextjs-dev 토픽 추가 (총 3토픽)
-- 전부 push됨 (origin/main = 310275f + 이 세션 커밋)
+## Completed Work (이번 세션 — 데스크톱)
+- **우측 디테일바(PropsSidebar) 이식** (커밋 d6173de): 04 상세 마지막 조각. `components/plan/props-sidebar.tsx` + `lib/closeout.ts`(core computeLedger 재사용 → 골든 무손상). 포지션/청산요약·속성·현황·메모(CRUD)·시나리오요약 + 접기토글(**기본 접힘**=screens/04 기준). 브라우저 E2E.
+  - **커스텀 필드 오이식→제거**: source PropsSidebar에 핸들러만 남은 vestigial 코드(JSX 렌더 없음)를 잘못 이식 → 유저 지적으로 5파일에서 제거.
+- **새 디자인 핸드오프 도입** (커밋 6e3ea0b): `Downloads/키스톤파이널.zip`. **참조만 교체**(유저 결정) — design_handoff_keystone/ 번들 + root screens/(**6→22장**) + 스펙 5종. root `source/`·core·골든 불변.
+- **01 인박스 이식** (커밋 방금, feat(web) 01 인박스): 3-pane 트리아지. `lib/inbox.ts`·`lib/inbox-triage.ts`(localStorage)·`components/inbox/*`·`app/(shell)/inbox/page.tsx`·`addExecutionAction`. **스누즈 제거 반영**. 브라우저 E2E(체결 DB 영속 카카오 Jul3 검증). 버킷팅 버그(인라인 ibxBucket) 수정.
 
 ## In Progress
-- 없음 (워킹트리 클린, typecheck 3/3 + next build + 골든 89/89 그린)
+- 없음 (인박스까지 커밋 완료, 워킹트리 클린 예정)
 
 ## Remaining Tasks
-- [ ] **screens/ 6장 뷰 이식** ← 다음 작업. 권장 순서: 03 플랜 리스트(ListView 77줄 + BoardTimeline 297줄) → 04 플랜 상세(DetailView 3065줄, 최대 덩어리) → 01 인박스(488) → 02 일지(369) → 05 전략 편집기(422) → 06 청산 플로우
-  - screens/*.png = 픽셀 기준, source/*.jsx = 로직 기준, 순수 계산은 @keystone/core import
-- [ ] 사이드바 도구 섹션 (OPTIONAL_DESTS 7종 + CustomizeModal — profiles.sidebar 연동)
-- [ ] GET /fx·/quote Route Handler + 클라이언트 setFxRate 연결
-- [ ] (마일스톤 6, 나중) KIS/Finnhub WS 멀티플렉서 — 참고 레포 NEXT-ACTION에 정리됨
+- [ ] **02 일지(Journal)** ← 다음. `design_handoff_keystone/source/Journal.jsx` + screens/02. 이후 05 전략편집기 → 06 청산 → 07 대시보드(현황) 등 **새 핸드오프 스크린(screens 6→22)**.
+- [ ] **묶음 후속**: 사이드바 인박스 unread 뱃지 + 트리아지 DB 동기화 — 정확한 unread=(전체 알림−localStorage 처리)라 트리아지가 DB로 가야 서버계산 가능(현 셸 레이아웃은 light plans만). openPlan 탭 딥링크(activity/executions)도 후속.
+- [ ] **🔴 source/core 재조정** (칩 task_8aa778fc): 새 핸드오프 `source/*.jsx` 순수로직 변경분을 core에 반영 + 골든 재생성. root `source/`(구)↔screens(신) 불일치 해소.
+- [ ] (마일스톤 6) 과거 시세 히스토리 백필 + 실시간 WS.
 
 ## Key Decisions
-- 마일스톤 7을 6보다 선행 (소비할 앱 먼저, 실시간은 sync:quotes 폴링으로 버팀)
-- 서버 런타임 = Next Route Handler로 시작 (별도 Node 서비스는 WS 필요 시)
-- 전략/관점 데이터 = core 프리셋 (LIBRARY_LOCKED=true, DB 커스텀은 나중)
-- 프로토타입 CSS 통복사 전략 — 클래스명 보존으로 픽셀 충실도 확보
+- 새 핸드오프: **참조만 교체, source/core 재조정은 별도**(유저 확정).
+- 우측바 **기본 접힘**(screens/04 불변기준 우선, 프로토타입 펼침과 충돌 시 screens 승리).
+- 인박스 트리아지 상태 = localStorage(이번 스코프), DB 동기화는 뱃지와 묶어 후속.
 
 ## Blockers / Issues
-- 없음. Next dev 함정 1건 해결됨: .next 캐시 오염 → 하이드레이션 무반응 → 캐시 삭제 (LLM Wiki nextjs-dev에 기록)
+- **⚠️ PUSH 대기 (중요)**: 로컬 main이 origin보다 **여러 커밋 앞섬**(우측바 d6173de · 핸드오프 6e3ea0b · 인박스 · after-work 문서). **자동승인이 main 직푸시를 차단** → **유저가 이 폴더에서 `git push origin main` 수동 실행 필요.** 안 하면 다음 머신이 또 뒤처짐.
 
 ## Notes for Next Session
-**⚠️ 크로스머신 인계 체크리스트 (git에 없는 것들):**
-1. 루트 `.env` 복사 필수 — 키 5종: DART_API_KEY / FINNHUB_API_KEY / KIS_APP_KEY / KIS_APP_SECRET / KIS_ENV=real (.env.example 참고)
-2. `apps/web/.env.local` 생성 — NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 + ANON_KEY(supabase start 출력, 로컬 공개 데모 키) (apps/web/.env.example 참고)
-3. Docker Desktop 실행 확인
+- **before-work는 반드시 `git fetch origin`으로 대조부터** (이번 세션 시작 때 12커밋 뒤처진 로컬로 오판한 사고 재발 방지).
+- 새 뷰 이식 시 **`design_handoff_keystone/source/*.jsx`(신)** 기준. root `source/`는 구버전(재조정 전까지).
+- **"핸들러 정의됨 ≠ 실제 렌더됨"** — source의 return(JSX)에 실제 그려지는지 grep 확인 (커스텀필드 교훈).
+- 함정: SWC≠tsc(JSX 내 제네릭 캐스트 금지)·supabase-js thenable(await 필수)·Windows 파일워처 stale→서버 재시작·`.next` 오염 시 삭제.
+- 실행: `pnpm supabase start` → `node apps/web/scripts/dev-seed-plans.mjs`(11플랜) → preview "web"(:3000). 로그인 webtest@keystone.local / web-test-password-1.
 
-**재현 순서 (새 머신):**
-```
-git pull → pnpm install
-pnpm supabase start → pnpm supabase db reset
-pnpm --filter @keystone/server sync:financials → sync:quotes   # 실데이터
-pnpm --filter @keystone/web dev                                 # localhost:3000
-```
-- 웹 테스트 계정은 머신-로컬 DB라 새로 가입해야 함 (가입→온보딩 30초)
-- 프리뷰: .claude/launch.json에 "web"(:3000) 구성 있음
-- dev 서버 이상(클릭 무반응) 시: apps/web/.next 삭제 후 재시작
-
-## Files Modified
-- `apps/server/src/adapters/` — kis.ts, finnhub.ts 신규 + dart.ts(alotMatter) + sync-quotes.ts
-- `apps/web/` — 신설 전체 (app/, components/, lib/supabase/, styles/, middleware.ts)
-- `packages/core` — 변경 없음 (golden 보호 유지)
-- `docs/MEMORY.md, NEXT-ACTION.md, TODO.md` — 마일스톤 5 완료 + 7 진행 반영
+## Files Modified (이번 세션)
+- `apps/web/components/plan/` — props-sidebar.tsx(신규) · detail-view.tsx · plan-mapper.ts
+- `apps/web/lib/` — closeout.ts, inbox.ts, inbox-triage.ts (신규)
+- `apps/web/components/inbox/` — inbox-screen/reader/props/strategy-strip (신규)
+- `apps/web/app/(shell)/inbox/page.tsx`(신규) · `[dest]/page.tsx` · `plans/[id]/actions.ts`(addExecutionAction)
+- `apps/web/scripts/dev-seed-plans.mjs`
+- `design_handoff_keystone/`(번들 교체) · `screens/`(6→22) · root 스펙 5종 · `docs/*`(MEMORY/NEXT-ACTION/TODO/SESSION-LOG)

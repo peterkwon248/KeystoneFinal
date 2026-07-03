@@ -10,8 +10,9 @@
 
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
 완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 + 우측 디테일바 완료** — 전부 브라우저 E2E 검증. 다음:
-1. **🎯 01 인박스(screens/01, `source/InboxScreen`)** ← 다음 작업. 이후 02 일지 → 05 전략 편집기 → 06 청산.
-   - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵). screens/*.png이 픽셀 기준 · source/*.jsx가 로직 기준
+1. **🎯 02 일지(screens/02, `design_handoff_keystone/source/Journal.jsx`)** ← 다음 작업. 이후 05 전략 편집기 → 06 청산 → 07 대시보드(현황) 등 새 스크린.
+   - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵). screens/*.png이 픽셀 기준 · **새 핸드오프 `design_handoff_keystone/source/*.jsx`가 최신 로직 기준**(root `source/`는 구버전 — 재조정 미결)
+   - ✅ **01 인박스 완료(2026-07-03)**: 3-pane 트리아지(리스트+리더+읽기전용 속성) — `lib/inbox.ts`(buildInboxNotes/scenarioAlerts, UIPlan 기반)·`lib/inbox-triage.ts`(localStorage)·`components/inbox/*`. 매수/매도 → `addExecutionAction`(executions insert, DB 트리거 상태전이) · 청산=patchPlan · 기록=patchNotes. **스누즈 제거 반영**. 브라우저 E2E(체결 DB 영속 Jul3 검증). ⏸️ **후속(묶음)**: 사이드바 unread 뱃지 + 트리아지 DB 동기화 — 정확한 unread는 (전체 알림−localStorage 처리)라 트리아지가 DB로 가야 서버계산 가능(현재 셸 레이아웃은 light plans만 조회). openPlan 탭 딥링크도 후속
    - ✅ **04 상세 완료(2026-07-03)**: 8탭(시나리오·전략·재무제표·투자지표·밸류에이션·인사이트·체결·활동) + **우측 디테일바(PropsSidebar)** — 포지션/청산요약·속성(종목/생성/수정)·현황·메모(CRUD)·시나리오요약 + 접기토글(**기본 접힘**, `rightCollapsed` 로컬 state 비영속). closeoutSummary는 웹 lib(`lib/closeout.ts`)로 core computeLedger 재사용 → 골든 무손상
    - ⚠️ **커스텀 필드는 이식 안 함(교훈)**: source `PropsSidebar`에 `CF_TYPES`/`addCf` **핸들러만 남은 vestigial 코드**(JSX 렌더엔 없음)라 디자인에서 제거된 것. 처음 잘못 이식했다가 유저 지적으로 제거. **다음 뷰 이식 때도 "핸들러 정의됨 ≠ 실제 렌더됨" 확인 — source의 return(JSX)에 실제로 그려지는지 grep으로 검증할 것**
 2. 상단 필터 패널(FilterPanel) — 지금은 DisplayPanel만 있음
