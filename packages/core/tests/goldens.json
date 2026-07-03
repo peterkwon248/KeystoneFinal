@@ -24851,6 +24851,138 @@
    }
   ]
  },
+ "scenario": {
+  "autoStatus": [
+   {
+    "px": 100,
+    "tg": 120,
+    "out": "tracking"
+   },
+   {
+    "px": 120,
+    "tg": 120,
+    "out": "realized"
+   },
+   {
+    "px": 117,
+    "tg": 120,
+    "out": "approaching"
+   },
+   {
+    "px": 110,
+    "tg": 120,
+    "out": "tracking"
+   },
+   {
+    "px": 100,
+    "tg": 80,
+    "out": "tracking"
+   },
+   {
+    "px": 80,
+    "tg": 80,
+    "out": "realized"
+   },
+   {
+    "px": 82,
+    "tg": 80,
+    "out": "approaching"
+   },
+   {
+    "px": 90,
+    "tg": 80,
+    "out": "tracking"
+   },
+   {
+    "px": 100,
+    "tg": 100,
+    "out": "realized"
+   },
+   {
+    "px": 97,
+    "tg": 100,
+    "out": "approaching"
+   },
+   {
+    "px": 103,
+    "tg": 100,
+    "out": "approaching"
+   },
+   {
+    "px": null,
+    "tg": 100,
+    "out": "tracking"
+   },
+   {
+    "px": 100,
+    "tg": null,
+    "out": "tracking"
+   },
+   {
+    "px": null,
+    "tg": null,
+    "out": "tracking"
+   }
+  ],
+  "prob": [
+   {
+    "s": {
+     "prob": 30
+    },
+    "out": 30
+   },
+   {
+    "s": {
+     "prob": 0
+    },
+    "out": 0
+   },
+   {
+    "s": {
+     "label": {
+      "en": "Base"
+     }
+    },
+    "out": 50
+   },
+   {
+    "s": {
+     "label": {
+      "en": "Bull"
+     }
+    },
+    "out": 25
+   },
+   {
+    "s": {
+     "label": {
+      "en": "Bear"
+     }
+    },
+    "out": 25
+   },
+   {
+    "s": {
+     "label": {
+      "en": "Custom"
+     }
+    },
+    "out": 20
+   },
+   {
+    "s": {
+     "label": {
+      "en": ""
+     }
+    },
+    "out": 20
+   },
+   {
+    "s": {},
+    "out": 20
+   }
+  ]
+ },
  "fin": [
   {
    "ticker": "207940",

@@ -72,6 +72,7 @@ export interface DbPlanRow {
 export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
   const cur = (row.currency === "KRW" ? "KRW" : "USD") as Currency;
   const currentPrice = Number(row.securities?.last_close ?? 0);
+  const epsN = Number(row.eps ?? 0);
 
   // 체결 → 프로토타입 Execution + 평단/보유수량 롤업 (plan_positions 뷰와 같은 산식)
   const execRows = (row.executions ?? [])
@@ -100,15 +101,22 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
     .sort((a, b) => order.indexOf(a.case_t) - order.indexOf(b.case_t))
     .map((s) => {
       const c = SC_CASE[s.case_t] ?? SC_CASE.base;
+      const target = Number(s.target);
       return {
         label: SC_LABEL_MAP[c.en] ?? { en: c.en, ko: c.en },
         color: s.color || c.color,
-        target: Number(s.target),
+        target,
+        // 함의 PER = 목표가 / EPS (프로토타입 저장 s.per와 동치 — Simulator 산식). eps 없으면 0.
+        per: epsN > 0 ? target / epsN : 0,
         status: s.status === "pending" ? "tracking" : s.status,
         thesis: s.thesis ?? undefined,
         isAuto: s.is_auto,
       };
     });
+  // 내재가치(iv) 시드 = 기준(Base) 시나리오 target (source/data.jsx:809 문서화된 시드 의도).
+  // ivHistory(가치 추세 궤적)는 GapTab 이식 때 mock 이음새로 (마일스톤 6 실데이터 교체).
+  const baseSc = scenarios.find((s) => s.label.en === "Base");
+  const iv = baseSc ? baseSc.target : undefined;
 
   // 리스트 뷰가 세는 건 활성 룰 개수뿐 — 나머지 필드는 스텁 (Rule 상세는 04 플랜 상세에서)
   const rules: Rule[] = (row.rules ?? []).map((r) => ({
@@ -141,8 +149,9 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
     updatedAt: toRelToken(row.updated_at, now),
     closedAt: row.closed_at ? toMonD(row.closed_at) : undefined,
     realizedPL: row.realized_pl ?? undefined,
-    eps: Number(row.eps ?? 0),
+    eps: epsN,
     sharesOut: Number(row.shares_out ?? row.securities?.shares_out ?? 0),
+    iv,
     scenarios,
     executions,
     rules,

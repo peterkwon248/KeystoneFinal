@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { goldens, J } from "./helpers.ts";
 import {
   planReturn, planTag, gaugeData, planActionLines, planExecState,
-  scLabel, metricDef,
+  scLabel, metricDef, scAutoStatus, scProbOf,
 } from "../src/analytics/index.ts";
 
 const g = goldens.analytics;
 const plans: any[] = goldens.plans;
+const sc = goldens.scenario;
 
 describe("analytics — golden equivalence per plan", () => {
   for (const gp of g.perPlan) {
@@ -25,5 +26,11 @@ describe("analytics — golden equivalence per plan", () => {
   });
   it("metricDef", () => {
     for (const c of g.metricDef) expect(J(metricDef(c.k)), `metricDef(${c.k})`).toEqual(c.out);
+  });
+  it("scAutoStatus", () => {
+    for (const c of sc.autoStatus) expect(scAutoStatus({ currentPrice: c.px }, c.tg), `scAutoStatus(${c.px}, ${c.tg})`).toBe(c.out);
+  });
+  it("scProbOf", () => {
+    for (const c of sc.prob) expect(scProbOf(c.s), `scProbOf(${JSON.stringify(c.s)})`).toBe(c.out);
   });
 });

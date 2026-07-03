@@ -39,6 +39,18 @@ run(read("valuation.jsx"), "valuation.jsx");
   if (cut < 0) throw new Error("futuretest.jsx: pure/UI boundary marker not found");
   run(ft.slice(0, cut), "futuretest.pure.jsx");
 }
+// scenario pure logic — sliced out of the JSX components around them so the vm can eval them,
+// then dumped for a battery of inputs. TS ports (analytics/scAutoStatus, scProbOf) must match.
+{
+  const ic = read("icons.jsx");
+  const a = ic.indexOf("function scAutoStatus"), b = ic.indexOf("// The killer column");
+  if (a < 0 || b < 0) throw new Error("icons.jsx: scAutoStatus slice markers not found");
+  run(ic.slice(a, b), "icons.scAutoStatus.pure.jsx");
+  const dv = read("DetailView.jsx");
+  const c = dv.indexOf("function scProbOf"), d = dv.indexOf("function ScProbEdit");
+  if (c < 0 || d < 0) throw new Error("DetailView.jsx: scProbOf slice markers not found");
+  run(dv.slice(c, d), "detailview.scProbOf.pure.jsx");
+}
 
 // ---- extraction runs INSIDE the vm (same realm), returns a JSON string ----
 const json = run(`
@@ -181,6 +193,16 @@ const json = run(`
       scLabel: ["Bull", "Base", "Bear", "X"].flatMap(k => ["en", "ko"].map(lang => ({ k, lang, out: scLabel(k, lang) }))),
       metricDef: [...Object.keys(KS_METRIC_DEFS), "nope"].map(k => ({ k, out: metricDef(k) })),
     };
+  }
+
+  /* scenario logic — scAutoStatus (price vs target) / scProbOf (label default) */
+  {
+    const autoStatus = [];
+    for (const [px, tg] of [[100,120],[120,120],[117,120],[110,120],[100,80],[80,80],[82,80],[90,80],[100,100],[97,100],[103,100],[null,100],[100,null],[null,null]])
+      autoStatus.push({ px, tg, out: scAutoStatus({ currentPrice: px }, tg) });
+    const prob = [{ prob: 30 }, { prob: 0 }, { label: { en: "Base" } }, { label: { en: "Bull" } }, { label: { en: "Bear" } }, { label: { en: "Custom" } }, { label: { en: "" } }, {}]
+      .map(s => ({ s, out: scProbOf(s) }));
+    out.scenario = { autoStatus, prob };
   }
 
   /* seed financials */

@@ -26,7 +26,11 @@ export function Lic({
     if (process.env.NODE_ENV !== "production") console.warn(`[Lic] 알 수 없는 아이콘 "${name}" (→ ${key}). LUCIDE_ALIASES에 추가 필요.`);
     return null;
   }
-  return <I className={cls} width={size} height={size} strokeWidth={1.7} color={color} style={style} />;
+  // lucide-react는 color prop을 svg stroke 속성에 넣는다. 프로토타입은 "inherit"로
+  // "부모 텍스트색 상속"을 의도했지만, stroke="inherit"는 CSS 초기값 none으로 상속돼
+  // 아이콘이 완전히 사라진다(사이드바 nav 전부). 올바른 값은 currentColor.
+  const stroke = color == null || color === "inherit" ? "currentColor" : color;
+  return <I className={cls} width={size} height={size} strokeWidth={1.7} color={stroke} style={style} />;
 }
 
 /** 사이드바 접기 아이콘 (source/icons.jsx PanelIcon 그대로) */

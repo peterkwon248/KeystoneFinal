@@ -6,10 +6,11 @@
    - Supabase 로컬 스키마(마이그레이션 6개) + RLS/GRANT + 이메일 Auth + seed
    - 플랜 DB화: plan_positions 뷰(security_invoker) + 상태 전이 트리거 2종 + DB 타입 생성
    - 재무 어댑터(DART/EDGAR 14종 × 5년) + 시세 폴링(KIS/Finnhub 14/14 + dividend_yield + FX)
-2. **마일스톤 7 (웹 이식) 1·2단계** (2026-07-03, 데스크톱)
+2. **마일스톤 7 (웹 이식) 진행 중** (2026-07-03)
    - apps/web: Next.js 15 App Router + @supabase/ssr + 프로토타입 CSS 통이식(colors_and_type/reticle)
    - Auth.jsx 이식(로그인/가입/온보딩 3단계 → profiles/portfolios/plans) — 브라우저 E2E 검증
    - 앱 셸: Sidebar + WorkspaceMenu/Settings + 라우트((shell) 그룹) + 테마/언어 토글
+   - 03 플랜 리스트(ListView/BoardView/TimelineView/DisplayPanel) + 사이드바 도구 섹션/CustomizeModal(profiles.sidebar DB 연동) — 브라우저 E2E 검증
 
 ## 설계 결정
 - **골든 동치 전략**: 원본 .jsx를 Node vm에서 eval → 기대값 dump → TS 포팅본과 정확 일치 검증.
@@ -34,6 +35,6 @@ Keystone Final/
 ```
 
 ## TODO (MEMORY.md 기준)
-- 마일스톤 7 계속: screens/ 6장 뷰 이식 (03 플랜 리스트 → 04 플랜 상세 → 01/02/05/06)
-- 사이드바 도구 섹션(OPTIONAL_DESTS + CustomizeModal) / GET /fx·/quote Route Handler + setFxRate
+- 마일스톤 7 계속: **04 플랜 상세(DetailView 3065줄)** → 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
+- 상단 필터 패널(FilterPanel) / GET /fx·/quote Route Handler + setFxRate
 - 이후: 마일스톤 6 (실시간 WS) → 8 (Expo) → 9 (구독)

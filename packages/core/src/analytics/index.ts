@@ -51,6 +51,30 @@ export function planActionLines(p: Plan): ActionLines {
   return out;
 }
 
+// Scenario auto-status from current price vs its target — promoted verbatim from source/icons.jsx.
+// tracking(추적) · approaching(근접) · realized(돌파, upside reached) · invalidated(이탈, downside reached)
+export type ScAutoStatus = "tracking" | "approaching" | "realized" | "invalidated";
+export function scAutoStatus(plan: { currentPrice?: number | null } | null | undefined, target: number | null | undefined): ScAutoStatus {
+  const px = plan && plan.currentPrice;
+  if (px == null || target == null) return "tracking";
+  const up = target >= px;
+  if (up) {
+    if (px >= target) return "realized";
+    if (px >= target * 0.97) return "approaching";
+    return "tracking";
+  }
+  if (px <= target) return "invalidated";
+  if (px <= target * 1.03) return "approaching";
+  return "tracking";
+}
+
+// Scenario probability — explicit prob, else defaulted by case label. Promoted from source/DetailView.jsx.
+export function scProbOf(s: { prob?: number; label?: { en?: string } }): number {
+  if (typeof s.prob === "number") return s.prob;
+  const en = (s.label && s.label.en) || "";
+  return en === "Base" ? 50 : (en === "Bull" || en === "Bear") ? 25 : 20;
+}
+
 // METRIC_DEFS — plain-language definitions for the metrics shown on strategy / position / closeout cards.
 // Hovering a metric label reveals its def. Keep them terse (Vector voice). Keyed by a stable id.
 export const KS_METRIC_DEFS: Record<string, L10n> = {

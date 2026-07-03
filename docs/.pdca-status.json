@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-03T03:20:17.886Z",
+  "lastUpdated": "2026-07-03T05:19:43.411Z",
   "activeFeatures": [
     "core",
     "valuation",
@@ -83,9 +83,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-02T08:18:26.655Z",
-        "lastUpdated": "2026-07-02T08:19:18.062Z"
+        "lastUpdated": "2026-07-03T05:15:58.723Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\packages\\core\\tests\\seed.test.ts"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\packages\\core\\tests\\analytics.test.ts"
     },
     "i18n": {
       "phase": "do",
@@ -161,7 +161,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-02T08:26:23.878Z",
-        "lastUpdated": "2026-07-02T08:26:23.878Z"
+        "lastUpdated": "2026-07-03T05:14:58.588Z"
       },
       "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\packages\\core\\src\\analytics\\index.ts"
     },
@@ -174,9 +174,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:11:47.377Z",
-        "lastUpdated": "2026-07-03T03:20:17.886Z"
+        "lastUpdated": "2026-07-03T05:17:02.435Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\icons.tsx"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\lib\\plan-mapper.ts"
     },
     "plan": {
       "phase": "do",
@@ -187,9 +187,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:13:37.588Z",
-        "lastUpdated": "2026-07-03T00:18:50.973Z"
+        "lastUpdated": "2026-07-03T05:19:43.411Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\board-view.tsx"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\detail-view.tsx"
     },
     "plans": {
       "phase": "do",
@@ -213,9 +213,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:17:29.770Z",
-        "lastUpdated": "2026-07-03T00:17:29.770Z"
+        "lastUpdated": "2026-07-03T04:44:18.006Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\app\\(shell)\\plans\\[id]\\page.tsx"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\app\\(shell)\\plans\\[id]\\actions.ts"
     },
     "shell": {
       "phase": "do",
@@ -252,7 +252,7 @@
   "session": {
     "startedAt": "2026-07-02T08:00:52.252Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-03T03:20:17.886Z"
+    "lastActivity": "2026-07-03T05:19:43.411Z"
   },
   "history": [
     {
@@ -618,6 +618,156 @@
     {
       "timestamp": "2026-07-03T03:20:17.886Z",
       "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:40:16.103Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:40:51.809Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:41:38.463Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:41:57.399Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:42:06.550Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:43:07.313Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:43:26.439Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:43:33.249Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:44:10.455Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:44:17.148Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:44:18.006Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:44:27.039Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:44:29.532Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:44:30.859Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T04:45:40.547Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:09:19.992Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:14:58.588Z",
+      "feature": "analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:15:52.919Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:15:58.723Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:16:46.688Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:16:56.867Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:17:02.435Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:19:26.996Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:19:38.928Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T05:19:43.411Z",
+      "feature": "plan",
       "phase": "do",
       "action": "updated"
     }
