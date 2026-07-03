@@ -18,9 +18,15 @@
 - 브라우저 E2E: 매수폼→체결 **DB 영속(카카오 Jul3 ₩35,250)**·처리완료→undo+리로드 유지·탭·시간버킷팅(오늘5·이전11). tsc 0·core 102·next build 성공
 - **버킷팅 버그 수정**: executor가 ibxBucket을 lib에 두고 inbox-screen에 인라인(`/^today/`)해 웹 토큰 미인식 → 전부 "이전". ibxBucket이 now/Nh/오늘"Mon D" 인식하게 고치고 배선
 
+### 완료 — 마일스톤 7: 02 일지 + 05 전략편집기 → 원본 6개 스크린 완결
+- **02 일지**(커밋 feat 02 일지): 3-pane 노트 피드(`components/journal/*`·`lib/journal.ts`). 플랜 노트(custom_fields.notes) 기반, 추가/편집 **patchNotesAction 재사용**(신규 액션 0). 리더 "기록 시점→현재" since 트랙(jrWritePrice mock, 마일스톤6 교체). 종목 저널(SECS)은 종목상세 이식 때 후속. 브라우저 E2E(새기록 NVDA DB 영속).
+- **05 전략편집기**(커밋 feat 05): **읽기전용(LIBRARY_LOCKED)** 4탭(개요/필드/규칙/미리보기). 관점(st1~8)=등급 룰(gradeFocus×thresholds), 전략(ex1~7)=WHEN→THEN(STRAT_RULES, GUI/수식). core 프리셋 실데이터. **core 프리셋 mutation 0**(로컬 딥클론). `lib/strategy-editor-ref.ts`. 브라우저 E2E(st1 PER 15/40·ex1 다이어그램).
+- **→ 원본 6개 스크린(01~06) 전부 완료**. 06 청산 = 인박스 리더 청산카드로 커버. 이후 새 핸드오프 확장분(07 대시보드~22 종목상세).
+
 ### 미결/후속
-- **push 대기**: 로컬이 origin/main보다 앞섬(우측바·핸드오프·인박스 커밋). 자동승인이 main 직푸시 차단 → **유저가 `git push origin main` 수동 실행 필요**
-- 사이드바 인박스 unread 뱃지 + 트리아지 DB 동기화(묶음), source/core 재조정(칩)
+- **push 대기(중요)**: 로컬이 origin/main보다 **6커밋** 앞섬(우측바·핸드오프·인박스·after-work·일지·전략편집기 + 이 after-work). 자동승인이 main 직푸시 차단 → **유저가 `git push origin main` 수동 실행 필요**
+- 사이드바 인박스 unread 뱃지 + 트리아지 DB 동기화(묶음), source/core 재조정(칩 task_8aa778fc), 종목 저널
+- **재현 함정**: 첫 컴파일 직후 첫 클릭이 /plans로 튕기는 하이드레이션 아티팩트(재진입하면 정상 — 실사용 무관). preview_screenshot 도구 간헐 타임아웃(앱 무관, eval로 검증)
 
 ### 머신
 데스크톱 (`C:\Users\user\Desktop\KeystoneFinal`)
