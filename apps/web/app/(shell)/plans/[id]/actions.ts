@@ -50,6 +50,26 @@ export async function patchNotesAction(id: string, notes: UINote[]) {
   revalidatePath(`/plans/${id}`);
 }
 
+/** 인박스 트리아지 매수/매도 체결 기록 — executions insert. RLS로 소유 플랜만.
+ *  상태 자동전이(active/closing)는 DB 트리거(t_exec_activate/t_exec_close)가 처리 → insert만.
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. exec_date는 오늘(ISO date). */
+export type ExecInput = { side: "buy" | "sell"; price: number; quantity: number };
+
+export async function addExecutionAction(planId: string, input: ExecInput) {
+  const supabase = await supabaseServer();
+  const execDate = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const { error } = await supabase.from("executions").insert({
+    plan_id: planId,
+    side: input.side,
+    price: input.price,
+    quantity: input.quantity,
+    exec_date: execDate,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${planId}`);
+  revalidatePath("/inbox");
+}
+
 /** 전략 탭 규칙 활성/비활성 토글 — rules.enabled. RLS로 소유 플랜의 규칙만. */
 export async function toggleRuleAction(id: string, ruleId: string, enabled: boolean) {
   const supabase = await supabaseServer();
