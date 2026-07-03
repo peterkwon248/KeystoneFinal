@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-03T05:19:43.411Z",
+  "lastUpdated": "2026-07-03T06:14:28.089Z",
   "activeFeatures": [
     "core",
     "valuation",
@@ -174,9 +174,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:11:47.377Z",
-        "lastUpdated": "2026-07-03T05:17:02.435Z"
+        "lastUpdated": "2026-07-03T06:14:28.089Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\lib\\plan-mapper.ts"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\icons.tsx"
     },
     "plan": {
       "phase": "do",
@@ -187,9 +187,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:13:37.588Z",
-        "lastUpdated": "2026-07-03T05:19:43.411Z"
+        "lastUpdated": "2026-07-03T06:09:52.293Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\detail-view.tsx"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\scenarios-tab.tsx"
     },
     "plans": {
       "phase": "do",
@@ -252,7 +252,7 @@
   "session": {
     "startedAt": "2026-07-02T08:00:52.252Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-03T05:19:43.411Z"
+    "lastActivity": "2026-07-03T06:14:28.089Z"
   },
   "history": [
     {
@@ -768,6 +768,48 @@
     {
       "timestamp": "2026-07-03T05:19:43.411Z",
       "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:05:01.199Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:09:34.589Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:09:39.586Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:09:47.934Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:09:52.293Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:12:47.711Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:14:28.089Z",
+      "feature": "web",
       "phase": "do",
       "action": "updated"
     }

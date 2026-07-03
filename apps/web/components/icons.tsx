@@ -13,8 +13,9 @@ const pascal = (name: string) =>
 // lucide-react가 개명한 아이콘 — 프로토타입/core(골든 보호라 수정 불가)의 옛 kebab 이름을 현행 이름으로 매핑.
 // 새 항목은 렌더 시 dev 경고(아래)를 보고 추가한다.
 const LUCIDE_ALIASES: Record<string, string> = {
-  filter: "Funnel",       // Filter → Funnel
-  "pie-chart": "ChartPie", // PieChart → ChartPie
+  filter: "Funnel",         // Filter → Funnel
+  "pie-chart": "ChartPie",  // PieChart → ChartPie
+  "help-circle": "CircleQuestionMark", // HelpCircle → CircleQuestionMark (lucide 0.545)
 };
 
 export function Lic({

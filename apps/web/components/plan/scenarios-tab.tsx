@@ -10,6 +10,7 @@ import { STRATEGIES } from "@keystone/core/reference";
 import { scAutoStatus } from "@keystone/core/analytics";
 import { fmtMoney, fmtCompact, toDispCur } from "@keystone/core/format";
 import type { UIPlan } from "@/lib/plan-mapper";
+import { GapTab } from "./gap-tab";
 
 // 시나리오 미니 상태 pill 색 (source/icons.jsx SC_STATUS_COLOR 그대로 — 순수 프레젠테이션).
 const SC_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
@@ -96,13 +97,7 @@ export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lan
 
   return (
     <div>
-      {/* GapTab(내재가치 vs 가격 시계열 히어로 차트)은 후속 증분 이식 예정 */}
-      <div className="conv" style={{ borderStyle: "dashed", opacity: 0.85 }}>
-        <div className="conv-head">
-          <span className="conv-title">{ko ? "괴리 차트 (내재가치 vs 가격)" : "Gap chart (value vs price)"}</span>
-          <span className="conv-sub">{ko ? "히어로 시계열 차트 — 다음 증분에서 이식 (screens/04)" : "Hero time-series chart — porting next increment"}</span>
-        </div>
-      </div>
+      <GapTab plan={plan} t={t} lang={lang} part="track" />
 
       <div className="sc-grid">
         {plan.scenarios.map((s, i) => {
@@ -168,6 +163,7 @@ export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lan
         })()}
       </div>
 
+      <GapTab plan={plan} t={t} lang={lang} part="head" />
       <ConvergenceTest plan={plan} lang={lang} />
     </div>
   );
