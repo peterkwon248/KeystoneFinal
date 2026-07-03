@@ -26,8 +26,13 @@ export const FIN_SEED: Record<string, FinSeed> = {
   "TSM": { unit: 1e9, rev: [45.5, 56.8, 73.6, 69.3, 90.0], opm: [42.3, 40.9, 49.5, 42.6, 45.7], npm: 40.0, roe: 27.8, gpm: 54, debt: 28, curr: 230, divy: 1.4, revg: 30.0 },
 };
 export function buildFin(ticker: string, px: number, eps: number, sharesOut: number): Fin | null {
-  const years = ["2020", "2021", "2022", "2023", "2024"];
   const s = FIN_SEED[ticker]; if (!s) return null;
+  return buildFinFromSeed(s, px, eps, sharesOut);
+}
+// buildFin의 합성 본문을 FinSeed 입력으로 분리 (골든-불변: ticker는 FIN_SEED 룩업에만 쓰였음).
+// web fin-mapper가 DB 실데이터로 복원한 FinSeed에 재사용해 "DB 우선·시드 폴백" 이음새를 만든다.
+export function buildFinFromSeed(s: FinSeed, px: number, eps: number, sharesOut: number): Fin {
+  const years = ["2020", "2021", "2022", "2023", "2024"];
   {
     const per = eps ? px / eps : null, pbr = s.roe ? (per as number) * (s.roe / 100) : null;
     const tax = 0.22;                                  // 유효법인세율 가정

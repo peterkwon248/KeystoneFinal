@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-03T06:34:35.061Z",
+  "lastUpdated": "2026-07-03T06:51:36.113Z",
   "activeFeatures": [
     "core",
     "valuation",
@@ -148,7 +148,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-02T08:25:08.560Z",
-        "lastUpdated": "2026-07-02T08:25:08.560Z"
+        "lastUpdated": "2026-07-03T06:45:41.690Z"
       },
       "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\packages\\core\\src\\seed\\index.ts"
     },
@@ -174,9 +174,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:11:47.377Z",
-        "lastUpdated": "2026-07-03T06:14:28.089Z"
+        "lastUpdated": "2026-07-03T06:46:11.961Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\icons.tsx"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\lib\\fin-mapper.ts"
     },
     "plan": {
       "phase": "do",
@@ -187,9 +187,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:13:37.588Z",
-        "lastUpdated": "2026-07-03T06:34:12.234Z"
+        "lastUpdated": "2026-07-03T06:51:36.113Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\detail-view.tsx"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\financials-tab.tsx"
     },
     "plans": {
       "phase": "do",
@@ -213,9 +213,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:17:29.770Z",
-        "lastUpdated": "2026-07-03T04:44:18.006Z"
+        "lastUpdated": "2026-07-03T06:50:32.070Z"
       },
-      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\app\\(shell)\\plans\\[id]\\actions.ts"
+      "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\app\\(shell)\\plans\\[id]\\page.tsx"
     },
     "shell": {
       "phase": "do",
@@ -252,7 +252,7 @@
   "session": {
     "startedAt": "2026-07-02T08:00:52.252Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-03T06:34:35.061Z"
+    "lastActivity": "2026-07-03T06:51:36.113Z"
   },
   "history": [
     {
@@ -888,6 +888,84 @@
     {
       "timestamp": "2026-07-03T06:34:35.061Z",
       "feature": "analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:45:41.690Z",
+      "feature": "seed",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:46:11.961Z",
+      "feature": "web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:04.367Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:09.815Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:13.539Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:14.801Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:32.070Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:37.719Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:42.179Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:46.567Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:50:52.322Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:51:23.485Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:51:36.113Z",
+      "feature": "plan",
       "phase": "do",
       "action": "updated"
     }

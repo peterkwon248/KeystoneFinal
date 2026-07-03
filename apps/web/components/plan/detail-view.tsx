@@ -4,7 +4,7 @@
 "use client";
 import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import type { I18nDict, Lang, PlanStatus } from "@keystone/core/types";
+import type { Fin, I18nDict, Lang, PlanStatus } from "@keystone/core/types";
 import { EXEC_STRATEGIES, STATUS_ORDER } from "@keystone/core/reference";
 import { planReturn } from "@keystone/core/analytics";
 import { fmtMoney, fmtCompact } from "@keystone/core/format";
@@ -16,14 +16,15 @@ import { MiniDropdown, type MdItem } from "./mini-dropdown";
 import { ScenariosTab } from "./scenarios-tab";
 import { ActivityTab } from "./activity-tab";
 import { ExecutionsTab } from "./executions-tab";
+import { FinancialsTab } from "./financials-tab";
 import type { UIPlan } from "@/lib/plan-mapper";
 import type { PfLite } from "@/lib/pf-palette";
 import { patchPlanAction } from "@/app/(shell)/plans/[id]/actions";
 
 interface TabDef { key: string; label: string; num?: number; tip?: { ko: string[]; en: string[] } }
 
-export function PlanDetail({ plan, portfolios }: {
-  plan: UIPlan; portfolios: PfLite[];
+export function PlanDetail({ plan, portfolios, fin }: {
+  plan: UIPlan; portfolios: PfLite[]; fin: Fin | null;
 }) {
   const { lang } = usePrefs();
   const t: I18nDict = I18N[lang];
@@ -121,6 +122,7 @@ export function PlanDetail({ plan, portfolios }: {
           </div>
 
           {tab === "scenarios" ? <ScenariosTab plan={plan} t={t} lang={lang} />
+            : tab === "financials" ? <FinancialsTab plan={plan} fin={fin} t={t} lang={lang} />
             : tab === "executions" ? <ExecutionsTab plan={plan} t={t} lang={lang} />
             : tab === "activity" ? <ActivityTab plan={plan} lang={lang} />
             : <TabPlaceholder tab={tab} tabs={tabs} lang={lang} />}

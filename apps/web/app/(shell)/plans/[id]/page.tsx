@@ -3,6 +3,7 @@
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { mapDbPlan, PLAN_SELECT, type DbPlanRow } from "@/lib/plan-mapper";
+import { buildPlanFin, type DbFinRow } from "@/lib/fin-mapper";
 import { pfColor, type PfLite } from "@/lib/pf-palette";
 import { PlanDetail } from "@/components/plan/detail-view";
 
@@ -10,15 +11,25 @@ export default async function PlanDetailPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const supabase = await supabaseServer();
 
-  const [{ data: row }, { data: pfRows }] = await Promise.all([
-    supabase.from("plans").select(PLAN_SELECT).eq("id", id).is("deleted_at", null).maybeSingle(),
-    supabase.from("portfolios").select("id, name, sort").order("sort"),
-  ]);
+  const { data: row } = await supabase
+    .from("plans").select(PLAN_SELECT).eq("id", id).is("deleted_at", null).maybeSingle();
 
   if (!row) notFound();
 
   const plan = mapDbPlan(row as unknown as DbPlanRow);
-  const portfolios: PfLite[] = (pfRows ?? []).map((p, i) => ({ id: p.id, name: p.name, color: pfColor(i) }));
 
-  return <PlanDetail plan={plan} portfolios={portfolios} />;
+  // 포트폴리오 + 재무(security_financials): ticker를 알아야 재무를 fetch하므로 plan 매핑 뒤 병렬로.
+  const [{ data: pfRows }, { data: finRows }] = await Promise.all([
+    supabase.from("portfolios").select("id, name, sort").order("sort"),
+    supabase.from("security_financials").select("*").eq("ticker", plan.ticker).order("fiscal_year"),
+  ]);
+
+  const portfolios: PfLite[] = (pfRows ?? []).map((p, i) => ({ id: p.id, name: p.name, color: pfColor(i) }));
+  // DB 우선·시드 폴백 — DART sync 시 자동 실데이터화 (lib/fin-mapper).
+  const fin = buildPlanFin(
+    plan.ticker, plan.cur, (finRows ?? []) as unknown as DbFinRow[],
+    plan.currentPrice, plan.eps, plan.sharesOut,
+  );
+
+  return <PlanDetail plan={plan} portfolios={portfolios} fin={fin} />;
 }
