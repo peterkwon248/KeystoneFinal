@@ -20,8 +20,9 @@
 | 3 | 플랜 데이터 DB화 | ✅ 2026-07-02 (롤업 뷰 + 전이 트리거 2종 + 타입 생성, E2E 검증) |
 | 4 | 재무 어댑터 (DART/EDGAR) | ✅ 2026-07-02 (apps/server, 14/14 동기화, 실측 교차검증) |
 | 5 | 시세 폴링 + FX | ✅ 2026-07-02 (KIS/Finnhub 14/14 + dividend_yield + FX) ← **MVP 데이터 레이어 완료** |
-| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — Auth+온보딩+앱 셸+**03 플랜 리스트+사이드바 도구/CustomizeModal** 완료, 04 상세부터 남음 |
-| 6·8·9 | 실시간 WS / 모바일 / 구독 | |
+| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — Auth+온보딩+앱셸+03 리스트+사이드바 완료. **04 상세 8탭 중 5개**(셸·시나리오·활동·체결·재무제표) 완료, 남은 4: 전략/투자지표/밸류에이션/인사이트 |
+| 6 | 실시간 WS **+ 과거 시세 히스토리 백필** | 차트 실데이터의 전제 (아래 참조) |
+| 8·9 | 모바일 / 구독 | |
 
 ## 커밋/PR 히스토리
 - `685525a` 초기 커밋: 프로토타입 + 스펙 + 스크린샷 (2026-07-02)
@@ -58,3 +59,5 @@
 - **앱 셸 레이아웃**: 프로토타입 App.jsx 구조 = `.app`(flex column) > banner + `.app-row`(flex row) > 사이드바 + main. `.app-row` 래퍼 빼먹으면 사이드바+메인이 세로로 쌓임(2026-07-03 버그 수정)
 - **사이드바 도구 섹션**: `lib/sidebar-config.ts`(OPTIONAL_DESTS 7종/SB_CFG0/SB_ORDER0/normalizeSidebar/mergedKeys), `components/shell/sidebar-config.tsx`(Context, cfg/order/pinned를 **profiles.sidebar(jsonb)로 서버 동기화**), `customize-modal.tsx`(핀→상단·표시토글·드래그순서·기본값복원). 상단 고정=pinned, 도구 섹션=cfg true & !pinned
 - **⚠️ supabase-js 쿼리 빌더는 lazy thenable** — `.then()`/`await` 호출해야 HTTP 요청 발사됨. `void supabase.from().update().eq()`는 빌더만 만들고 **요청 안 감**(profiles.sidebar 영속이 조용히 실패했던 버그). mutation은 반드시 실행할 것
+- **04 플랜 상세 이식 이음새(2026-07-03)**: `components/plan/`에 mini-dropdown·scenarios-tab·gap-tab·execution-ledger·perf-band·financials-tab·activity-tab. mock 시계열은 `lib/gap-history.ts`(GapTab priceHistory/ivHistory/scenarioHistory)+`lib/trajectory.ts`. 재무는 `lib/fin-mapper.ts`(DB security_financials 완전하면 우선, 아니면 core FIN_SEED 폴백). 헤더 픽커 영속=`app/(shell)/plans/[id]/actions.ts`. core 승격 골든 92: scAutoStatus/scProbOf/computeLedger/buildFinFromSeed(seed 분리)
+- **⚠️ 실데이터 전환 필수(2026-07-03 확정, NEXT-ACTION 상세)**: ①**과거 시세 히스토리 백필이 마일스톤 6 핵심**(forward-only 축적은 실사용 불가 — 유저 과거 차트/보유기간 전제). KIS 일봉 + US 대안provider 조사 + `security_price_history` 테이블 신규. 교체 지점=trajectory.ts/gap-history.ts. ②**날짜 앵커** KS_REF=2026-06-26·GapTab new Date(2026,5,..) 하드코딩 → 실제 today 교체. ③재무는 `sync:financials`로 DB 채우면 fin-mapper가 코드변경0으로 자동 실측 전환(공시주기 기준)

@@ -1,5 +1,35 @@
 # SESSION-LOG (append-only, 최신이 위)
 
+## 2026-07-03 저녁 (집)
+
+### 완료 — 마일스톤 7 (웹 이식): 04 플랜 상세 5탭 이식
+- **셸**: 크럼·헤더 픽커(상태/포트폴리오/전략, 서버 액션 영속)·티커라인·타이틀·메트릭행+스파크라인·8탭 바 + MiniDropdown 이식. 스크린샷 04 상단부 재현
+- **시나리오 탭**: 카드 그리드(함의 PER/시총 파생 — 프로토타입 값 정확 일치)·평균 카드·수렴분석(IRR)·상태 pill + **GapTab 히어로 차트**(내재가치 vs 가격 SVG 시계열·기간 토글·괴리 헤드라인·체결 마커)
+- **활동 탭** / **체결 탭**(회차 누적 장부·성과밴드 — 합계행 메트릭 일치)
+- **재무제표 탭**: IS/BS/CF 3표+토글·렌즈 강조·Waterfall·차트 + **DB우선·시드폴백 실연결 이음새**(`lib/fin-mapper.ts`)
+- **core 순수 로직 4종 승격**(골든 89→92): scAutoStatus·scProbOf·computeLedger·buildFinFromSeed(seed 분리). 골든 생성기 슬라이스 eval 방식
+- **버그 수정 2건**: 사이드바 nav 아이콘 전멸(`Lic` color="inherit"→currentColor) / help-circle 개명(→CircleQuestionMark). 아이콘 alias
+- executor-high 3회 위임(GapTab·체결·재무제표), 메인이 브라우저 E2E 검증. 커밋 6건 전부 검증 후
+
+### 브레인스토밍 & 큰 결정
+- **증분 이식 전략**: DetailView 3065줄+valuation_view+planinsights를 탭 단위 증분으로. 각 탭이 쓰는 데이터를 그 증분에서 실 DB 필드로 연결
+- **실데이터 전환 = "탭 이식마다" 국소 연결**, 큰 전환점 없음. 순수 로직은 골든 보호로 mock/실 동일 동작
+- **⚠️ 과거 시세 히스토리 백필이 마일스톤 6 핵심(옵션 아님)** — forward-only 축적은 실사용 불가. 유저 과거 차트/보유기간의 전제. KIS 일봉+US 대안 provider 조사 필요
+- **날짜 앵커(2026-06 하드코딩) 실제 today 교체** 필수 — NEXT-ACTION §실데이터에 명시 기록
+- 재무 이음새는 sync 시 코드변경0으로 자동 실측(fin-mapper DB완전성 판정)
+
+### 다음
+- 04 상세 남은 4탭: 전략(최대)·투자지표(fin 재사용)·밸류에이션·인사이트 → 이후 01/02/05/06 스크린 (NEXT-ACTION 참조)
+
+### Watch Out
+- 이 머신 DB `security_financials`는 seed(revenue+op_margin만) → 재무제표는 core FIN_SEED 폴백 경로. 실측은 `sync:financials`(.env) 후
+- 차트 시계열은 전부 mock(`lib/trajectory.ts`·`gap-history.ts`) — 마일스톤 6 백필 전까지
+- 프리뷰 스크린샷 툴 간헐 타임아웃(페이지는 정상) — DOM/inspect로 대체 검증
+- 시드 재실행 시 플랜 uuid 바뀜 → 하드코딩 상세 URL 404 (리스트에서 재진입)
+
+### 머신
+집
+
 ## 2026-07-03 오후 (집)
 
 ### 완료 — 마일스톤 7 (웹 이식) 계속

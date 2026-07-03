@@ -11,6 +11,7 @@
    - Auth.jsx 이식(로그인/가입/온보딩 3단계 → profiles/portfolios/plans) — 브라우저 E2E 검증
    - 앱 셸: Sidebar + WorkspaceMenu/Settings + 라우트((shell) 그룹) + 테마/언어 토글
    - 03 플랜 리스트(ListView/BoardView/TimelineView/DisplayPanel) + 사이드바 도구 섹션/CustomizeModal(profiles.sidebar DB 연동) — 브라우저 E2E 검증
+   - **04 플랜 상세 8탭 중 5개** (2026-07-03): 셸(헤더 픽커·메트릭·탭바) + 시나리오(카드·수렴분석·GapTab 시계열 차트) + 활동 + 체결(회차 장부·성과밴드) + **재무제표(IS/BS/CF + DB우선·시드폴백 실연결 이음새)** — 전부 브라우저 E2E. core 승격 골든 92(scAutoStatus/scProbOf/computeLedger/buildFinFromSeed)
 
 ## 설계 결정
 - **골든 동치 전략**: 원본 .jsx를 Node vm에서 eval → 기대값 dump → TS 포팅본과 정확 일치 검증.
@@ -27,7 +28,7 @@ Keystone Final/
 ├─ ARCHITECTURE.md / DATA_MODEL.md / API.md / HANDOFF.md   ← 스펙
 ├─ screens/          ← 디자인 구현 기준 (6장)
 ├─ source/           ← 프로토타입 (읽기 전용 참조 + 골든 원본)
-├─ packages/core/    ← 순수 로직 (골든 89 테스트로 보호)
+├─ packages/core/    ← 순수 로직 (골든 92 테스트로 보호)
 ├─ supabase/         ← 로컬 스택 (마이그레이션 6개 + seed)
 ├─ apps/server/      ← 어댑터 (DART/EDGAR/KIS/Finnhub/FX)
 ├─ apps/web/         ← Next.js 15 (Auth+온보딩+앱 셸 완료, 뷰 이식 중)
@@ -35,6 +36,7 @@ Keystone Final/
 ```
 
 ## TODO (MEMORY.md 기준)
-- 마일스톤 7 계속: **04 플랜 상세(DetailView 3065줄)** → 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
+- 마일스톤 7 계속: **04 상세 남은 4탭**(전략·투자지표·밸류에이션·인사이트) → 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
 - 상단 필터 패널(FilterPanel) / GET /fx·/quote Route Handler + setFxRate
-- 이후: 마일스톤 6 (실시간 WS) → 8 (Expo) → 9 (구독)
+- 이후: 마일스톤 6 (실시간 WS **+ 과거 시세 히스토리 백필** — 차트 실데이터 전제) → 8 (Expo) → 9 (구독)
+- ⚠️ **실데이터 전환 필수**(NEXT-ACTION §실데이터): 히스토리 백필(옵션 아님) + 날짜 앵커(2026-06 하드코딩) 교체 + 재무 sync

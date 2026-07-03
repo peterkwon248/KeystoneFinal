@@ -37,14 +37,18 @@
 - [x] 03 플랜 리스트: ListView + BoardView + TimelineView + DisplayPanel 이식 (2026-07-03, 브라우저 E2E: 11 플랜 시드, 리스트/보드/타임라인 3뷰 + 상태/포트폴리오 그룹핑 검증)
 - [x] 앱 셸 레이아웃 버그 수정: `.app-row`(가로 flex) 래퍼 누락 → 사이드바+메인 세로 스택 → 복원 (2026-07-03)
 - [x] 사이드바 도구 섹션 (OPTIONAL_DESTS + CustomizeModal — **profiles.sidebar DB 연동**) (2026-07-03, E2E: 핀→상단·숨김·순서·리로드 유지·기본값 복원 검증)
-- [ ] screens/ 나머지 뷰 이식: 04 플랜 상세(DetailView) → 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
+- [~] **04 플랜 상세(DetailView) — 8탭 중 5개 완료** (2026-07-03, 브라우저 E2E + 골든 92):
+  - [x] 셸(헤더 픽커/메트릭행/탭바 + MiniDropdown) · [x] 시나리오(카드·수렴분석·GapTab 시계열 차트) · [x] 활동 · [x] 체결(회차 장부·성과밴드) · [x] 재무제표(IS/BS/CF + DB우선·시드폴백 실연결)
+  - [ ] 남은 4탭: 전략(StrategyTab, 룰/회차) / 투자지표(fin 재사용) / 밸류에이션(valuation_view.jsx) / 인사이트(planinsights.jsx)
+- [ ] 나머지 스크린: 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
 - [ ] GET /fx·/quote — Next.js Route Handler로 (서버 런타임 결정 완료: Next 내장으로 시작)
 - [ ] 클라이언트 초기화에서 setFxRate(fx.rate) 연결
 
 ## P4 — 마일스톤 6·8·9
+- [ ] **과거 시세 히스토리 백필 (마일스톤 6 핵심, 옵션 아님)** — KIS 일봉 + US 대안 provider 조사 + `security_price_history` 테이블. 교체 지점 `lib/trajectory.ts`·`lib/gap-history.ts`. forward-only 축적은 실사용 불가
+- [ ] **날짜 앵커 교체** — KS_REF=2026-06-26·GapTab new Date(2026,5,..) 하드코딩 → 실제 today
 - [ ] WS 멀티플렉서 + Realtime 팬아웃 (참고 레포 NEXT-ACTION에 정리됨)
-- [ ] Expo 모바일
-- [ ] Stripe/RevenueCat 구독
+- [ ] Expo 모바일 · Stripe/RevenueCat 구독
 
 ## 완료
 - [x] KeystoneFinal 레포 생성 + 초기 커밋 (2026-07-02)
