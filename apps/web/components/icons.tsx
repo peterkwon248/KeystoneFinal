@@ -16,6 +16,7 @@ const LUCIDE_ALIASES: Record<string, string> = {
   filter: "Funnel",         // Filter → Funnel
   "pie-chart": "ChartPie",  // PieChart → ChartPie
   "help-circle": "CircleQuestionMark", // HelpCircle → CircleQuestionMark (lucide 0.545)
+  "alert-triangle": "TriangleAlert",   // AlertTriangle → TriangleAlert (StrategyTab rule-warn)
 };
 
 export function Lic({

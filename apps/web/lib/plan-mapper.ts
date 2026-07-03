@@ -4,6 +4,7 @@
 import type { Currency, L10n, Plan, PlanStatus, Scenario, ScenarioStatus, Execution, Rule } from "@keystone/core/types";
 import { MON_EN } from "@keystone/core/format";
 import { SC_LABEL_MAP } from "@keystone/core/analytics";
+import { RULE_TRIGS } from "@keystone/core/reference";
 
 /** 리스트/보드/타임라인이 쓰는 Plan + DB 식별자 */
 export interface UIPlan extends Plan {
@@ -66,7 +67,27 @@ export interface DbPlanRow {
     status: ScenarioStatus; color: string | null; is_auto: boolean; sort: number;
   }[];
   executions: { side: "buy" | "sell"; exec_date: string; price: number; quantity: number | null; amount: number | null; round_no: number | null }[];
-  rules: { id: string; enabled: boolean }[];
+  rules: { id: string; enabled: boolean; condition: DbRuleCondition | null; action: DbRuleAction | null; last_fired: string | null }[];
+}
+
+/* DB rules.condition jsonb — 트리거 인코딩 (dev-seed-plans.mjs가 쓰고 여기서 디코드) */
+interface DbRuleCondition { type: string; op?: string; value?: number }
+/* DB rules.action jsonb — 액션 인코딩 (action.type = RULE_ACTS id) */
+interface DbRuleAction { type: string }
+
+/* condition(type/op) → Rule.trig (strategy-web-spec 디코드 표) */
+function decodeTrig(c: DbRuleCondition | null): { trig?: string; trigVal?: string } {
+  if (!c) return {};
+  switch (c.type) {
+    case "price":
+      return { trig: c.op === "gte" ? "price_ge" : "price_le", trigVal: c.value != null ? String(c.value) : undefined };
+    case "return":
+      return { trig: c.op === "lte" ? "ret_le" : "ret_ge", trigVal: c.value != null ? String(c.value) : undefined };
+    case "loc": return { trig: "loc_hit" };
+    case "bull_target": return { trig: "target_hit" };
+    case "buy_fill": return { trig: "buy_exec" };
+    default: return {};
+  }
 }
 
 export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
@@ -118,13 +139,29 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
   const baseSc = scenarios.find((s) => s.label.en === "Base");
   const iv = baseSc ? baseSc.target : undefined;
 
-  // 리스트 뷰가 세는 건 활성 룰 개수뿐 — 나머지 필드는 스텁 (Rule 상세는 04 플랜 상세에서)
-  const rules: Rule[] = (row.rules ?? []).map((r) => ({
-    id: r.id, on: r.enabled, last: "",
-    name: { en: "", ko: "" }, when: { en: "", ko: "" }, then: { en: "", ko: "" },
-  }));
+  // DB rules(condition/action/last_fired) → 리치 Rule (StrategyTab이 trig/act 드롭다운·evalRule에 사용).
+  // name은 DB에 없어(코스메틱) trig의 RULE_TRIGS ko/en에서 파생. 시드 룰은 모두 custom/edited=false.
+  const rules: Rule[] = (row.rules ?? []).map((r) => {
+    const { trig, trigVal } = decodeTrig(r.condition);
+    const act = r.action?.type;
+    const td = trig ? RULE_TRIGS.find((x) => x.id === trig) : null;
+    const name: L10n = td ? { en: td.en, ko: td.ko } : { en: "Rule", ko: "규칙" };
+    return {
+      id: r.id, on: r.enabled,
+      last: r.last_fired ? toMonD(r.last_fired) : "Never",
+      name, trig, trigVal, act,
+      when: { en: "", ko: "" }, then: { en: "", ko: "" },
+      custom: false, edited: false,
+    };
+  });
 
   const cf = row.custom_fields ?? {};
+  // custom_fields.goal → plan.goal ({type:'return'|'price', value:number}) — 유효할 때만.
+  const goalCf = cf.goal as { type?: unknown; value?: unknown } | undefined;
+  const goal: Plan["goal"] | undefined =
+    goalCf && (goalCf.type === "return" || goalCf.type === "price") && typeof goalCf.value === "number"
+      ? { type: goalCf.type, value: goalCf.value }
+      : undefined;
   const divisions = typeof cf.divisions === "number" ? cf.divisions
     : typeof cf.divisions === "string" && cf.divisions !== "" ? Number(cf.divisions) : undefined;
 
@@ -152,6 +189,7 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
     eps: epsN,
     sharesOut: Number(row.shares_out ?? row.securities?.shares_out ?? 0),
     iv,
+    goal,
     scenarios,
     executions,
     rules,
@@ -167,5 +205,5 @@ export const PLAN_SELECT = `
   securities(name, market, last_close, shares_out),
   scenarios(case_t, label, target, thesis, status, color, is_auto, sort),
   executions(side, exec_date, price, quantity, amount, round_no),
-  rules(id, enabled)
+  rules(id, enabled, condition, action, last_fired)
 `;

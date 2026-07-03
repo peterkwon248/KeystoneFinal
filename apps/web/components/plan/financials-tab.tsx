@@ -15,7 +15,7 @@ import type { UIPlan } from "@/lib/plan-mapper";
 type Lens = (typeof STRATEGIES)[number] & { hiliteLines?: string[] };
 
 /* ---- 관점(밸류에이션 렌즈) 픽커 — source/DetailView.jsx LensPicker(3080~) ---- */
-function LensPicker({ value, onPick, lang, width = 200 }: {
+export function LensPicker({ value, onPick, lang, width = 200 }: {
   value: string; onPick: (v: string | null | undefined) => void; lang: Lang; width?: number;
 }) {
   const ko = lang === "ko";

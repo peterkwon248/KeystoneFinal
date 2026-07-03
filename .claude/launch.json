@@ -10,8 +10,9 @@
     {
       "name": "web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@keystone/web", "dev"],
-      "port": 3000
+      "runtimeArgs": ["--filter", "@keystone/web", "exec", "next", "dev"],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

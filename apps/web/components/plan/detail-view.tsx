@@ -14,12 +14,15 @@ import { usePrefs } from "@/components/shell/prefs";
 import { Sparkline } from "./sparkline";
 import { MiniDropdown, type MdItem } from "./mini-dropdown";
 import { ScenariosTab } from "./scenarios-tab";
+import { StrategyTab } from "./strategy-tab";
 import { ActivityTab } from "./activity-tab";
 import { ExecutionsTab } from "./executions-tab";
 import { FinancialsTab } from "./financials-tab";
+import { IndicatorsTab } from "./indicators-tab";
+import { ValuationTab } from "./valuation-tab";
 import type { UIPlan } from "@/lib/plan-mapper";
 import type { PfLite } from "@/lib/pf-palette";
-import { patchPlanAction } from "@/app/(shell)/plans/[id]/actions";
+import { applyValuationTargetsAction, patchPlanAction, setGoalAction, toggleRuleAction, type PlanGoal } from "@/app/(shell)/plans/[id]/actions";
 
 interface TabDef { key: string; label: string; num?: number; tip?: { ko: string[]; en: string[] } }
 
@@ -35,6 +38,16 @@ export function PlanDetail({ plan, portfolios, fin }: {
 
   const patch = (p: { status?: PlanStatus; portfolioId?: string | null; execId?: string | null }) =>
     startTransition(() => { void patchPlanAction(plan.dbId, p); });
+
+  // 전략 탭 실연결 콜백 — supabase-js 빌더는 lazy thenable이라 서버 액션 내부에서 await됨.
+  const onToggleRule = (ruleId: string, enabled: boolean) =>
+    startTransition(() => { void toggleRuleAction(plan.dbId, ruleId, enabled); });
+  const onSetGoal = (goal: PlanGoal | null) =>
+    startTransition(() => { void setGoalAction(plan.dbId, goal); });
+  // 밸류에이션 탭 "시나리오에 적용" — 슬롯 적정가(bull/base/bear)를 scenarios.target 에 기록.
+  // base target 갱신 → plan-mapper 가 iv 를 파생하므로 iv 는 자동 반영(별도 필드 없음).
+  const onApplyTargets = (targets: { bull: number; base: number; bear: number }) =>
+    startTransition(() => { void applyValuationTargetsAction(plan.dbId, targets); });
 
   const ret = planReturn(plan);
   const isClosed = plan.status === "closed";
@@ -122,7 +135,10 @@ export function PlanDetail({ plan, portfolios, fin }: {
           </div>
 
           {tab === "scenarios" ? <ScenariosTab plan={plan} t={t} lang={lang} />
+            : tab === "strategy" ? <StrategyTab plan={plan} t={t} lang={lang} onToggleRule={onToggleRule} onSetGoal={onSetGoal} />
             : tab === "financials" ? <FinancialsTab plan={plan} fin={fin} t={t} lang={lang} />
+            : tab === "indicators" ? <IndicatorsTab plan={plan} fin={fin} t={t} lang={lang} />
+            : tab === "valuation" ? <ValuationTab plan={plan} fin={fin} t={t} lang={lang} onApplyTargets={onApplyTargets} />
             : tab === "executions" ? <ExecutionsTab plan={plan} t={t} lang={lang} />
             : tab === "activity" ? <ActivityTab plan={plan} lang={lang} />
             : <TabPlaceholder tab={tab} tabs={tabs} lang={lang} />}
