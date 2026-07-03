@@ -2,7 +2,12 @@
 
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
 완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 전부 완료** — 전부 브라우저 E2E 검증. 다음:
-1. **🎯 우측 디테일바(PropsSidebar, `source/DetailView.jsx:1143` `.detail-side`)** — 04 상세 화면의 마지막 조각. 탭이 아니라 모든 탭에 걸치는 우측 레일이라 8탭 카운트에 안 잡혀 별도 증분. 고유 콘텐츠 = 포지션/청산 요약·전략 파라미터·커스텀 필드(추가/편집)·노트(추가/편집/삭제) + 접기 토글(`rightCollapsed`/`onToggleRight`). 상태/포트폴리오/전략 피커는 이미 셸의 `dt-headrow`로 올라가 있음(중복). ⚠️ **첫 스텝: `screens/04-plan-detail.png`가 펼침/접힘 어느 상태로 캡처됐는지 확인**(디자인 불변 기준) → 그 상태로 재현. `PropsSidebar` + `detail-wrap` 안에 `.detail-side`를 `.detail-main` 형제로 추가. 커스텀필드/노트는 mutation → custom_fields/notes를 custom_fields(jsonb)에 저장하는 서버액션(전략탭 setGoal 패턴)
+1. **🎯 우측 디테일바(PropsSidebar, `source/DetailView.jsx:1143` `.detail-side`)** — 04 상세 화면의 마지막 조각. 탭이 아니라 모든 탭에 걸치는 우측 레일이라 8탭 카운트에 안 잡혀 별도 증분. 고유 콘텐츠 = 포지션/청산 요약·전략 파라미터·커스텀 필드(추가/편집)·노트(추가/편집/삭제) + 접기 토글(`rightCollapsed`/`onToggleRight`). 상태/포트폴리오/전략 피커는 이미 셸의 `dt-headrow`로 올라가 있음(중복). **조사 완료(다음 세션 바로 시작 가능)**:
+   - ⚠️ **펼침/접힘 결정**: `screens/04-plan-detail.png`엔 우측바 안 보임(메인이 우측 끝까지)=**접힘으로 보임**. BUT 프로토타입 `App.jsx:420 useState(false)`=**기본 펼침**. 충돌 → screens=불변기준이니 **접힘 기본 + 토글로 펼침** 채택 권장(재확인만). rightCollapsed는 프로토타입 세션상태(비영속) → 웹 영속 방식(profiles.sidebar 같은 jsonb? or 세션) 결정
+   - 레이아웃: `detail-wrap` 안에 `.detail-side`를 `.detail-main` 형제로 추가(접힘 시 `.detail-main`의 `rp-toggle` 버튼 노출). 앱셸 `.app-row`와 별개(상세 내부)
+   - 헬퍼: `closeoutSummary`(`source/ledger.jsx:196` — computeLedger처럼 이미 core 승격됐는지 먼저 확인, 안 됐으면 골든 승격)·`holdingPeriod`(`DetailView.jsx:6`, 로컬 view 헬퍼로 이식)
+   - CSS: detail-side/ds-toolbar/side-group/side-cap/prop-line/pl-label/pl-value/rp-toggle **존재 ✓**. 커스텀필드/노트 sub-row 클래스는 실제 클래스명 확인(cf-row/note-row 추정은 web CSS에 0 — 소스에서 실클래스 확인)
+   - 뮤테이션: 노트·커스텀필드 → `custom_fields`(jsonb)에 저장하는 서버액션(전략탭 `setGoal` 패턴, supabase-js await 필수)
    - ✅ 완료 8탭: 셸 · 시나리오 · 활동 · 체결 · 재무제표 · 전략 · 투자지표 · 밸류에이션 · **인사이트**(실행정확도 게이지·평단추이 차트·시나리오거리·룰이력, 진입전 empty-state — `insights-tab.tsx`, computeLedger 사용)
    - 이후 다른 스크린: 01 인박스 → 02 일지 → 05 전략 편집기 → 06 청산
    - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리 (ARCHITECTURE §7 이음새 맵). screens/*.png이 픽셀 기준 · source/*.jsx가 로직 기준
@@ -83,4 +88,4 @@ pnpm --filter @keystone/server sync:financials      # DART/EDGAR 실데이터 (.
 - 데스크톱 (Windows, `C:\Users\user\Desktop\KeystoneFinal`) — 마일스톤 2 진행 머신
 
 ## 마지막 갱신
-2026-07-03 밤 (집)
+2026-07-03 심야 (집)

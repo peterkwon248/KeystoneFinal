@@ -1,5 +1,31 @@
 # SESSION-LOG (append-only, 최신이 위)
 
+## 2026-07-03 심야 (집) — 인사이트 탭 → 04 상세 8탭 완료
+
+### 완료 — 마일스톤 7: 04 상세 인사이트 탭 이식 (마지막 8번째 탭)
+- **인사이트 탭(insights-tab.tsx)**: 실행 정확도(반원 게이지 InsGauge·평단 아래 매수 비율) + 메트릭 타일(관찰→진입/보유기간/회차/평단개선/룰발동) + 평단가 추이 차트(AvgTrendChart) + 시나리오 거리 바 + 룰 발동 이력. 진입전 empty-state. 순수 표시형(뮤테이션 없음)
+- InsSection·InsGauge를 source/Insights.jsx에서 모듈 프라이빗 이식(window 참조 제거). computeLedger(core, 기승격)·trajMonthIdx(lib/trajectory, 기존) import. core/CSS 작업 0
+- 브라우저 E2E 양쪽 상태 검증: 포지션 있음(PLN-001 4섹션·게이지100%·차트) + 진입전(PLN-009 게이지—·empty-state). typecheck 클린·core 102·SWC 클린. 커밋 41fdabb 푸시
+- **→ 04 플랜 상세 8탭 전부 완료** (시나리오·전략·재무제표·투자지표·밸류에이션·인사이트·체결·활동)
+
+### 브레인스토밍 & 큰 결정 (배포 모델 확인)
+- **최종 형태 = 클라우드 웹 SaaS**(노션/챗지피티/클로드처럼 브라우저 접속, 다운로드 없음) + 모바일(Expo, core 공유) + 구독. 지금 로컬은 개발환경일 뿐, 클라우드 전환은 마일스톤9 배포에서 스위치(Vercel + Supabase 클라우드, 마이그레이션 기존). 데스크톱 앱은 웹 래핑(선택, 불필요)
+
+### 다음 (우측 디테일바 groundwork — NEXT-ACTION §1 상세)
+- **우측 디테일바(PropsSidebar, `source/DetailView.jsx:1143`)** = 04 상세 마지막 조각. 조사 완료분:
+  - ⚠️ **펼침/접힘 결정 필요**: `screens/04-plan-detail.png`엔 우측바 안 보임(메인이 우측 끝까지) = 접힘 상태로 보임. BUT 프로토타입 `App.jsx:420 useState(false)`=기본 펼침. 충돌 → screens 기준(불변규칙)이면 접힘 기본, 재확인 필요. rightCollapsed은 프로토타입 세션상태(비영속) → 웹은 영속 방식(profiles? 세션?) 결정
+  - 헬퍼: `closeoutSummary`(source/ledger.jsx:196 — computeLedger처럼 core 승격 필요 여부 확인)·`holdingPeriod`(DetailView.jsx:6, 로컬 view 헬퍼)
+  - CSS: detail-side/ds-toolbar/side-group/side-cap/prop-line/pl-label/pl-value/rp-toggle 존재 ✓. 커스텀필드/노트 sub-row 클래스는 실제 클래스명 확인 필요(cf-row/note-row 추정은 0)
+  - 뮤테이션: 노트(추가/편집/삭제)·커스텀필드(추가/편집) → custom_fields(jsonb)에 저장하는 서버액션(전략탭 setGoal 패턴). 상태/포트폴리오/전략 피커는 셸 헤더에 이미 있어 중복
+- 우측바 뒤: 01 인박스 → 02 일지 → 05 전략편집기 → 06 청산
+
+### Watch Out
+- **SWC≠tsc 제네릭-캐스트-in-JSX 금지** 계속 유효. dev 서버 stale시 재시작
+- 우측바 = `detail-wrap` 안에 `.detail-side`를 `.detail-main` 형제로 추가(앱셸 `.app-row` 패턴과 별개, 상세 내부 레이아웃)
+
+### 머신
+집
+
 ## 2026-07-03 밤 (집)
 
 ### 완료 — 마일스톤 7: 04 상세 3탭 이식 (전략·투자지표·밸류에이션) → 7/8탭
