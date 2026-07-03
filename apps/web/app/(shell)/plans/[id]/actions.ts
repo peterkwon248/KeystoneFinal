@@ -3,6 +3,7 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Json, PlanStatus } from "@keystone/core/types";
+import type { UINote } from "@/lib/plan-mapper";
 
 type PlanPatch = { status?: PlanStatus; portfolioId?: string | null; execId?: string | null };
 
@@ -30,6 +31,20 @@ export async function setGoalAction(id: string, goal: PlanGoal | null) {
   if (readErr) throw new Error(readErr.message);
   const cf: { [k: string]: Json } = { ...((data?.custom_fields as { [k: string]: Json } | null) ?? {}) };
   if (goal) cf.goal = goal; else delete cf.goal;
+  const { error } = await supabase.from("plans").update({ custom_fields: cf }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${id}`);
+}
+
+/** 사이드바 메모(투자 일지) 영속 — plans.custom_fields.notes 병합 update. setGoalAction 패턴.
+ *  supabase-js 빌더는 lazy thenable 이라 read/update 모두 반드시 await. RLS 로 소유자만. */
+export async function patchNotesAction(id: string, notes: UINote[]) {
+  const supabase = await supabaseServer();
+  const { data, error: readErr } = await supabase
+    .from("plans").select("custom_fields").eq("id", id).single();
+  if (readErr) throw new Error(readErr.message);
+  const cf: { [k: string]: Json } = { ...((data?.custom_fields as { [k: string]: Json } | null) ?? {}) };
+  cf.notes = notes as unknown as Json;
   const { error } = await supabase.from("plans").update({ custom_fields: cf }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/plans/${id}`);

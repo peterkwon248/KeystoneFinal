@@ -21,9 +21,10 @@ import { FinancialsTab } from "./financials-tab";
 import { IndicatorsTab } from "./indicators-tab";
 import { ValuationTab } from "./valuation-tab";
 import { InsightsTab } from "./insights-tab";
-import type { UIPlan } from "@/lib/plan-mapper";
+import { PropsSidebar } from "./props-sidebar";
+import type { UINote, UIPlan } from "@/lib/plan-mapper";
 import type { PfLite } from "@/lib/pf-palette";
-import { applyValuationTargetsAction, patchPlanAction, setGoalAction, toggleRuleAction, type PlanGoal } from "@/app/(shell)/plans/[id]/actions";
+import { applyValuationTargetsAction, patchNotesAction, patchPlanAction, setGoalAction, toggleRuleAction, type PlanGoal } from "@/app/(shell)/plans/[id]/actions";
 
 interface TabDef { key: string; label: string; num?: number; tip?: { ko: string[]; en: string[] } }
 
@@ -34,6 +35,8 @@ export function PlanDetail({ plan, portfolios, fin }: {
   const t: I18nDict = I18N[lang];
   const router = useRouter();
   const [tab, setTab] = useState("scenarios");
+  // 우측 디테일바 — screens/04 기준(우측바 안 보임)이므로 접힘 기본.
+  const [rightCollapsed, setRightCollapsed] = useState(true);
   const [, startTransition] = useTransition();
   const onBack = () => router.push("/plans");
 
@@ -49,6 +52,9 @@ export function PlanDetail({ plan, portfolios, fin }: {
   // base target 갱신 → plan-mapper 가 iv 를 파생하므로 iv 는 자동 반영(별도 필드 없음).
   const onApplyTargets = (targets: { bull: number; base: number; bear: number }) =>
     startTransition(() => { void applyValuationTargetsAction(plan.dbId, targets); });
+  // 사이드바 메모 영속 — onSetGoal 과 동일 패턴(서버 액션이 revalidatePath 하므로 refresh 불필요).
+  const onPatchNotes = (notes: UINote[]) =>
+    startTransition(() => { void patchNotesAction(plan.dbId, notes); });
 
   const ret = planReturn(plan);
   const isClosed = plan.status === "closed";
@@ -77,6 +83,7 @@ export function PlanDetail({ plan, portfolios, fin }: {
             <span className="c-link" onClick={onBack}>{t.plans}</span>
             <Lic name="chevron-right" size={12} cls="icon-sm" color="var(--fg-4)" />
             <span>{plan.id}</span>
+            {rightCollapsed && <button className="iconbtn rp-toggle" onClick={() => setRightCollapsed((v) => !v)} title={t.showProps}><PanelIcon side="right" size={15} /></button>}
           </div>
 
           <div className="dt-headrow">
@@ -146,6 +153,15 @@ export function PlanDetail({ plan, portfolios, fin }: {
             : <TabPlaceholder tab={tab} tabs={tabs} lang={lang} />}
         </div>
       </div>
+      {!rightCollapsed && (
+        <PropsSidebar
+          plan={plan}
+          t={t}
+          lang={lang}
+          onToggleRight={() => setRightCollapsed((v) => !v)}
+          onPatchNotes={onPatchNotes}
+        />
+      )}
     </div>
   );
 }

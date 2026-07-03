@@ -39,7 +39,7 @@
 - [x] 사이드바 도구 섹션 (OPTIONAL_DESTS + CustomizeModal — **profiles.sidebar DB 연동**) (2026-07-03, E2E: 핀→상단·숨김·순서·리로드 유지·기본값 복원 검증)
 - [x] **04 플랜 상세(DetailView) — 8탭 전부 완료** (2026-07-03, 브라우저 E2E + 골든 102):
   - [x] 셸 · [x] 시나리오 · [x] 활동 · [x] 체결 · [x] 재무제표 · [x] 전략 · [x] 투자지표 · [x] 밸류에이션 · [x] 인사이트(실행정확도 게이지·평단추이 차트·시나리오거리·룰이력, 진입전 empty-state)
-- [ ] **우측 디테일바(PropsSidebar, `.detail-side`)** ← 04 상세 마지막 조각. 크로스탭 우측레일 (포지션/청산요약·전략파라미터·커스텀필드·노트+접기토글). ⚠️ screens/04-plan-detail.png 펼침/접힘 상태 먼저 확인
+- [x] **우측 디테일바(PropsSidebar, `.detail-side`)** ← 04 상세 마지막 조각 (2026-07-03, 브라우저 E2E). 포지션/청산요약·속성(종목/생성/수정)·현황·메모(CRUD)·시나리오요약 + 접기토글(기본 접힘). ⚠️ **커스텀 필드는 이식 안 함** — source PropsSidebar 에 핸들러(CF_TYPES/addCf)만 남은 vestigial 코드였고 디자인(screens/04)에서 제거됨. 처음 잘못 이식했다가 제거함
 - [ ] 나머지 스크린: 01 인박스 / 02 일지 / 05 전략 편집기 / 06 청산
 - [ ] GET /fx·/quote — Next.js Route Handler로 (서버 런타임 결정 완료: Next 내장으로 시작)
 - [ ] 클라이언트 초기화에서 setFxRate(fx.rate) 연결

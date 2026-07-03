@@ -57,6 +57,11 @@ const PLANS = [
   // ex1 무한매수법(isPrice) — LOC/회차증가/익절/목표 룰. 목표수익률 25%(source verbatim).
   { hid: "PLN-001", ticker: "005930", cur: "KRW", name: { en: "Samsung memory discount", ko: "삼성전자 메모리 저평가" }, status: "active", pf: "pf1", st: "st1", exec: "ex1", eps: 4830, so: 5969, div: 40, createdAt: "Mar 3", updatedAt: "2d",
     goal: { type: "return", value: 25 },
+    // 사이드바 메모(투자 일지) — when 은 L10n({en,ko}) 정본. 디코드/렌더 경로 검증용.
+    notes: [
+      { id: "nt1", when: { en: "Jun 20", ko: "6월 20일" }, text: "HBM3E 수율 개선 뉴스 — 저점 매수 유지.", price: 69800 },
+      { id: "nt2", when: { en: "Jun 5", ko: "6월 5일" }, text: "12회차 체결. 평단 68k 근처, 계획대로 분할 진행 중.", price: 70100 },
+    ],
     sc: [["Bull", 92000, "tracking"], ["Base", 78000, "approaching"], ["Bear", 58000, "tracking"]],
     ex: [[12, "buy", 70100, 14, "Jun 5"], [11, "buy", 69400, 15, "Jun 3"], [10, "buy", 68200, 15, "May 30"], [9, "buy", 67500, 16, "May 28"]],
     rules: [R.loc("notify_buy", "Jun 5"), R.retGe(10, "notify_sell"), R.buyfill("round_inc", "Jun 5"), R.priceLe(66000, "notify")] },
@@ -149,6 +154,7 @@ async function main() {
     const cf = {};
     if (p.div) cf.divisions = p.div;
     if (p.goal) cf.goal = p.goal; // custom_fields.goal → plan-mapper decode → StrategyTab goal
+    if (p.notes) cf.notes = p.notes; // custom_fields.notes → plan-mapper decode → 사이드바 메모
     const { data: plan, error } = await db.from("plans").insert({
       user_id: userId, human_id: p.hid, portfolio_id: pfMap[p.pf], ticker: p.ticker, currency: p.cur,
       name: p.name, status: p.status, strategy_id: p.st, exec_id: p.exec ?? null,

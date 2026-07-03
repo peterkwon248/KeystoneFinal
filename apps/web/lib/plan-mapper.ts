@@ -1,10 +1,19 @@
 // DB rows(plans + scenarios + executions + securities) → 프로토타입 Plan 형태.
 // core의 순수 로직(planReturn/gaugeData/planExecState/fmtRel…)이 기대하는 필드로 변환한다.
 // ARCHITECTURE §7: 뷰/계산 로직은 그대로, 데이터 소스만 교체 — 이 파일이 그 이음새.
-import type { Currency, L10n, Plan, PlanStatus, Scenario, ScenarioStatus, Execution, Rule } from "@keystone/core/types";
+import type { Currency, L10n, Plan, PlanNote, PlanStatus, Scenario, ScenarioStatus, Execution, Rule } from "@keystone/core/types";
 import { MON_EN } from "@keystone/core/format";
 import { SC_LABEL_MAP } from "@keystone/core/analytics";
 import { RULE_TRIGS } from "@keystone/core/reference";
+
+// 커스텀 필드는 디자인에서 제거됨(source PropsSidebar 에 핸들러만 남은 vestigial 코드) — 웹에 이식하지 않음.
+
+/** 사이드바 메모(투자 일지) 항목 — core PlanNote 에 프로토타입의 price/editedAt 부가필드 추가.
+ *  core 타입은 골든 보호라 수정 불가 → 웹 이음새에서 확장한다. */
+export interface UINote extends PlanNote {
+  price?: number;
+  editedAt?: number;
+}
 
 /** 리스트/보드/타임라인이 쓰는 Plan + DB 식별자 */
 export interface UIPlan extends Plan {
@@ -165,6 +174,26 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
   const divisions = typeof cf.divisions === "number" ? cf.divisions
     : typeof cf.divisions === "string" && cf.divisions !== "" ? Number(cf.divisions) : undefined;
 
+  // custom_fields.notes(배열) → plan.notes (사이드바 투자 일지). when 은 L10n({en,ko}) 저장이
+  // 정본이나 옛 문자열도 렌더가 처리하므로 통과시킨다(유효성만 가드).
+  const notesRaw = Array.isArray(cf.notes) ? (cf.notes as unknown[]) : [];
+  const notes: UINote[] = notesRaw
+    .filter((n): n is Record<string, unknown> => !!n && typeof n === "object")
+    .map((n) => {
+      const when = n.when;
+      const asL10n: L10n =
+        when && typeof when === "object" && "en" in when
+          ? (when as L10n)
+          : { en: typeof when === "string" ? when : "", ko: typeof when === "string" ? when : "" };
+      return {
+        id: String(n.id ?? `nt${Math.random().toString(36).slice(2)}`),
+        when: asL10n,
+        text: String(n.text ?? ""),
+        price: typeof n.price === "number" ? n.price : undefined,
+        editedAt: typeof n.editedAt === "number" ? n.editedAt : undefined,
+      };
+    });
+
   return {
     dbId: row.id,
     id: row.human_id ?? `PLN-${row.id.slice(0, 4).toUpperCase()}`,
@@ -193,6 +222,7 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
     scenarios,
     executions,
     rules,
+    notes,
     tpPrice: typeof cf.tpPrice === "number" ? cf.tpPrice : null,
     slPrice: typeof cf.slPrice === "number" ? cf.slPrice : null,
   };
