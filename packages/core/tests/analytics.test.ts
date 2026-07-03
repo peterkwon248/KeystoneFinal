@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { goldens, J } from "./helpers.ts";
 import {
   planReturn, planTag, gaugeData, planActionLines, planExecState,
-  scLabel, metricDef, scAutoStatus, scProbOf,
+  scLabel, metricDef, scAutoStatus, scProbOf, computeLedger,
 } from "../src/analytics/index.ts";
 
 const g = goldens.analytics;
@@ -32,5 +32,11 @@ describe("analytics — golden equivalence per plan", () => {
   });
   it("scProbOf", () => {
     for (const c of sc.prob) expect(scProbOf(c.s), `scProbOf(${JSON.stringify(c.s)})`).toBe(c.out);
+  });
+  it("computeLedger", () => {
+    for (const c of goldens.ledger) {
+      const p = plans.find((x) => x.id === c.id)!;
+      expect(J(computeLedger(p)), `computeLedger(${c.id})`).toEqual(c.out);
+    }
   });
 });

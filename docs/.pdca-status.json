@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-03T06:27:15.692Z",
+  "lastUpdated": "2026-07-03T06:34:35.061Z",
   "activeFeatures": [
     "core",
     "valuation",
@@ -83,7 +83,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-02T08:18:26.655Z",
-        "lastUpdated": "2026-07-03T05:15:58.723Z"
+        "lastUpdated": "2026-07-03T06:31:36.641Z"
       },
       "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\packages\\core\\tests\\analytics.test.ts"
     },
@@ -161,7 +161,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-02T08:26:23.878Z",
-        "lastUpdated": "2026-07-03T05:14:58.588Z"
+        "lastUpdated": "2026-07-03T06:34:35.061Z"
       },
       "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\packages\\core\\src\\analytics\\index.ts"
     },
@@ -187,7 +187,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-03T00:13:37.588Z",
-        "lastUpdated": "2026-07-03T06:27:15.692Z"
+        "lastUpdated": "2026-07-03T06:34:12.234Z"
       },
       "lastFile": "C:\\Users\\kwonkyunghun\\Desktop\\Keystone Final\\apps\\web\\components\\plan\\detail-view.tsx"
     },
@@ -252,7 +252,7 @@
   "session": {
     "startedAt": "2026-07-02T08:00:52.252Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-03T06:27:15.692Z"
+    "lastActivity": "2026-07-03T06:34:35.061Z"
   },
   "history": [
     {
@@ -828,6 +828,66 @@
     {
       "timestamp": "2026-07-03T06:27:15.692Z",
       "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:30:58.876Z",
+      "feature": "analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:31:09.515Z",
+      "feature": "analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:31:31.343Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:31:36.642Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:32:21.538Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:33:37.699Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:34:02.287Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:34:06.912Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:34:12.234Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-03T06:34:35.061Z",
+      "feature": "analytics",
       "phase": "do",
       "action": "updated"
     }

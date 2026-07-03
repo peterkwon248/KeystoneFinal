@@ -5,6 +5,7 @@
 
 import type {
   ActionLines,
+  Execution,
   GaugeData,
   L10n,
   Lang,
@@ -73,6 +74,156 @@ export function scProbOf(s: { prob?: number; label?: { en?: string } }): number 
   if (typeof s.prob === "number") return s.prob;
   const en = (s.label && s.label.en) || "";
   return en === "Base" ? 50 : (en === "Bull" || en === "Bear") ? 25 : 20;
+}
+
+// ExecutionLedger row/totals — spreadsheet-style 회차별 누적 장부, promoted verbatim from source/ledger.jsx.
+// Every figure is DERIVED from executions; an opening carry-forward row reconciles omitted early rounds.
+export interface LedgerRow {
+  type: "buy" | "sell" | "open";
+  e?: Execution & { synth?: boolean };
+  qty?: number;
+  invested?: number;
+  cost?: number;
+  avg?: number | null;
+  dAvg?: number | null;
+  pnl?: number | null;
+  pnlPct?: number;
+  realized?: number;
+  realizedPct?: number;
+  base?: boolean;
+  fromR?: number;
+  toR?: number;
+  seq?: number;
+  seqFrom?: number;
+  seqTo?: number;
+}
+export interface LedgerTotals {
+  qty: number;
+  cost: number;
+  invested: number;
+  realized: number;
+  avg: number | null;
+  unreal: number;
+  combined: number;
+}
+export interface PlanLedger {
+  rows: LedgerRow[];
+  totals: LedgerTotals;
+}
+// `TRAJ_MONTHS` lives in the (browser-only) trajectory module; the pure ledger guards its
+// use with `typeof … !== "undefined"` and falls back inline. Declared (not imported) so the
+// guard resolves to "undefined" at runtime here — exactly as in the golden vm sandbox.
+declare const TRAJ_MONTHS: string[] | undefined;
+export function computeLedger(plan: Plan): PlanLedger {
+  const execs = (plan.executions || []).slice().reverse(); // stored latest-first → chronological
+  const rows: LedgerRow[] = [];
+  let qty = 0, cost = 0, realized = 0, invested = 0;
+
+  // carry-forward: plan totals minus listed executions
+  const netListedQty = execs.reduce((a, e) => a + (e.side === "buy" ? e.qty : -e.qty), 0);
+  const listedBuyCost = execs.filter(e => e.side === "buy").reduce((a, e) => a + e.qty * e.price, 0);
+  // Older rounds aren't itemized in plan.executions (only recent ones are stored).
+  // For a uniform spreadsheet-style ledger we expand the omitted early rounds into
+  // INDIVIDUAL deterministic rows that reconcile EXACTLY to the aggregate open basis
+  // (same total qty + cost) — so totals are unchanged and every round reads 1,2,3,…
+  // Real per-round history replaces these once live data is wired in.
+  const hasSells = execs.some(e => e.side === "sell");
+  if (plan.totalShares > 0 && plan.avgPrice != null) {
+    const openQty = plan.totalShares - netListedQty;
+    // Pure staged-buy: opening lot = stored total basis minus listed buys (exact).
+    // Two-way (grid/리밸런싱, has sells): sells removed basis the buy-only plug can't
+    // recover, so price the opening lot at the plan's avg cost (plausible) instead.
+    const openCost = hasSells
+      ? openQty * plan.avgPrice
+      : plan.totalShares * plan.avgPrice - listedBuyCost;
+    const listedRounds = execs.filter(e => e.round != null).map(e => e.round as number);
+    const firstListedR = listedRounds.length ? Math.min(...listedRounds) : null;
+    const nR = firstListedR ? firstListedR - 1 : 0;
+    if (openQty > 0.01 && openCost > 0) {
+      const basis = openCost / openQty;
+      if (nR > 1 && openQty >= nR) {
+        // expand into nR individual rounds (prices wobble around basis; last absorbs residual)
+        let s = 0; const seed = (plan.ticker || plan.id || "x"); for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) % 233280;
+        const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+        // synthesize ascending dates BEFORE the first listed round
+        const MON = (typeof TRAJ_MONTHS !== "undefined") ? TRAJ_MONTHS : ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+        const idxToDate = (ix: number) => { const mi = Math.max(0, Math.min(MON.length - 1, Math.floor(ix))); const d = Math.max(1, Math.min(28, Math.round((ix - Math.floor(ix)) * 31))); return MON[mi] + " " + d; };
+        const listedIdx = execs.filter(e => e.date).map(e => (MON.indexOf(e.date.split(" ")[0]) + (parseInt(e.date.split(" ")[1] || "15") / 31))).filter(v => v >= 0);
+        const firstListedIdx = listedIdx.length ? Math.min(...listedIdx) : MON.length - 1;
+        const createdIdx = plan.createdAt ? (MON.indexOf(plan.createdAt.split(" ")[0]) + (parseInt(plan.createdAt.split(" ")[1] || "15") / 31)) : (firstListedIdx - nR * 0.5);
+        const startIdx = (createdIdx >= 0 && createdIdx < firstListedIdx) ? createdIdx : Math.max(0, firstListedIdx - nR * 0.4);
+        const qBase = Math.floor(openQty / nR);
+        let accQ = 0, accC = 0;
+        for (let i = 1; i <= nR; i++) {
+          let q, p;
+          if (i < nR) {
+            q = qBase;
+            const drift = (i / nR - 0.5) * 0.10;            // gentle upward drift toward listed rounds
+            p = basis * (1 + drift + (rnd() - 0.5) * 0.06); // ±3% wobble
+          } else {
+            q = openQty - accQ;                              // last round absorbs the remainder
+            p = (openCost - accC) / q;                       // exact cost reconciliation
+          }
+          accQ += q; accC += q * p;
+          const dt = idxToDate(startIdx + (firstListedIdx - startIdx) * ((i - 1) / nR));
+          const prevAvg = qty > 0 ? cost / qty : null;
+          qty += q; cost += q * p; invested += q * p;
+          const avg = cost / qty;
+          rows.push({ type: "buy", e: { side: "buy", price: p, qty: q, round: i, date: dt, synth: true },
+            qty, invested, avg, dAvg: prevAvg != null ? avg - prevAvg : null,
+            pnl: (p - avg) * qty, pnlPct: avg > 0 ? (p / avg - 1) * 100 : 0 });
+        }
+      } else if (hasSells) {
+        // two-way strategy (grid/리밸런싱): no sequential "회차" — a single opening lot,
+        // priced at avg cost, that the listed buys/sells build on. No round span.
+        qty = openQty; cost = openCost; invested = openCost;
+        rows.push({ type: "open", base: true, qty: openQty, cost: openCost, avg: basis });
+      } else {
+        // pure staged-buy with omitted early rounds → single carry-forward (이월) summary.
+        // Estimate how many omitted executions it represents (avg listed buy size) so the
+        // unified sequence continues correctly across it.
+        const cfBuys = execs.filter(e => e.side === "buy");
+        const cfTypQ = cfBuys.length ? cfBuys.reduce((a, e) => a + e.qty, 0) / cfBuys.length : openQty;
+        const cfEst = Math.max(1, Math.round(openQty / Math.max(1, cfTypQ)));
+        qty = openQty; cost = openCost; invested = openCost;
+        rows.push({ type: "open", fromR: 1, toR: nR > 0 ? nR : cfEst, qty: openQty, cost: openCost, avg: basis });
+      }
+    }
+  }
+
+  execs.forEach(e => {
+    const prevAvg = qty > 0 ? cost / qty : null;
+    if (e.side === "buy") {
+      qty += e.qty; cost += e.qty * e.price; invested += e.qty * e.price;
+      const avg = cost / qty;
+      rows.push({ type: "buy", e, qty, invested, avg, dAvg: prevAvg != null ? avg - prevAvg : null,
+        pnl: (e.price - avg) * qty, pnlPct: avg > 0 ? (e.price / avg - 1) * 100 : 0 });
+    } else {
+      const avg = prevAvg || e.price;
+      const r = (e.price - avg) * e.qty;
+      realized += r; qty -= e.qty; cost -= avg * e.qty;
+      rows.push({ type: "sell", e, qty, invested, avg: qty > 0 ? cost / qty : avg, dAvg: null,
+        realized: r, realizedPct: avg > 0 ? (e.price / avg - 1) * 100 : 0,
+        pnl: qty > 0 ? (e.price - avg) * qty : null });
+    }
+  });
+
+  // Unified execution sequence (체결 순번): number every row oldest→newest, sells included.
+  // The carry-forward summary spans the range of omitted executions it aggregates.
+  let seqN = 0;
+  for (const r of rows) {
+    if (r.type === "open") {
+      if (r.base) continue; // opening lot is unnumbered (기초); real fills start at 1
+      const span = Math.max(1, (r.toR || r.fromR!) - r.fromR! + 1);
+      r.seqFrom = seqN + 1; r.seqTo = seqN + span; seqN += span;
+    } else {
+      r.seq = ++seqN;
+    }
+  }
+
+  const avgNow = qty > 0 ? cost / qty : null;
+  const unreal = qty > 0 && avgNow != null ? (plan.currentPrice - avgNow) * qty : 0;
+  return { rows, totals: { qty, cost, invested, realized, avg: avgNow, unreal, combined: realized + unreal } };
 }
 
 // METRIC_DEFS — plain-language definitions for the metrics shown on strategy / position / closeout cards.

@@ -50,6 +50,10 @@ run(read("valuation.jsx"), "valuation.jsx");
   const c = dv.indexOf("function scProbOf"), d = dv.indexOf("function ScProbEdit");
   if (c < 0 || d < 0) throw new Error("DetailView.jsx: scProbOf slice markers not found");
   run(dv.slice(c, d), "detailview.scProbOf.pure.jsx");
+  const lg = read("ledger.jsx");
+  const a2 = lg.indexOf("function computeLedger"), b2 = lg.indexOf("function ExecutionLedger");
+  if (a2 < 0 || b2 < 0) throw new Error("ledger.jsx: computeLedger slice markers not found");
+  run(lg.slice(a2, b2), "ledger.computeLedger.pure.jsx");
 }
 
 // ---- extraction runs INSIDE the vm (same realm), returns a JSON string ----
@@ -204,6 +208,9 @@ const json = run(`
       .map(s => ({ s, out: scProbOf(s) }));
     out.scenario = { autoStatus, prob };
   }
+
+  /* ledger — computeLedger per plan (회차별 누적 장부) */
+  out.ledger = PLANS.map(p => ({ id: p.id, out: computeLedger(p) }));
 
   /* seed financials */
   {

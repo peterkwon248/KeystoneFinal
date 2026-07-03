@@ -15,6 +15,7 @@ import { Sparkline } from "./sparkline";
 import { MiniDropdown, type MdItem } from "./mini-dropdown";
 import { ScenariosTab } from "./scenarios-tab";
 import { ActivityTab } from "./activity-tab";
+import { ExecutionsTab } from "./executions-tab";
 import type { UIPlan } from "@/lib/plan-mapper";
 import type { PfLite } from "@/lib/pf-palette";
 import { patchPlanAction } from "@/app/(shell)/plans/[id]/actions";
@@ -120,6 +121,7 @@ export function PlanDetail({ plan, portfolios }: {
           </div>
 
           {tab === "scenarios" ? <ScenariosTab plan={plan} t={t} lang={lang} />
+            : tab === "executions" ? <ExecutionsTab plan={plan} t={t} lang={lang} />
             : tab === "activity" ? <ActivityTab plan={plan} lang={lang} />
             : <TabPlaceholder tab={tab} tabs={tabs} lang={lang} />}
         </div>
