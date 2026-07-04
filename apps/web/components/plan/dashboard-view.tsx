@@ -12,6 +12,7 @@ import { Flag, StatusIcon, Lic } from "@/components/icons";
 import { Sparkline } from "./sparkline";
 import { MiniDropdown } from "./mini-dropdown";
 import { orderPlans, type Ordering } from "./group";
+import { DashStat } from "./dash-stat";
 import type { UIPlan } from "@/lib/plan-mapper";
 
 // mock FX so mixed-currency groups can still roll up into one display currency (KRW base)
@@ -171,25 +172,6 @@ function PortfolioTreemap({ tiles, lang, onOpen }: { tiles: SqItem[]; lang: Lang
 function tipName(p: UIPlan, lang: Lang) {
   const tg = planTag(p, lang);
   return <>{p.tickerName[lang]}{tg ? <span className="dash-tip-plan">{tg}</span> : null}</>;
-}
-
-interface DashTipRow { name: React.ReactNode; flag?: React.ReactNode; val?: React.ReactNode; tone?: string }
-function DashStat({ lab, val, tone, tip }: { lab: string; val: string; tone?: string; tip?: DashTipRow[] }) {
-  return (
-    <div className={"dash-stat" + (tip && tip.length ? " has-tip" : "")} tabIndex={tip && tip.length ? 0 : undefined}>
-      <span className="dash-stat-lab">{lab}</span>
-      <span className={"dash-stat-val mono" + (tone ? " " + tone : "")}>{val}</span>
-      {tip && tip.length > 0 && <div className="dash-stat-tip">
-        <div className="dash-stat-tip-h">{lab}<span className="dash-stat-tip-n">{tip.length}</span></div>
-        <div className="dash-stat-tip-rows">
-          {tip.map((r, i) => <div className="dash-stat-tip-row" key={i}>
-            <span className="dash-stat-tip-nm">{r.flag}{r.name}</span>
-            {r.val != null && <span className={"dash-stat-tip-v mono" + (r.tone ? " " + r.tone : "")}>{r.val}</span>}
-          </div>)}
-        </div>
-      </div>}
-    </div>
-  );
 }
 
 function DashRow({ plan, t, lang, onOpen }: { plan: UIPlan; t: I18nDict; lang: Lang; onOpen: (p: UIPlan, tab?: string) => void }) {
