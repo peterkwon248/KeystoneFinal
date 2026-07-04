@@ -1,48 +1,49 @@
 ---
-session_date: "2026-07-04 10:48"
+session_date: "2026-07-04 17:14"
 project: "KeystoneFinal"
 working_directory: "C:/Users/user/Desktop/KeystoneFinal"
 ---
 
-## Completed Work (이번 세션 — 데스크톱, 7커밋)
-- **source/core 재조정 → 실측 no-op 종결** (커밋 8893ef0 docs): root `source/` ↔ 새 핸드오프 `source/` 32파일 대조 = **라인엔딩(CRLF↔LF) 차이뿐**, 순수로직 0줄. 골든 생성기가 읽는 파일 전부 동일 → core 수정·골든 재생성 불필요. 문서의 "순수로직 전부 바뀜" premise는 CRLF에 속은 오판이었음 → NEXT-ACTION/MEMORY 정정. 칩 task_8aa778fc 종결.
-- **07 대시보드(현황)** (커밋 7f7b525): `components/plan/dashboard-view.tsx` — 트리맵(squarified)·헤드라인 스탯·액션큐 + openPlan `?tab=` 딥링크 + plan `sector` 노출. E2E 검증(트리맵 8타일·시장그룹 KR/US·dash-row→체결 딥링크).
-- **16 인사이트** (커밋 5f7ffda): `components/insights/insights-screen.tsx` + `(shell)/insights/` — 적중률·관점성과 scatter·프로세스건강도 funnel·승률손익비.
-- **10 시나리오 모니터** (커밋 c8025f7): `components/scenarios/scenarios-screen.tsx` + `(shell)/scenarios/`. **공용 이식 2건**: `components/plan/filter-panel.tsx`(watchlist/screener/archive 언블록) + `components/plan/dash-stat.tsx`(dashboard에서 추출). `lib/scenario-ref.ts`.
-- **19~22 종목상세 MVP** (커밋 ea3e1b3): `lib/security-mapper.ts` + `(shell)/securities/[ticker]/`(page+actions) + `components/securities/security-detail.tsx`. 헤더·차트·계절성·4탭(재무/투자지표/밸류=기존 탭 secPlan 재사용)·**관심 토글 서버액션**. eps는 같은 ticker 플랜에서 유도(PER 74.5×·EPS ₩3841). E2E(관심토글 양방향·콘솔 0).
-- **LLM Wiki 반영**: nextjs-dev 토픽 3소스로 확장(검증·진단 오판 함정 3건 + 합성객체 재사용 패턴).
+## Completed Work (2026-07-04 데스크톱 — 웹 이식 마일스톤 7 대량 진척)
+### 오전 세션 (커밋 7f7b525~6b6a6dc, push됨)
+- **source/core 재조정 → 실측 no-op 종결**: root `source/` ↔ 새 핸드오프 = 라인엔딩(CRLF↔LF) 차이뿐, 순수로직 0줄. 골든 무손상. 오판 premise 정정.
+- **07 대시보드·16 인사이트·10 시나리오모니터·19~22 종목상세 MVP** 이식 + E2E. 공용 FilterPanel·DashStat·scenario-ref·security-mapper 추출.
+### 오후 세션 (커밋 4bfdec9~6dbf462, **push됨 이번 after-work**)
+- **14 관심종목**: `watchlist/` + `lib/securities-list.ts`(공용 종목리스트 레이어 — research/screener 재사용) + `lib/gics.ts`. dev-seed에 watchlist 8종목. E2E(헤드라인·필터·그룹·스파크라인).
+- **종목상세 overview 보강**(유저 지적 — MVP에서 과하게 defer했던 2섹션): ①**이 종목의 시나리오**(플랜 시나리오 — linked 재사용 집계, 행→`/plans/[dbId]?tab=scenarios` 딥링크) ②**종목 메모**(`journal_entries` ticker 스코프 CRUD 서버액션). E2E(메모 추가+삭제 왕복·시나리오 딥링크).
+- **관심종목 change 버그 수정**: 전종목 +5.00% saturate(genSpark가 pts[n-1]=base 강제 → sparkChange 편향) → `mockChange(ticker)` FNV-1a→[-4.5,+5.0] 결정적 혼합부호. E2E(상승4/하락4/평균+0.52%).
+- **defer 전량 마일스톤/순서 배정**(신규 문서 없이 기존 문서에): ARCHITECTURE §13 마일스톤 6/7 범위 확장 + NEXT-ACTION "마일스톤 7 잔여 실행 계획" 섹션 + MEMORY 미러.
+- **LLM Wiki**: nextjs-dev 토픽 4소스로 확장(mock 데이터 파생 편향 + "테이블 없음 단정 전 스키마 확인").
 
 ## In Progress
 - 없음 (워킹트리 클린, .claude/.active-skill 제외).
 
-## Remaining Tasks
-- [ ] **언블록된 화면**: 14 관심종목 · 15 리서치 · 11~13 스크리너 — onOpenSecurity → `/securities/[ticker]` 이제 가능. (watchlist 테이블 있음)
-- [ ] **17 보관함**: `archived_at` 컬럼 없음 → 마이그레이션 선행 필요.
-- [ ] **18 휴지통**: `deleted_at` 있음 → restore/deleteForever 뮤테이션만 추가.
-- [ ] **종목상세 후속(defer됨)**: 종목 메모 CRUD(notes 테이블 신규 필요)·SecurityScenarios(adhoc)·SecurityPeek 팝오버·Cmd+K SearchModal·onCreatePlan/onAddScenario·`change` 일일%(DB 미저장 mock).
-- [ ] **시나리오 후속(defer됨)**: 작성 모달(onNewScenario/SecurityPicker/ScenarioAuthor)·adhoc 종목시나리오.
-- [ ] (마일스톤 6) 과거 시세 히스토리 백필 + 실시간 WS — 차트/spark/change 실데이터 전제.
+## Remaining Tasks — 마일스톤 7 잔여 실행 계획 (NEXT-ACTION/ARCHITECTURE §13에 배정됨)
+**Phase A 남은 뷰**: [ ] 15 리서치(SecurityPicker 선행) · [ ] 11~13 스크리너(core screener+FilterPanel) · [ ] 18 휴지통(뮤테이션) · [ ] 17 보관함(**스키마 S1 선행**)
+**Phase B write-path defer 해소**: [ ] SecurityPeek · [ ] Cmd+K 검색모달 · [ ] 시나리오 작성모달(플랜) · [ ] 🔴 **플랜 생성 위저드**(핵심·규모 큼) · [ ] adhoc 시나리오(**스키마 S2 선행**)
+**Phase C 실데이터(마일스톤 6)**: [ ] change·spark·차트 → 실 시세(security_price_history 백필+WS)
+**선행 스키마 2건**: [ ] S1 `plans.archived_at` · [ ] S2 `scenarios.plan_id` nullable + `ticker` → `pnpm db:types` 재생성
 
 ## Key Decisions
-- source/core 재조정 = 실측 no-op(라인엔딩뿐) — 유저 승인 하에 문서 정정으로 종결.
-- 종목상세: 재무/투자지표/밸류에이션 탭은 기존 컴포넌트를 합성 secPlan으로 재사용(신규 코드 최소화).
-- 종목 eps: DB 미저장 → 같은 ticker 최신 플랜에서 유도(mock 0 방치 대신).
-- 커밋 = 스크린별 feat + docs 분리, 직접 main(프로젝트 크로스머신 관행).
+- 종목 메모 = 기존 `journal_entries`(ticker 컬럼) 재사용 — 새 테이블 불필요("일지에도 함께 모임").
+- defer는 backlog가 아니라 마일스톤·순서·선행작업에 배정. 플랜 생성이 22스크린에서 누락됐던 것 명시(핵심 기능).
+- 종목 eps는 securities에 없어 같은 ticker 최신 플랜에서 유도.
 
 ## Blockers / Issues
-- **⚠️ PUSH 대기 (중요)**: 로컬 main이 origin보다 **7커밋 앞섬**. 자동승인이 main 직푸시 차단 → **유저가 이 폴더에서 `git push origin main` 수동 실행 필요.**
-- "우측바 2개" 신고 = **HMR Fast Refresh 겹침 오진**(실버그 아님, 하드 리로드 시 DOM 단일). 위키에 기록.
+- 없음. (이번 세션 8+5 커밋 전부 push 완료 — 아래 참조.)
+- mock seam(change/spark/차트)은 마일스톤6 실데이터 전제 — 정상(로드맵상 뒤 단계).
 
 ## Notes for Next Session
-- before-work는 반드시 `git fetch origin` 대조부터.
-- 새 뷰 이식 기준 = `design_handoff_keystone/source/*.jsx`(= root `source/`와 라인엔딩만 차이, 동일). "핸들러≠렌더" grep 확인.
-- 함정: SWC≠tsc(JSX 내 제네릭 캐스트 hoist)·supabase-js thenable(await)·`.next` 오염(build는 dev 끄고)·ResizeObserver 위젯은 preview 뷰포트 폭 세팅+리로드 후 검증·preview_screenshot 간헐 타임아웃(eval 검증).
-- 실행: `pnpm supabase start`(이미 up) → `node apps/web/scripts/dev-seed-plans.mjs`(11플랜) → preview "web"(:3000). 로그인 webtest@keystone.local / web-test-password-1.
-- 검증 게이트: `pnpm --filter @keystone/core test`(골든 102) + `cd apps/web && pnpm exec tsc --noEmit`.
+- **다음 착수 권장**: NEXT-ACTION "마일스톤 7 잔여 실행 계획"의 **A1 15 리서치 + B6 Cmd+K(SecurityPicker 공유)** 부터.
+- before-work는 `git fetch origin` 대조부터.
+- 함정(LLM Wiki nextjs-dev 참조): SWC≠tsc(JSX 제네릭 캐스트 hoist)·supabase-js thenable(await)·`.next` 오염(build는 dev 끄고)·ResizeObserver 위젯 preview 뷰포트 폭+리로드·mock 파생 편향(분포 확인)·HMR 겹침 오진(리로드 재현).
+- 실행: `pnpm supabase start` → `node apps/web/scripts/dev-seed-plans.mjs`(11플랜+watchlist 8) → preview "web"(:3000). 로그인 webtest@keystone.local / web-test-password-1.
+- 검증 게이트: 골든 102(`pnpm --filter @keystone/core test`) + `cd apps/web && pnpm exec tsc --noEmit` + `pnpm exec next build`(dev 끄고 `.next` 삭제 후).
 
 ## Files Modified (이번 세션 — 신규 위주)
-- `apps/web/components/`: plan/dashboard-view · plan/dash-stat · plan/filter-panel · insights/insights-screen · scenarios/scenarios-screen · securities/security-detail (신규)
-- `apps/web/lib/`: scenario-ref · security-mapper (신규); plan-mapper(sector)
-- `apps/web/app/(shell)/`: insights/ · scenarios/ · securities/[ticker]/(page+actions) (신규); plans-screen·detail-view·[dest]/page (수정)
-- `docs/`: MEMORY.md · NEXT-ACTION.md
-- LLM Wiki: raw/2026-07-04-nextjs-porting-verification-pitfalls.md + wiki/topics/nextjs-dev.md·INDEX·log·.compile-state
+- `apps/web/components/`: watchlist/watchlist-screen(신규) · securities/security-detail(+시나리오/메모) · plan/dashboard-view·dash-stat·filter-panel · insights/insights-screen · scenarios/scenarios-screen (신규)
+- `apps/web/lib/`: securities-list·gics·scenario-ref·security-mapper(gics·mockChange·SecNote) (신규/수정)
+- `apps/web/app/(shell)/`: watchlist/·securities/[ticker]/(page+actions, +journal_entries)·insights/·scenarios/ (신규); [dest]/page(수정)
+- `apps/web/scripts/dev-seed-plans.mjs`(watchlist 시드)
+- docs: `ARCHITECTURE.md`(§13) · `MEMORY.md` · `NEXT-ACTION.md`(실행 계획)
+- LLM Wiki: raw 2건(2026-07-04-*) + nextjs-dev 토픽(4소스)·INDEX·log·state
