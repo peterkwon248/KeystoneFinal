@@ -31,10 +31,14 @@ export interface UISecurity {
   market: Market;
   cur: Currency;
   sector: L10n;
+  /** GICS 11 섹터(광의) — securities.gics jsonb. 관심종목 섹터 필터/그룹은 gics를 우선(원본 s.gics||s.sector). */
+  gics: L10n | null;
   sharesOut: number;
   price: number;
   eps: number | null;
-  /** ⚠️ DB 미저장 — mock 이음새(마일스톤6 실데이터 교체). 원본은 등락률을 보유. */
+  /** ⚠️ DB 미저장 — mock 이음새(마일스톤6 실데이터 교체). 원본은 등락률을 보유.
+   *  현재는 spark(mock 시계열)의 마지막 구간 델타에서 유도해 spark 방향과 부호가 일치하는
+   *  self-consistent mock 값을 채운다(0 하드코딩 제거). 실 시세 델타는 마일스톤6에서 교체. */
   change: number;
   watched: boolean;
   /** mock placeholder chart — source/securities.jsx genSpark 재현. */
@@ -90,20 +94,42 @@ export function mapSecurity(
   const epsFin = latestFin && latestFin.eps != null ? Number(latestFin.eps) : null;
   const eps = epsFin ?? (epsFromPlan != null && epsFromPlan > 0 ? Number(epsFromPlan) : null);
   const sector: L10n = row.sector ?? row.gics ?? { en: "—", ko: "—" };
+  const spark = genSpark(sparkSeedOf(row.ticker), price > 0 ? price : 1);
   return {
     ticker: row.ticker,
     name: row.name,
     market,
     cur,
     sector,
+    gics: row.gics ?? null,
     sharesOut: Number(row.shares_out ?? 0),
     price,
     eps,
-    change: 0, // ⚠️ DB 미저장 — mock 이음새(마일스톤6).
+    // ⚠️ mock 이음새(마일스톤6 실데이터 교체): 등락률은 DB 미저장.
+    // 티커 시드 기반 결정적 등락률([-4.5%, +5.0%], 종목마다 다름·부호 섞임).
+    // genSpark는 pts[n-1]=base로 엔드포인트를 고정해 마지막 구간 델타가 거의 항상 큰 양수 →
+    // 예전 sparkChange가 전 종목을 +5.00%로 saturate하던 버그를 제거한다.
+    change: mockChange(row.ticker),
     watched,
-    spark: genSpark(sparkSeedOf(row.ticker), price > 0 ? price : 1),
+    spark,
     journal: [],
   };
+}
+
+/** 티커 시드 → 결정적 일일 등락률(%) mock. 범위 [-4.5%, +5.0%], 종목마다 다르고 부호가 섞인다.
+ *  genSpark의 강제 엔드포인트(pts[n-1]=base)에 의존하던 예전 sparkChange는 spark[n-2]가 거의 항상
+ *  base 미만 → change가 항상 큰 양수 → ±5% 상한으로 saturate되어 전 종목이 +5.00%로 나오는 버그가
+ *  있었다. 여기서는 spark와 독립적으로 티커 해시에서 균등분포를 뽑아 현실적 등락 범위로 매핑한다.
+ *  결정적(리로드 시 동일)·종목마다 다름·부호 섞임. 스파크라인은 genSpark 유지(mini()가 change 부호로
+ *  색칠하므로 색은 change와 일관). ⚠️ mock 이음새 — 실 시세 델타는 마일스톤6에서 교체. */
+function mockChange(ticker: string): number {
+  // FNV-1a 해시로 티커별 안정적 시드 → [0,1) 균등값.
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < ticker.length; i++) h = Math.imul(h ^ ticker.charCodeAt(i), 16777619);
+  const u = (h >>> 0) / 4294967296; // [0,1)
+  const LO = -4.5, HI = 5.0;
+  const pct = LO + u * (HI - LO);
+  return Math.round(pct * 100) / 100; // 소수 2자리
 }
 
 /**
@@ -143,6 +169,26 @@ export function secPlanOf(security: UISecurity): UIPlan {
     fin: null,
   };
 }
+
+/** journal_entries 한 행(종목 메모 스코프 select) — SEC_NOTE_SELECT와 짝. */
+export interface DbSecNoteRow {
+  id: string;
+  body: string;
+  price_snapshot: number | null;
+  created_at: string;
+}
+
+/** 종목 상세 UI가 읽는 메모(journal_entries 공유, plan_id=null·ticker 스코프). */
+export interface SecNote {
+  id: string;
+  body: string;
+  /** 작성 시점 주가 스냅샷(없을 수 있음). */
+  price: number | null;
+  createdAt: string;
+}
+
+/** journal_entries 종목 메모 select 절. */
+export const SEC_NOTE_SELECT = `id,body,price_snapshot,created_at`;
 
 /** securities 테이블 select 절 — mapSecurity(DbSecurityRow)와 짝. */
 export const SECURITY_SELECT = `

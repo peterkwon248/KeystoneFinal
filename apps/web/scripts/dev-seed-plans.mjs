@@ -50,6 +50,10 @@ const PF = [
   { id: "pf3", name: "가치·배당", base: "KRW", sort: 2 },
 ];
 
+// 관심종목(watchlist) 시드 — screens/14-watchlist.png의 watched=true 종목(source/securities.jsx).
+// 관심종목 화면(웹)에 내용이 뜨도록 seed.sql securities 중 8개를 webtest 유저 밑에 등록.
+const WATCHLIST = ["005930", "000660", "035420", "005490", "AAPL", "NVDA", "TSLA", "AMD"];
+
 // source/data.jsx PLANS (요약: 리스트/보드/타임라인 + 전략 콕핏에 필요한 필드).
 //   exec: EXEC_STRATEGIES id (source assignExec 매핑 + 6개 오버레이 커버리지 — ex1 isPrice/ex2 isTime/ex4 isGrid/ex5 isVR/ex6 isWeight/ex7 isMomentum).
 //   rules: R.* 헬퍼로 구조화 (trig/act 다양 → evalRule이 fired/armed/event를 섞어 산출). goal: custom_fields.goal.
@@ -139,6 +143,7 @@ async function main() {
   // 3) 기존 데이터 클린 (재실행 idempotent)
   await db.from("plans").delete().eq("user_id", userId);
   await db.from("portfolios").delete().eq("user_id", userId);
+  await db.from("watchlist").delete().eq("user_id", userId);
 
   // 4) 포트폴리오
   const pfMap = {};
@@ -187,6 +192,13 @@ async function main() {
     }
   }
   console.log("• plans:", PLANS.length);
+
+  // 6) 관심종목(watchlist) — seed.sql securities FK 참조. sort로 화면 순서 고정.
+  const wl = WATCHLIST.map((ticker, i) => ({ user_id: userId, ticker, sort: i }));
+  const { error: wlErr } = await db.from("watchlist").insert(wl);
+  if (wlErr) throw wlErr;
+  console.log("• watchlist:", wl.length, "→", WATCHLIST.join(", "));
+
   console.log("✓ dev seed complete →", EMAIL, "/", PASSWORD);
 }
 
