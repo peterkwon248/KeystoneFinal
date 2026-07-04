@@ -1,45 +1,48 @@
 ---
-session_date: "2026-07-03 (데스크톱)"
+session_date: "2026-07-04 10:48"
 project: "KeystoneFinal"
 working_directory: "C:/Users/user/Desktop/KeystoneFinal"
 ---
 
-## Completed Work (이번 세션 — 데스크톱)
-- **우측 디테일바(PropsSidebar)** (커밋 d6173de) — 04 상세 마지막 조각. `lib/closeout.ts`(core computeLedger 재사용). 커스텀필드 오이식→제거(vestigial 교훈).
-- **새 디자인 핸드오프 도입** (커밋 6e3ea0b) — **참조만 교체**(유저 결정): 번들 + screens/(6→22) + 스펙 5종. root source/·core·골든 불변.
-- **01 인박스** (커밋 5157df8) — 3-pane 트리아지, `addExecutionAction`(체결 DB왕복), 스누즈 제거. 버킷팅 수정.
-- **after-work 문서** (커밋 4f27257).
-- **02 일지** (커밋 feat 02 일지) — `components/journal/*`·`lib/journal.ts`. 플랜 노트 피드 + since 트랙. patchNotes 재사용.
-- **05 전략편집기** (커밋 feat 05) — 읽기전용 4탭, 관점(등급룰)·전략(WHEN→THEN), core 프리셋. mutation 0.
-- **이 after-work 문서** (커밋 예정).
-- **→ 원본 6개 스크린(01~06) 전부 완료.**
+## Completed Work (이번 세션 — 데스크톱, 7커밋)
+- **source/core 재조정 → 실측 no-op 종결** (커밋 8893ef0 docs): root `source/` ↔ 새 핸드오프 `source/` 32파일 대조 = **라인엔딩(CRLF↔LF) 차이뿐**, 순수로직 0줄. 골든 생성기가 읽는 파일 전부 동일 → core 수정·골든 재생성 불필요. 문서의 "순수로직 전부 바뀜" premise는 CRLF에 속은 오판이었음 → NEXT-ACTION/MEMORY 정정. 칩 task_8aa778fc 종결.
+- **07 대시보드(현황)** (커밋 7f7b525): `components/plan/dashboard-view.tsx` — 트리맵(squarified)·헤드라인 스탯·액션큐 + openPlan `?tab=` 딥링크 + plan `sector` 노출. E2E 검증(트리맵 8타일·시장그룹 KR/US·dash-row→체결 딥링크).
+- **16 인사이트** (커밋 5f7ffda): `components/insights/insights-screen.tsx` + `(shell)/insights/` — 적중률·관점성과 scatter·프로세스건강도 funnel·승률손익비.
+- **10 시나리오 모니터** (커밋 c8025f7): `components/scenarios/scenarios-screen.tsx` + `(shell)/scenarios/`. **공용 이식 2건**: `components/plan/filter-panel.tsx`(watchlist/screener/archive 언블록) + `components/plan/dash-stat.tsx`(dashboard에서 추출). `lib/scenario-ref.ts`.
+- **19~22 종목상세 MVP** (커밋 ea3e1b3): `lib/security-mapper.ts` + `(shell)/securities/[ticker]/`(page+actions) + `components/securities/security-detail.tsx`. 헤더·차트·계절성·4탭(재무/투자지표/밸류=기존 탭 secPlan 재사용)·**관심 토글 서버액션**. eps는 같은 ticker 플랜에서 유도(PER 74.5×·EPS ₩3841). E2E(관심토글 양방향·콘솔 0).
+- **LLM Wiki 반영**: nextjs-dev 토픽 3소스로 확장(검증·진단 오판 함정 3건 + 합성객체 재사용 패턴).
 
 ## In Progress
-- 없음 (워킹트리 클린 예정).
+- 없음 (워킹트리 클린, .claude/.active-skill 제외).
 
 ## Remaining Tasks
-- [ ] **🎯 07 대시보드(현황)** ← 다음. 플랜 4번째 표시모드(현재 `plans-screen.tsx` placeholder). 원본 = `design_handoff_keystone/source/Dashboard.jsx` + screens/07. 헤드라인 스탯 + 포트폴리오 히트맵(트리맵) + 액션큐.
-- [ ] 새 핸드오프 스크린: 10 시나리오모니터 · 11~13 스크리너 · 14 관심종목 · 15 리서치 · 16 인사이트 · 17 보관함 · 18 휴지통 · 19~22 종목상세.
-- [ ] **묶음 후속**: 사이드바 인박스 unread 뱃지 + 트리아지 DB 동기화(정확한 unread는 트리아지가 DB로 가야 서버계산). openPlan 탭 딥링크. 종목 저널(일지 SECS)은 종목상세 이식 때.
-- [ ] **🔴 source/core 재조정** (칩 task_8aa778fc): 새 핸드오프 순수로직을 core에 반영 + 골든 재생성. root source(구)↔screens(신) 불일치 해소.
-- [ ] (마일스톤 6) 과거 시세 히스토리 백필 + 실시간 WS.
+- [ ] **언블록된 화면**: 14 관심종목 · 15 리서치 · 11~13 스크리너 — onOpenSecurity → `/securities/[ticker]` 이제 가능. (watchlist 테이블 있음)
+- [ ] **17 보관함**: `archived_at` 컬럼 없음 → 마이그레이션 선행 필요.
+- [ ] **18 휴지통**: `deleted_at` 있음 → restore/deleteForever 뮤테이션만 추가.
+- [ ] **종목상세 후속(defer됨)**: 종목 메모 CRUD(notes 테이블 신규 필요)·SecurityScenarios(adhoc)·SecurityPeek 팝오버·Cmd+K SearchModal·onCreatePlan/onAddScenario·`change` 일일%(DB 미저장 mock).
+- [ ] **시나리오 후속(defer됨)**: 작성 모달(onNewScenario/SecurityPicker/ScenarioAuthor)·adhoc 종목시나리오.
+- [ ] (마일스톤 6) 과거 시세 히스토리 백필 + 실시간 WS — 차트/spark/change 실데이터 전제.
 
 ## Key Decisions
-- 새 핸드오프: **참조만 교체, source/core 재조정 별도**(유저 확정).
-- 우측바 기본 접힘 / 인박스 트리아지 localStorage / 일지 플랜노트-only / 전략편집기 읽기전용.
+- source/core 재조정 = 실측 no-op(라인엔딩뿐) — 유저 승인 하에 문서 정정으로 종결.
+- 종목상세: 재무/투자지표/밸류에이션 탭은 기존 컴포넌트를 합성 secPlan으로 재사용(신규 코드 최소화).
+- 종목 eps: DB 미저장 → 같은 ticker 최신 플랜에서 유도(mock 0 방치 대신).
+- 커밋 = 스크린별 feat + docs 분리, 직접 main(프로젝트 크로스머신 관행).
 
 ## Blockers / Issues
-- **⚠️ PUSH 대기 (중요)**: 로컬 main이 origin보다 **6커밋 앞섬**. **자동승인이 main 직푸시 차단** → **유저가 이 폴더에서 `git push origin main` 수동 실행 필요.** 안 하면 다음 머신이 또 뒤처짐.
+- **⚠️ PUSH 대기 (중요)**: 로컬 main이 origin보다 **7커밋 앞섬**. 자동승인이 main 직푸시 차단 → **유저가 이 폴더에서 `git push origin main` 수동 실행 필요.**
+- "우측바 2개" 신고 = **HMR Fast Refresh 겹침 오진**(실버그 아님, 하드 리로드 시 DOM 단일). 위키에 기록.
 
 ## Notes for Next Session
-- **before-work는 반드시 `git fetch origin` 대조부터** (세션 시작 때 12커밋 뒤처진 로컬로 오판한 사고 재발 방지).
-- 새 뷰 이식 = **`design_handoff_keystone/source/*.jsx`(신)** 기준. root `source/`는 구버전(재조정 전까지).
-- **"핸들러 정의됨 ≠ 렌더됨"** — source return(JSX) grep 확인(커스텀필드 교훈).
-- 함정: SWC≠tsc(JSX 내 제네릭 캐스트 금지)·supabase-js thenable(await)·Windows 파일워처 stale→서버 재시작·`.next` 오염 시 삭제(특히 executor `next build` 후 dev 재기동 전)·첫 컴파일 후 첫 클릭 /plans 튕김(재진입)·preview_screenshot 간헐 타임아웃(eval로 검증).
-- 실행: `pnpm supabase start` → `node apps/web/scripts/dev-seed-plans.mjs`(11플랜) → preview "web"(:3000). 로그인 webtest@keystone.local / web-test-password-1.
+- before-work는 반드시 `git fetch origin` 대조부터.
+- 새 뷰 이식 기준 = `design_handoff_keystone/source/*.jsx`(= root `source/`와 라인엔딩만 차이, 동일). "핸들러≠렌더" grep 확인.
+- 함정: SWC≠tsc(JSX 내 제네릭 캐스트 hoist)·supabase-js thenable(await)·`.next` 오염(build는 dev 끄고)·ResizeObserver 위젯은 preview 뷰포트 폭 세팅+리로드 후 검증·preview_screenshot 간헐 타임아웃(eval 검증).
+- 실행: `pnpm supabase start`(이미 up) → `node apps/web/scripts/dev-seed-plans.mjs`(11플랜) → preview "web"(:3000). 로그인 webtest@keystone.local / web-test-password-1.
+- 검증 게이트: `pnpm --filter @keystone/core test`(골든 102) + `cd apps/web && pnpm exec tsc --noEmit`.
 
 ## Files Modified (이번 세션 — 신규 위주)
-- `apps/web/components/`: plan/props-sidebar · inbox/* · journal/* · strategy/*
-- `apps/web/lib/`: closeout · inbox · inbox-triage · journal · strategy-editor-ref (신규)
-- `apps/web/app/(shell)/`: inbox/ · journal/ · strategy/[id]/ · [dest]/ · plans/[id]/actions.ts(addExecutionAction)
-- `design_handoff_keystone/`(번들 교체) · `screens/`(6→22) · root 스펙 5종 · `docs/*`
+- `apps/web/components/`: plan/dashboard-view · plan/dash-stat · plan/filter-panel · insights/insights-screen · scenarios/scenarios-screen · securities/security-detail (신규)
+- `apps/web/lib/`: scenario-ref · security-mapper (신규); plan-mapper(sector)
+- `apps/web/app/(shell)/`: insights/ · scenarios/ · securities/[ticker]/(page+actions) (신규); plans-screen·detail-view·[dest]/page (수정)
+- `docs/`: MEMORY.md · NEXT-ACTION.md
+- LLM Wiki: raw/2026-07-04-nextjs-porting-verification-pitfalls.md + wiki/topics/nextjs-dev.md·INDEX·log·.compile-state
