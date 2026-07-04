@@ -5,7 +5,6 @@ const DESTS: Record<string, { ko: string; screen?: string }> = {
   views: { ko: "뷰" },
   research: { ko: "리서치" },
   screener: { ko: "스크리너" },
-  archive: { ko: "보관함" },
   trash: { ko: "휴지통" },
 };
 

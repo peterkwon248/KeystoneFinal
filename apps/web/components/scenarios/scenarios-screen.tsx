@@ -20,12 +20,27 @@ import { fmtCompact } from "@keystone/core/format";
 import { Flag, Lic } from "@/components/icons";
 import { usePrefs } from "@/components/shell/prefs";
 import type { UIPlan } from "@/lib/plan-mapper";
-import type { Scenario } from "@keystone/core/types";
+import type { UISecurity } from "@/lib/security-mapper";
+import type { Scenario, ScenarioStatus } from "@keystone/core/types";
 import { DashStat, type DashTipRow } from "@/components/plan/dash-stat";
 import { FilterPanel, type FilterCat, type FilterAnchor } from "@/components/plan/filter-panel";
+import { ScenarioAuthorModal } from "@/components/plan/scenario-author-modal";
 import { SC_STATUS_COLOR, SCEN_ORDER, SC_CASE_ORDER, scCaseLabel } from "@/lib/scenario-ref";
 
 type ScPanel = "filter" | "display" | null;
+
+/** adhoc(종목단독) 시나리오 — 서버가 scenarios(plan_id null) + securities 조인으로 매핑해 전달(S2). */
+export interface AdhocScenario {
+  ticker: string;
+  name: { en: string; ko: string };
+  cur: string;
+  price: number;
+  label: { en: string; ko: string };
+  color: string;
+  target: number;
+  status: ScenarioStatus;
+  thesis?: { en: string; ko: string };
+}
 
 // 시나리오 모니터 한 행 — plan row 유래(adhoc 생략).
 interface ScMonRow {
@@ -44,10 +59,11 @@ function scenGroupLoad(): string {
   try { return localStorage.getItem("keystone-scen-group") || "status"; } catch { return "status"; }
 }
 
-function ScenariosMonitor({ t, lang, plans, onOpenPlan, onNewScenario, panel, setPanel, filterAnchor }: {
+function ScenariosMonitor({ t, lang, plans, securityScenarios, onOpenPlan, onNewScenario, panel, setPanel, filterAnchor }: {
   t: I18nDict;
   lang: Lang;
   plans: UIPlan[];
+  securityScenarios: AdhocScenario[];
   onOpenPlan: (p: UIPlan) => void;
   onNewScenario: (ticker?: string) => void;
   panel: ScPanel;
@@ -68,7 +84,12 @@ function ScenariosMonitor({ t, lang, plans, onOpenPlan, onNewScenario, panel, se
 
   const rows: ScMonRow[] = [];
   plans.forEach(p => p.scenarios.forEach(sc => rows.push({ plan: p, sc, ticker: p.ticker, cur: p.cur, price: p.currentPrice, name: p.tickerName, adhoc: false })));
-  // adhoc(SECURITY_SCENARIOS) rows 생략(defer).
+  // adhoc(종목단독) 시나리오(S2) — plan 없이 ticker+가격으로 합성 Scenario 행 push. per=0(EPS 미보유 seam).
+  securityScenarios.forEach(a => rows.push({
+    plan: null,
+    sc: { label: a.label, color: a.color, target: a.target, per: 0, status: a.status, thesis: a.thesis, isAuto: false },
+    ticker: a.ticker, cur: a.cur, price: a.price, name: a.name, adhoc: true,
+  }));
   rows.forEach(r => { r.st = scAutoStatus(r.plan || { currentPrice: r.price }, r.sc.target); r.kase = r.sc.label.en; });
 
   // securityOf 대체: ticker → 첫 row의 name/cur.
@@ -174,15 +195,21 @@ function ScenariosMonitor({ t, lang, plans, onOpenPlan, onNewScenario, panel, se
   );
 }
 
-export function ScenariosScreen({ plans }: { plans: UIPlan[] }) {
+export function ScenariosScreen({ plans, securities, securityScenarios }: {
+  plans: UIPlan[];
+  securities: UISecurity[];
+  securityScenarios: AdhocScenario[];
+}) {
   const router = useRouter();
   const { lang }: { lang: Lang } = usePrefs();
   const t = I18N[lang];
   const [panel, setPanel] = useState<ScPanel>(null);
   const [filterAnchor, setFilterAnchor] = useState<FilterAnchor | null>(null);
+  // adhoc 작성 모달 — null이면 닫힘. ticker=열 때 프리셀렉트할 종목(없으면 null).
+  const [author, setAuthor] = useState<{ ticker: string | null } | null>(null);
 
   const onOpenPlan = (p: UIPlan) => router.push(`/plans/${p.dbId}`);
-  const onNewScenario = () => { /* 작성 모달 이식 defer — no-op 스텁 */ };
+  const onNewScenario = (ticker?: string) => setAuthor({ ticker: ticker ?? null });
 
   const openFilter = (e: React.MouseEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -204,8 +231,9 @@ export function ScenariosScreen({ plans }: { plans: UIPlan[] }) {
         </div>
       </div>
       <div className="body-row">
-        <ScenariosMonitor t={t} lang={lang} plans={plans} onOpenPlan={onOpenPlan} onNewScenario={onNewScenario} panel={panel} setPanel={setPanel} filterAnchor={filterAnchor} />
+        <ScenariosMonitor t={t} lang={lang} plans={plans} securityScenarios={securityScenarios} onOpenPlan={onOpenPlan} onNewScenario={onNewScenario} panel={panel} setPanel={setPanel} filterAnchor={filterAnchor} />
       </div>
+      {author && <ScenarioAuthorModal adhoc={{ securities, initialTicker: author.ticker }} onClose={() => setAuthor(null)} />}
     </div>
   );
 }

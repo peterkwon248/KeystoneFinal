@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -201,6 +201,7 @@ export type Database = {
       }
       plans: {
         Row: {
+          archived_at: string | null
           closed_at: string | null
           created_at: string
           currency: string
@@ -221,6 +222,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived_at?: string | null
           closed_at?: string | null
           created_at?: string
           currency: string
@@ -241,6 +243,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived_at?: string | null
           closed_at?: string | null
           created_at?: string
           currency?: string
@@ -368,30 +371,39 @@ export type Database = {
           action: Json
           condition: Json
           created_at: string
+          edited: boolean
           enabled: boolean
           id: string
+          is_auto: boolean
           last_fired: string | null
           plan_id: string
+          source: string | null
           updated_at: string
         }
         Insert: {
           action: Json
           condition: Json
           created_at?: string
+          edited?: boolean
           enabled?: boolean
           id?: string
+          is_auto?: boolean
           last_fired?: string | null
           plan_id: string
+          source?: string | null
           updated_at?: string
         }
         Update: {
           action?: Json
           condition?: Json
           created_at?: string
+          edited?: boolean
           enabled?: boolean
           id?: string
+          is_auto?: boolean
           last_fired?: string | null
           plan_id?: string
+          source?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -457,11 +469,13 @@ export type Database = {
           id: string
           is_auto: boolean
           label: Json
-          plan_id: string
+          plan_id: string | null
           sort: number
           status: Database["public"]["Enums"]["scenario_status_t"]
           target: number
           thesis: Json | null
+          ticker: string | null
+          user_id: string | null
         }
         Insert: {
           case_t: Database["public"]["Enums"]["scenario_case_t"]
@@ -469,11 +483,13 @@ export type Database = {
           id?: string
           is_auto?: boolean
           label: Json
-          plan_id: string
+          plan_id?: string | null
           sort?: number
           status?: Database["public"]["Enums"]["scenario_status_t"]
           target: number
           thesis?: Json | null
+          ticker?: string | null
+          user_id?: string | null
         }
         Update: {
           case_t?: Database["public"]["Enums"]["scenario_case_t"]
@@ -481,11 +497,13 @@ export type Database = {
           id?: string
           is_auto?: boolean
           label?: Json
-          plan_id?: string
+          plan_id?: string | null
           sort?: number
           status?: Database["public"]["Enums"]["scenario_status_t"]
           target?: number
           thesis?: Json | null
+          ticker?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -501,6 +519,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "plans"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenarios_ticker_fkey"
+            columns: ["ticker"]
+            isOneToOne: false
+            referencedRelation: "securities"
+            referencedColumns: ["ticker"]
           },
         ]
       }

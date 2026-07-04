@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Json, PlanStatus } from "@keystone/core/types";
 import type { UINote } from "@/lib/plan-mapper";
+import { autoRulesFor } from "@/lib/rules-from-strategy";
 
 type PlanPatch = { status?: PlanStatus; portfolioId?: string | null; execId?: string | null };
 
@@ -16,6 +17,8 @@ export async function patchPlanAction(id: string, patch: PlanPatch) {
   if (Object.keys(row).length === 0) return;
   const { error } = await supabase.from("plans").update(row).eq("id", id);
   if (error) throw new Error(error.message);
+  // 전략(execId) 변경 시 자동 규칙 재생성 (전략 없음↔무한매수법 등).
+  if (patch.execId !== undefined) await regenerateAutoRules(id);
   revalidatePath(`/plans/${id}`);
 }
 
@@ -33,6 +36,8 @@ export async function setGoalAction(id: string, goal: PlanGoal | null) {
   if (goal) cf.goal = goal; else delete cf.goal;
   const { error } = await supabase.from("plans").update({ custom_fields: cf }).eq("id", id);
   if (error) throw new Error(error.message);
+  // 목표 변경 → 목표 규칙 재생성(설정 시 추가·수정, 삭제 시 제거).
+  await regenerateAutoRules(id);
   revalidatePath(`/plans/${id}`);
 }
 
@@ -124,5 +129,63 @@ export async function addPlanScenario(planId: string, input: AddScenarioInput) {
     sort: 999,
   });
   if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${planId}`);
+}
+
+/** 플랜 보관(archive) — archived_at=now(). 청산(status)과 별개 축이라 상태는 건드리지 않는다.
+ *  프로토타입 archivePlan은 status=closed였으나(방식1), 웹은 archived_at 분리(방식2)로 미실현 플랜도 보관 가능.
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. RLS 로 소유자만. */
+export async function archivePlan(planId: string) {
+  const supabase = await supabaseServer();
+  const { error } = await supabase
+    .from("plans").update({ archived_at: new Date().toISOString() }).eq("id", planId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/plans");
+  revalidatePath("/archive");
+}
+
+/** 플랜 소프트삭제(휴지통으로) — deleted_at=now(). 휴지통 뷰(restore/deleteForever)의 진입점.
+ *  프로토타입 trashPlan 대응. supabase-js 빌더는 lazy thenable 이라 반드시 await. RLS 로 소유자만. */
+export async function softDeletePlan(planId: string) {
+  const supabase = await supabaseServer();
+  const { error } = await supabase
+    .from("plans").update({ deleted_at: new Date().toISOString() }).eq("id", planId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/plans");
+  revalidatePath("/trash");
+}
+
+/** 전략/목표 → 자동 규칙 재생성 (규칙 자동화 v1). (is_auto && !edited) 규칙만 교체 → 커스텀·편집분 보존.
+ *  전략 변경·목표 설정·플랜 생성 시 호출. supabase-js 빌더는 lazy thenable 이라 반드시 await. RLS 로 소유 플랜만. */
+export async function regenerateAutoRules(planId: string) {
+  const supabase = await supabaseServer();
+  const { data: plan, error: readErr } = await supabase
+    .from("plans").select("exec_id, custom_fields").eq("id", planId).single();
+  if (readErr) throw new Error(readErr.message);
+
+  // custom_fields.goal → PlanGoal (setGoalAction 인코딩과 동일 가드).
+  const cf = (plan?.custom_fields as { goal?: { type?: unknown; value?: unknown } } | null) ?? {};
+  const g = cf.goal;
+  const goal: PlanGoal | null =
+    g && (g.type === "return" || g.type === "price") && typeof g.value === "number"
+      ? { type: g.type, value: g.value } : null;
+
+  const specs = autoRulesFor(plan?.exec_id ?? null, goal);
+
+  // 기존 auto(미편집) 규칙 삭제 후 재삽입.
+  const { error: delErr } = await supabase
+    .from("rules").delete().eq("plan_id", planId).eq("is_auto", true).eq("edited", false);
+  if (delErr) throw new Error(delErr.message);
+
+  if (specs.length) {
+    const { error: insErr } = await supabase.from("rules").insert(
+      specs.map((s) => ({
+        plan_id: planId, enabled: true,
+        condition: s.condition as unknown as Json, action: s.action as unknown as Json,
+        is_auto: true, edited: false, source: s.source,
+      })),
+    );
+    if (insErr) throw new Error(insErr.message);
+  }
   revalidatePath(`/plans/${planId}`);
 }

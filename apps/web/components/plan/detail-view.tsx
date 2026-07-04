@@ -24,7 +24,7 @@ import { InsightsTab } from "./insights-tab";
 import { PropsSidebar } from "./props-sidebar";
 import type { UINote, UIPlan } from "@/lib/plan-mapper";
 import type { PfLite } from "@/lib/pf-palette";
-import { applyValuationTargetsAction, patchNotesAction, patchPlanAction, setGoalAction, toggleRuleAction, type PlanGoal } from "@/app/(shell)/plans/[id]/actions";
+import { applyValuationTargetsAction, archivePlan, patchNotesAction, patchPlanAction, setGoalAction, softDeletePlan, toggleRuleAction, type PlanGoal } from "@/app/(shell)/plans/[id]/actions";
 
 interface TabDef { key: string; label: string; num?: number; tip?: { ko: string[]; en: string[] } }
 
@@ -61,6 +61,9 @@ export function PlanDetail({ plan, portfolios, fin }: {
   // 사이드바 메모 영속 — onSetGoal 과 동일 패턴(서버 액션이 revalidatePath 하므로 refresh 불필요).
   const onPatchNotes = (notes: UINote[]) =>
     startTransition(() => { void patchNotesAction(plan.dbId, notes); });
+  // 헤더 오버플로 메뉴 — 보관(archived_at)/휴지통(deleted_at). 액션 후 리스트로 복귀(revalidate가 목록 갱신).
+  const onArchive = () => startTransition(async () => { await archivePlan(plan.dbId); router.push("/plans"); });
+  const onTrash = () => startTransition(async () => { await softDeletePlan(plan.dbId); router.push("/plans"); });
 
   const ret = planReturn(plan);
   const isClosed = plan.status === "closed";
@@ -113,6 +116,14 @@ export function PlanDetail({ plan, portfolios, fin }: {
                 ...EXEC_STRATEGIES.map((s): MdItem => ({ value: s.id, label: s.name[lang], icon: <span className="strat-dot" style={{ background: s.color }} />, on: plan.execId === s.id })),
               ]}
               onPick={(v) => patch({ execId: v ?? null })} />
+            <span className="spacer" />
+            <MiniDropdown width={180} align="right"
+              trigger={<span className="iconbtn" title={lang === "ko" ? "더보기" : "More"}><Lic name="ellipsis" size={16} /></span>}
+              items={[
+                { value: "archive", label: t.archive, icon: <Lic name="archive" size={15} cls="icon-sm" color="var(--fg-3)" /> },
+                { value: "trash", label: t.moveToTrash, icon: <Lic name="trash-2" size={15} cls="icon-sm" color="var(--neg)" /> },
+              ]}
+              onPick={(v) => { if (v === "archive") onArchive(); else if (v === "trash") onTrash(); }} />
           </div>
 
           <div className="dt-tickerline"><Flag market={plan.cur === "KRW" ? "KR" : "US"} size={14} /><b style={{ color: "var(--fg)", fontWeight: 600 }}>{plan.tickerName[lang]}</b> · <span className="mono">{plan.ticker}</span><Lic name="arrow-up-right" size={13} cls="icon-sm" color="var(--fg-4)" /></div>

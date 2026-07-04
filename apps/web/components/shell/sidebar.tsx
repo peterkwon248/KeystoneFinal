@@ -18,7 +18,7 @@ export interface SidebarPortfolio { id: string; name: string; count: number }
 export interface SidebarView { id: string; name: string }
 
 export function Sidebar({
-  portfolios, plansTotal, activeCount, inboxUnread = 0, views, onWsMenu, onCollapse, onSearch,
+  portfolios, plansTotal, activeCount, inboxUnread = 0, views, onWsMenu, onCollapse, onSearch, onNewPlan,
 }: {
   portfolios: SidebarPortfolio[];
   plansTotal: number;
@@ -28,6 +28,7 @@ export function Sidebar({
   onWsMenu: () => void;
   onCollapse: () => void;
   onSearch?: () => void;
+  onNewPlan?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -133,7 +134,7 @@ export function Sidebar({
         </div>
         <div className="ws-actions">
           <button className="iconbtn" title={t.searchSec} onClick={onSearch}><Lic name="search" size={16} /></button>
-          <button className="iconbtn" onClick={() => navTo("plans")} title={lang === "ko" ? "새 플랜" : "New plan"}><Lic name="square-pen" size={16} /></button>
+          <button className="iconbtn" onClick={() => (onNewPlan ? onNewPlan() : navTo("plans"))} title={lang === "ko" ? "새 플랜" : "New plan"}><Lic name="square-pen" size={16} /></button>
           <button className="iconbtn" onClick={onCollapse} title={t.collapseSb}><PanelIcon side="left" size={16} /></button>
         </div>
       </div>

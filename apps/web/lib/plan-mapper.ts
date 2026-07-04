@@ -20,6 +20,8 @@ export interface UIPlan extends Plan {
   dbId: string;
   // 대시보드 히트맵 섹터 그룹핑용 — securities.sector({en,ko}) 또는 없으면 null.
   sector: { en: string; ko: string } | null;
+  // 규칙은 웹 확장(UIRule) — isAuto/ruleSource 부가.
+  rules: UIRule[];
 }
 
 /* DB scenario case → 프로토타입 시나리오 라벨/색.
@@ -78,7 +80,13 @@ export interface DbPlanRow {
     status: ScenarioStatus; color: string | null; is_auto: boolean; sort: number;
   }[];
   executions: { side: "buy" | "sell"; exec_date: string; price: number; quantity: number | null; amount: number | null; round_no: number | null }[];
-  rules: { id: string; enabled: boolean; condition: DbRuleCondition | null; action: DbRuleAction | null; last_fired: string | null }[];
+  rules: { id: string; enabled: boolean; condition: DbRuleCondition | null; action: DbRuleAction | null; last_fired: string | null; is_auto: boolean; edited: boolean; source: string | null }[];
+}
+
+/** 웹 확장 Rule — core Rule(골든)에 물질화 플래그(isAuto/ruleSource) 부가. UINote 패턴. */
+export interface UIRule extends Rule {
+  isAuto?: boolean;
+  ruleSource?: string | null;
 }
 
 /* DB rules.condition jsonb — 트리거 인코딩 (dev-seed-plans.mjs가 쓰고 여기서 디코드) */
@@ -152,17 +160,19 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
 
   // DB rules(condition/action/last_fired) → 리치 Rule (StrategyTab이 trig/act 드롭다운·evalRule에 사용).
   // name은 DB에 없어(코스메틱) trig의 RULE_TRIGS ko/en에서 파생. 시드 룰은 모두 custom/edited=false.
-  const rules: Rule[] = (row.rules ?? []).map((r) => {
+  const rules: UIRule[] = (row.rules ?? []).map((r) => {
     const { trig, trigVal } = decodeTrig(r.condition);
     const act = r.action?.type;
     const td = trig ? RULE_TRIGS.find((x) => x.id === trig) : null;
     const name: L10n = td ? { en: td.en, ko: td.ko } : { en: "Rule", ko: "규칙" };
+    // custom = 구조화 트리거 표시 경로(ruleDesc). auto 규칙은 자동 배지로 구분하므로 custom=false.
     return {
       id: r.id, on: r.enabled,
       last: r.last_fired ? toMonD(r.last_fired) : "Never",
       name, trig, trigVal, act,
       when: { en: "", ko: "" }, then: { en: "", ko: "" },
-      custom: false, edited: false,
+      custom: !r.is_auto, edited: r.edited,
+      isAuto: r.is_auto, ruleSource: r.source,
     };
   });
 
@@ -238,5 +248,5 @@ export const PLAN_SELECT = `
   securities(name, market, last_close, shares_out, sector),
   scenarios(case_t, label, target, thesis, status, color, is_auto, sort),
   executions(side, exec_date, price, quantity, amount, round_no),
-  rules(id, enabled, condition, action, last_fired)
+  rules(id, enabled, condition, action, last_fired, is_auto, edited, source)
 `;

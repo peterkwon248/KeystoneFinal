@@ -12,7 +12,7 @@ export default async function PlansPage({ searchParams }: {
   const supabase = await supabaseServer();
 
   const [{ data: rows }, { data: pfRows }] = await Promise.all([
-    supabase.from("plans").select(PLAN_SELECT).is("deleted_at", null).order("created_at", { ascending: false }),
+    supabase.from("plans").select(PLAN_SELECT).is("deleted_at", null).is("archived_at", null).order("created_at", { ascending: false }),
     supabase.from("portfolios").select("id, name, sort").order("sort"),
   ]);
 

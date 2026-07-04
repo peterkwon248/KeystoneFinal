@@ -18,6 +18,7 @@ import { BoardView } from "./board-view";
 import { TimelineView, type TlMode, type TlOverlays, type TlYMode } from "./timeline-view";
 import { DashboardView } from "./dashboard-view";
 import { DisplayPanel, type ViewMode } from "./display-panel";
+import { ComposeModal } from "./compose-modal";
 import type { Grouping, Ordering } from "./group";
 
 const FILTER_TYPE_LABEL_KEY: Record<string, string> = {
@@ -35,6 +36,7 @@ export function PlansScreen({ plans, portfolios, activePf }: {
   const t = I18N[lang];
 
   // 프로토타입 App.jsx state 대응 (뷰 로컬 상태)
+  const [compose, setCompose] = useState(false);
   const [mode, setMode] = useState<ViewMode>("list");
   const [wfTab, setWfTab] = useState<"all" | "pre" | "open" | "closed">("all");
   const [grouping, setGrouping] = useState<Grouping>("status");
@@ -144,8 +146,7 @@ export function PlansScreen({ plans, portfolios, activePf }: {
           <button className={"iconbtn" + (panel === "display" ? " active" : "")} onClick={() => setPanel(panel === "display" ? null : "display")} title={t.display}><Lic name="sliders-horizontal" size={16} /></button>
           <button className="iconbtn" onClick={() => router.push("/inbox")} title={t.inbox}><Lic name="bell" size={16} /></button>
         </div>
-        {/* 컴포즈 모달은 후속 단계 — 버튼 자리만 유지 */}
-        <button className="v-btn v-btn--primary newplan-btn" title={t.newPlan + " · C"}>
+        <button className="v-btn v-btn--primary newplan-btn" title={t.newPlan + " · C"} onClick={() => setCompose(true)}>
           <Lic name="plus" size={15} cls="icon-sm" color="var(--fg-on-accent)" />{t.newPlan}
         </button>
       </div>
@@ -193,6 +194,7 @@ export function PlansScreen({ plans, portfolios, activePf }: {
       {panel === "filter" && <FilterPanel
         t={t} lang={lang} filters={filters} onToggle={toggleFilter} onClose={() => setPanel(null)} anchor={filterAnchor} cats={cats}
       />}
+      {compose && <ComposeModal initialPfId={activePf} onClose={() => setCompose(false)} />}
     </div>
   );
 }

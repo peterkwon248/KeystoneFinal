@@ -10,7 +10,7 @@ import {
   mapSecurity, secPlanOf, SECURITY_SELECT, SECURITY_FIN_SELECT,
   type DbSecurityRow, type DbSecurityFinRow, type DbSecNoteRow, type SecNote,
 } from "@/lib/security-mapper";
-import { SecurityDetailScreen } from "@/components/securities/security-detail";
+import { SecurityDetailScreen, type SecScenario } from "@/components/securities/security-detail";
 
 export default async function SecurityDetailPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
@@ -22,8 +22,8 @@ export default async function SecurityDetailPage({ params }: { params: Promise<{
     .from("securities").select(SECURITY_SELECT).eq("ticker", ticker).maybeSingle();
   if (!secRow) notFound();
 
-  // 재무(security_financials) + 관심 여부 + 관련 플랜 + 종목 메모(journal_entries)를 병렬로.
-  const [{ data: finRows }, watchRes, { data: planRows }, noteRes] = await Promise.all([
+  // 재무(security_financials) + 관심 여부 + 관련 플랜 + 종목 메모(journal_entries) + adhoc 시나리오를 병렬로.
+  const [{ data: finRows }, watchRes, { data: planRows }, noteRes, scenRes] = await Promise.all([
     supabase.from("security_financials").select(SECURITY_FIN_SELECT).eq("ticker", ticker).order("fiscal_year", { ascending: false }),
     user
       ? supabase.from("watchlist").select("id").eq("user_id", user.id).eq("ticker", ticker).maybeSingle()
@@ -35,6 +35,13 @@ export default async function SecurityDetailPage({ params }: { params: Promise<{
           .select("id,body,price_snapshot,created_at")
           .eq("ticker", ticker).is("plan_id", null)
           .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+    // adhoc(종목단독) 시나리오: plan_id=null, ticker 스코프 — RLS로 소유자 것만(S2).
+    user
+      ? supabase.from("scenarios")
+          .select("label,color,target,thesis")
+          .eq("ticker", ticker).is("plan_id", null)
+          .order("sort", { ascending: true })
       : Promise.resolve({ data: null }),
   ]);
 
@@ -69,5 +76,21 @@ export default async function SecurityDetailPage({ params }: { params: Promise<{
     security.price, security.eps ?? 0, security.sharesOut,
   );
 
-  return <SecurityDetailScreen security={security} secPlan={secPlan} fin={fin} plans={plans} secNotes={secNotes} />;
+  // adhoc 시나리오(secScenarios) → SecScenario[]. status pending→tracking 불필요(표시엔 label/target만).
+  const scenRows = (scenRes as { data: DbSecScenarioRow[] | null }).data ?? [];
+  const secScenarios: SecScenario[] = scenRows.map((r) => ({
+    label: r.label ?? { en: "Base", ko: "중간" },
+    color: r.color || "var(--r-base)",
+    target: Number(r.target),
+    thesis: r.thesis ?? undefined,
+  }));
+
+  return <SecurityDetailScreen security={security} secPlan={secPlan} fin={fin} plans={plans} secNotes={secNotes} secScenarios={secScenarios} />;
+}
+
+interface DbSecScenarioRow {
+  label: { en: string; ko: string } | null;
+  color: string | null;
+  target: number;
+  thesis: { en: string; ko: string } | null;
 }

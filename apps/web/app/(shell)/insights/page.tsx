@@ -13,6 +13,7 @@ export default async function InsightsPage() {
     .from("plans")
     .select(PLAN_SELECT)
     .is("deleted_at", null)
+    .is("archived_at", null)
     .order("updated_at", { ascending: false });
 
   const now = new Date();

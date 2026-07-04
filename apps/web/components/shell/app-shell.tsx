@@ -9,6 +9,7 @@ import { PanelIcon } from "@/components/icons";
 import { PrefsProvider } from "./prefs";
 import { SidebarConfigProvider } from "./sidebar-config";
 import { SearchModal } from "@/components/search/search-modal";
+import { ComposeModal } from "@/components/plan/compose-modal";
 
 export function AppShell({
   userId, sidebarPrefs, portfolios, plansTotal, activeCount, views, banner, signOutAction, children,
@@ -28,6 +29,7 @@ export function AppShell({
   const [customize, setCustomize] = useState(false);
   const [sbHidden, setSbHidden] = useState(false);
   const [search, setSearch] = useState(false);
+  const [compose, setCompose] = useState(false);
 
   // source/App.jsx:454 이식 — ⌘K/Ctrl+K로 전역 검색모달 토글, Escape로 닫기.
   useEffect(() => {
@@ -58,6 +60,7 @@ export function AppShell({
               onWsMenu={() => setWsMenu(true)}
               onCollapse={() => setSbHidden(true)}
               onSearch={() => setSearch(true)}
+              onNewPlan={() => setCompose(true)}
             />
           )}
           {sbHidden && (
@@ -79,6 +82,7 @@ export function AppShell({
         {settings && <SettingsModal onClose={() => setSettings(false)} />}
         {customize && <CustomizeModal onClose={() => setCustomize(false)} />}
         {search && <SearchModal userId={userId} onClose={() => setSearch(false)} />}
+        {compose && <ComposeModal userId={userId} onClose={() => setCompose(false)} />}
       </div>
      </SidebarConfigProvider>
     </PrefsProvider>

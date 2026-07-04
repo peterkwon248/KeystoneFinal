@@ -25,6 +25,8 @@ import { Flag, Lic, StatusIcon } from "@/components/icons";
 import { usePrefs } from "@/components/shell/prefs";
 import type { UIPlan } from "@/lib/plan-mapper";
 import type { UISecurity, SecNote } from "@/lib/security-mapper";
+import { ScenarioAuthorModal } from "@/components/plan/scenario-author-modal";
+import { ComposeModal } from "@/components/plan/compose-modal";
 import { FinancialsTab } from "@/components/plan/financials-tab";
 import { IndicatorsTab } from "@/components/plan/indicators-tab";
 import { ValuationTab } from "@/components/plan/valuation-tab";
@@ -223,12 +225,21 @@ function SeasonalityHeatmap({ security, lang }: { security: UISecurity; lang: La
 }
 
 /* ---- security detail (source/SecurityView.jsx 194-314) ---- */
-export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes }: {
+/** 이 종목의 adhoc(종목단독) 시나리오 — 서버가 scenarios(plan_id null, ticker) 매핑해 전달(S2). */
+export interface SecScenario {
+  label: { en: string; ko: string };
+  color: string;
+  target: number;
+  thesis?: { en: string; ko: string };
+}
+
+export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, secScenarios = [] }: {
   security: UISecurity;
   secPlan: UIPlan;
   fin: Fin | null;
   plans: UIPlan[];
   secNotes: SecNote[];
+  secScenarios?: SecScenario[];
 }) {
   const { lang }: { lang: Lang } = usePrefs();
   const t: I18nDict = I18N[lang];
@@ -242,10 +253,13 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes }
   const [watched, setWatched] = useState(s.watched);
   const [, watchForce] = useReducer((x: number) => x + 1, 0);
 
+  const [scAuthor, setScAuthor] = useState(false);
+  const [compose, setCompose] = useState(false);
   const linked = plans.filter(p => p.ticker === s.ticker);
-  // 이 종목의 (플랜) 시나리오 — 새 fetch 없이 linked 재사용. adhoc 시나리오는 defer(미이식).
+  // 이 종목의 (플랜) 시나리오 — 새 fetch 없이 linked 재사용. adhoc(종목단독) 시나리오는 secScenarios(S2).
   const planScens: { sc: UIPlan["scenarios"][number]; plan: UIPlan }[] = [];
   linked.forEach(p => p.scenarios.forEach(sc => planScens.push({ sc, plan: p })));
+  const totalScens = planScens.length + secScenarios.length;
   const eps = s.eps ?? 0;
   const per = eps > 0 ? s.price / eps : 0;
   const capStr = fmtMktCap(s.price * s.sharesOut * 1e6, s.cur);
@@ -380,24 +394,38 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes }
           <SeasonalityHeatmap security={s} lang={lang} />
           <div style={{ display: "flex", gap: 8, marginBottom: 24, marginTop: 24 }}>
             {/* onCreatePlan defer — 버튼 렌더 유지, onClick no-op(마일스톤 후속). */}
-            <button className="v-btn v-btn--primary" onClick={() => { /* defer: 플랜 생성 플로우 */ }}><Lic name="plus" size={15} cls="icon-sm" color="var(--fg-on-accent)" />{t.createPlanHere}</button>
+            <button className="v-btn v-btn--primary" onClick={() => setCompose(true)}><Lic name="plus" size={15} cls="icon-sm" color="var(--fg-on-accent)" />{t.createPlanHere}</button>
           </div>
 
-          {/* 이 종목의 시나리오(source/P5Scenarios.jsx 108-145 SecurityScenarios의 플랜 시나리오 부분).
-              adhoc 시나리오는 defer(데이터모델 없음) — linked(플랜) 재사용, 새 fetch 0.
-              행 클릭 → 해당 플랜 시나리오 탭 딥링크. "+시나리오 추가"는 adhoc 작성 모달 defer(no-op). */}
-          {planScens.length === 0 ? (
+          {/* 이 종목의 시나리오(source/P5Scenarios.jsx 108-145 SecurityScenarios).
+              adhoc(종목단독) 시나리오(secScenarios, S2) + 플랜 시나리오(linked 재사용) 병합 표시.
+              플랜 행 클릭 → 시나리오 탭 딥링크. adhoc 행은 플랜 없음(클릭 없음, adhoc 태그).
+              "+시나리오 추가" → 이 종목 고정 adhoc 작성 모달. */}
+          {totalScens === 0 ? (
             <div style={{ marginTop: 24 }}>
               <div className="se-section-h">{t.scenarioOn}</div>
-              <div className="sc-add" style={{ minHeight: 72 }} onClick={() => { /* defer: adhoc 시나리오 작성 */ }}>
+              <div className="sc-add" style={{ minHeight: 72 }} onClick={() => setScAuthor(true)}>
                 <Lic name="plus" size={16} color="var(--fg-4)" />{t.addScenarioHere}
               </div>
             </div>
           ) : (
             <div style={{ marginTop: 24 }}>
-              <div className="se-section-h" style={{ display: "flex", alignItems: "center" }}>{t.scenarioOn} <span className="grp-count" style={{ marginLeft: 6 }}>{planScens.length}</span>
-                <button className="v-btn" style={{ marginLeft: "auto", height: 26, padding: "0 9px" }} onClick={() => { /* defer: adhoc 시나리오 작성 */ }}><Lic name="plus" size={13} cls="icon-sm" color="inherit" />{t.addScenarioHere}</button>
+              <div className="se-section-h" style={{ display: "flex", alignItems: "center" }}>{t.scenarioOn} <span className="grp-count" style={{ marginLeft: 6 }}>{totalScens}</span>
+                <button className="v-btn" style={{ marginLeft: "auto", height: 26, padding: "0 9px" }} onClick={() => setScAuthor(true)}><Lic name="plus" size={13} cls="icon-sm" color="inherit" />{t.addScenarioHere}</button>
               </div>
+              {secScenarios.map((sc, i) => {
+                const ret = (sc.target / s.price - 1) * 100;
+                return (
+                  <div className="scn-row" key={"adhoc:" + i}>
+                    <span className="scsum-dot" style={{ background: sc.color }} />
+                    <span style={{ font: "var(--fw-semi) 13px var(--font-sans)", color: "var(--fg)", width: 46 }}>{sc.label[lang]}</span>
+                    <span className="scn-thesis">{sc.thesis?.[lang] ?? ""}</span>
+                    <span className="scn-tag"><span className="fl-auto" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>{t.adhoc}</span></span>
+                    <span className="mono" style={{ width: 92, textAlign: "right", color: "var(--fg-2)" }}>{fmtCompact(sc.target, s.cur)}</span>
+                    <span className={"mono " + (ret >= 0 ? "pos" : "neg")} style={{ width: 56, textAlign: "right", fontWeight: 600 }}>{ret >= 0 ? "+" : ""}{ret.toFixed(0)}%</span>
+                  </div>
+                );
+              })}
               {planScens.map(({ sc, plan }, i) => {
                 const ret = (sc.target / s.price - 1) * 100;
                 return (
@@ -461,6 +489,8 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes }
           </div>
         </Fragment>}
       </div>
+      {scAuthor && <ScenarioAuthorModal adhoc={{ securities: [s], initialTicker: s.ticker, lockTicker: true }} onClose={() => setScAuthor(false)} />}
+      {compose && <ComposeModal initialTicker={s.ticker} onClose={() => setCompose(false)} />}
     </div>
   );
 }
