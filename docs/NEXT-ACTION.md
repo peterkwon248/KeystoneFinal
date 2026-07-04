@@ -14,26 +14,25 @@
 > 목적: 여태 "defer"로 나열만 됐던 것들을 **순서·선행작업과 함께 배정**. 로드맵 정본은 `ARCHITECTURE.md §13`(마일스톤 6=실데이터, 7=웹이식 (a)뷰 (b)write-path (c)선행스키마).
 
 **Phase A — 남은 뷰 이식** (securities-list·FilterPanel 재사용):
-1. **15 리서치**(ResearchBrowser) — securities-list 재사용. **선행: SecurityPicker(종목 검색 드롭다운) 이식**(B6 Cmd+K 검색모달과 공유 컴포넌트 → 함께 or 먼저).
-2. **11~13 스크리너** — securities-list + core screener 로직(`screener.test.ts` 있음) + FilterPanel. 3뷰(리스트/히트맵/4분면).
-3. **18 휴지통** — `deleted_at` 있음. restore/deleteForever 서버액션(뮤테이션)만.
-4. **17 보관함** — 🔶 **선행: 스키마 `plans.archived_at` 마이그레이션**(아래 S1). 이후 archive/restore 뮤테이션.
+1. ✅ **15 리서치**(ResearchBrowser) — 완료(2026-07-04 2차, `1605d98`). 공용 SecurityPicker + fetchAllSecurities + sec-recents 이식.
+2. ✅ **11~13 스크리너** — 완료(`354467f`). 4레이아웃(리스트/보드/히트맵/4분면), core finOf+gradeWithFw, SEC_SEED mock seam.
+3. ✅ **18 휴지통** — 완료(`4d5970f`). restore/deleteForever 서버액션.
+4. **17 보관함** — 🔶 **선행: 스키마 `plans.archived_at` 마이그레이션**(아래 S1). 이후 archive/restore 뮤테이션. **← Phase A 유일 잔여.**
 
 **Phase B — write-path 기능 (현재 defer 해소)**:
-5. **SecurityPeek 팝오버** — 순수 프론트, security-mapper 재사용. 소규모.
-6. **Cmd+K 전역 검색모달**(SearchModal) — securities-list + plans 검색. SecurityPicker와 공유(A1과 묶기).
-7. **시나리오 작성 모달(플랜 시나리오)** — SecurityPicker + ScenarioAuthor 폼 → scenarios insert(서버액션). "새 시나리오"/"+시나리오추가"/onAddScenario no-op 해소(플랜 대상은 지금 가능).
-8. 🔴 **플랜 생성(compose 플로우)** — **핵심 기능·규모 큼**. 종목·전략·관점·시나리오 입력 위저드 → plans+scenarios insert. onCreatePlan no-op 해소. 백엔드(plans insert+RLS)는 준비됨. ⚠️ 22스크린 목록에 없던 누락 기능 — 여기 명시.
-9. **adhoc 종목 시나리오** — 🔶 **선행: 스키마 `scenarios.plan_id` nullable + `ticker` 마이그레이션**(아래 S2). 이후 작성모달 adhoc 경로 + 시나리오모니터/종목상세의 생략된 SECURITY_SCENARIOS 부활.
+5. **SecurityPeek 팝오버** — 순수 프론트, security-mapper 재사용. 소규모. ⚠️ 트리거 UX + onCreatePlan/onAddScenario no-op 딸림.
+6. ✅ **Cmd+K 전역 검색모달**(SearchModal) — 완료(`e2a5fbc`). app-shell Cmd+K 리스너 + 클라이언트 페치.
+7. ✅ **시나리오 작성 모달(플랜 시나리오)** — 완료(`bd5456c`). addPlanScenario insert. ⚠️ **scenarios unique(plan_id,case_t) 제약 없음 확인** → 플랜 대상은 S2 없이 가능(adhoc만 S2). 범위 밖: 인라인 편집/삭제·모니터 "새 시나리오".
+8. 🔴 **플랜 생성(compose 플로우)** — **핵심·규모 큼, 다음 최우선 후보**. 종목·전략·관점·시나리오 입력 위저드 → plans+scenarios insert. onCreatePlan no-op 해소. 백엔드 준비됨. ⚠️ 22스크린 누락 기능. **착수 전 범위 합의 필요**(단일모달 vs 멀티스텝, 필드셋).
+9. **adhoc 종목 시나리오** — 🔶 **선행: S2 스키마**(scenarios.plan_id nullable + ticker). 작성모달 adhoc 경로 + SECURITY_SCENARIOS 부활.
 
-**Phase C — 실데이터 (= 마일스톤 6, 웹이식과 병행/후속)**:
-- mock seam 3종(`change`/`spark`/차트 시계열) → 실 시세. `security_price_history` 백필 + 실시간 WS. **교체 지점**: `mockChange`(security-mapper)·`genSpark`·`trajectory.ts`·`gap-history.ts`·`fin-history.ts`.
+**Phase C — 실데이터 (= 마일스톤 6)**: mock seam(`change`/`spark`/차트/스크리너 `SEC_SEED` eps·perLo·perHi) → 실 시세. 교체 지점: `mockChange`·`genSpark`·`trajectory.ts`·`gap-history.ts`·`fin-history.ts`·`screener-ref.ts SEC_SEED`.
 
 **🔶 선행 스키마 마이그레이션 2건 (묶어서 처리 권장 → `pnpm db:types` 재생성)**:
 - **S1**: `plans.archived_at timestamptz` (→ A4 보관함).
 - **S2**: `scenarios.plan_id` nullable + `scenarios.ticker text` (→ B9 adhoc 시나리오).
 
-**권장 순서**: A1+B6(SecurityPicker 공유) → A2 스크리너 → A3 휴지통 → B5 peek → S1→A4 보관함 → B7 작성모달 → B8 플랜생성 → S2→B9 adhoc. C(실데이터)는 마일스톤6에서.
+**권장 다음 순서**: **B8 플랜생성(범위합의 후)** 또는 **S1+S2 묶어서 → A4 보관함 + B9 adhoc** 또는 **B5 peek**. C(실데이터)는 마일스톤6. (A1·A2·A3·B6·B7 완료 — 2026-07-04 2차 세션.)
 
 ---
 완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 + 우측 디테일바 완료** — 전부 브라우저 E2E 검증. (아래는 이력·이음새 상세)
