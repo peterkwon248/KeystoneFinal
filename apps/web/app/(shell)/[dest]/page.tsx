@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 const DESTS: Record<string, { ko: string; screen?: string }> = {
   views: { ko: "뷰" },
   watchlist: { ko: "관심종목" },
-  insights: { ko: "인사이트" },
   research: { ko: "리서치" },
   scenarios: { ko: "시나리오 모니터" },
   screener: { ko: "스크리너" },
