@@ -20,8 +20,8 @@
 | 3 | 플랜 데이터 DB화 | ✅ 2026-07-02 (롤업 뷰 + 전이 트리거 2종 + 타입 생성, E2E 검증) |
 | 4 | 재무 어댑터 (DART/EDGAR) | ✅ 2026-07-02 (apps/server, 14/14 동기화, 실측 교차검증) |
 | 5 | 시세 폴링 + FX | ✅ 2026-07-02 (KIS/Finnhub 14/14 + dividend_yield + FX) ← **MVP 데이터 레이어 완료** |
-| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — **원본 6개 스크린(01~06) 전부 완료**: Auth/온보딩/앱셸 · 03 리스트+사이드바 · 04 상세(8탭+우측바) · 01 인박스(체결 DB왕복) · 02 일지(노트 피드) · 05 전략편집기(읽기전용 4탭). **07·16·10·19~22·14 완료(2026-07-04)** — 07=`dashboard-view`. 16=`insights/`. 10=`scenarios/`(+공용 FilterPanel). 19~22=`securities/[ticker]/`+`security-detail`(헤더·차트·계절성·4탭[재무/투자지표/밸류=secPlan 재사용]·관심토글·**이 종목의 시나리오**[플랜시나리오]·**종목 메모**[journal_entries CRUD]). 14=`watchlist/`+`securities-list.ts`(공용 종목리스트 레이어). 남은 것 = **15 리서치·11~13 스크리너·17 보관함·18 휴지통**. ✅ source/core 재조정 no-op 종결(라인엔딩뿐) |
-| 6 | 실시간 WS **+ 과거 시세 히스토리 백필** | 차트 실데이터의 전제 (아래 참조) |
+| 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-03 — **원본 6개 스크린(01~06) 전부 완료**: Auth/온보딩/앱셸 · 03 리스트+사이드바 · 04 상세(8탭+우측바) · 01 인박스(체결 DB왕복) · 02 일지(노트 피드) · 05 전략편집기(읽기전용 4탭). **07·16·10·19~22·14 완료(2026-07-04)** — 07=`dashboard-view`. 16=`insights/`. 10=`scenarios/`(+공용 FilterPanel). 19~22=`securities/[ticker]/`+`security-detail`(헤더·차트·계절성·4탭[재무/투자지표/밸류=secPlan 재사용]·관심토글·**이 종목의 시나리오**[플랜시나리오]·**종목 메모**[journal_entries CRUD]). 14=`watchlist/`+`securities-list.ts`(공용 종목리스트 레이어). 남은 것 = **15 리서치·11~13 스크리너·17 보관함·18 휴지통** + **write-path defer(플랜생성·시나리오 작성모달·adhoc시나리오·SecurityPeek·Cmd+K 검색모달)**. 🗺️ **잔여 실행 계획(순서·선행스키마 2건)은 NEXT-ACTION "마일스톤 7 잔여 실행 계획" + ARCHITECTURE §13에 배정됨**. ✅ source/core 재조정 no-op 종결(라인엔딩뿐) |
+| 6 | 실시간 WS **+ 과거 시세 히스토리 백필** | 차트 실데이터의 전제. **웹 mock seam 3종(`change`/`spark`/차트)이 여기서 실데이터로 교체** — 교체지점 mockChange·genSpark·trajectory/gap-history/fin-history |
 | 8·9 | 모바일 / 구독 | |
 
 ## 커밋/PR 히스토리

@@ -324,12 +324,15 @@ US 재무          = SEC EDGAR            (무료)
 3. **플랜 데이터 DB화**: in-memory `PLANS` → 테이블. CRUD + 체결 롤업 + 상태 자동전이(트리거/RPC). **여기까지면 "내 데이터가 저장되는 진짜 앱".**
 4. **재무 어댑터**: DART + EDGAR → `security_financials`. 밸류에이션/재무 화면이 실데이터로.
 5. **시세(폴링)**: KIS/Finnhub REST 스냅샷 → 현황/차트. FX 교체.
-6. **실시간(WS)**: 서버 멀티플렉서 + Supabase Realtime 팬아웃(§8). `conn` 바인딩.
-7. **웹 앱 이식**: Next로 뷰 이관(데이터 소스만 교체).
+6. **실시간(WS) + 과거 시세 백필**: 서버 멀티플렉서 + Supabase Realtime 팬아웃(§8) + `security_price_history` 백필. `conn` 바인딩. **← 웹의 mock seam 3종(일일 등락 `change`·스파크라인 `spark`·차트 시계열 trajectory/gap-history)이 실데이터로 교체되는 곳.** 그전까진 mock placeholder(`mockChange`/`genSpark`).
+7. **웹 앱 이식**: Next로 뷰 이관 + **write-path 기능**. 세부 순서·선행조건은 `NEXT-ACTION.md` "마일스톤 7 잔여 실행 계획" 참조. 범위:
+   - (a) **뷰 이식** — 완료: Auth·셸·01~06·07 대시보드·16 인사이트·10 시나리오모니터·19~22 종목상세·14 관심종목. 남음: 15 리서치·11~13 스크리너·17 보관함·18 휴지통.
+   - (b) **write-path 기능(현재 defer)** — 플랜 생성(compose)·시나리오 작성 모달·adhoc 종목 시나리오·SecurityPeek 팝오버·Cmd+K 검색모달. **⚠️ "플랜 생성"은 앱 핵심 기능인데 22스크린 목록엔 없음 — 여기서 명시적으로 잡음.**
+   - (c) **선행 스키마 2건(§4/DATA_MODEL 마이그레이션)**: ①`scenarios.plan_id` nullable + `ticker` 추가(adhoc 종목 시나리오) ②`plans.archived_at`(17 보관함).
 8. **모바일 앱**: Expo로 핵심 화면(현황·플랜·시나리오·관심종목·일지).
 9. **구독(추후)**: 티어·엔타이틀먼트·Stripe/RevenueCat.
 
-> MVP 커트라인 = **1~5**(개인이 로그인해서 자기 플랜을 저장하고 실데이터 재무 + 준실시간 시세로 쓰는 앱). 6~9는 그 위 증분.
+> MVP 커트라인 = **1~5**(개인이 로그인해서 자기 플랜을 저장하고 실데이터 재무 + 준실시간 시세로 쓰는 앱). 6~9는 그 위 증분. 단 **플랜 생성(7b)은 실사용 필수** — MVP 이후로 미루면 유저가 플랜을 못 만듦.
 
 ---
 

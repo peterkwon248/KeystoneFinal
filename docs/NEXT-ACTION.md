@@ -9,7 +9,34 @@
 - 참고: 새 README 규칙 = **"스크린샷 vs 라이브 프로토타입 불일치 시 프로토타입(source/) 승리"**. 01-06 캡처는 구버전(스누즈 등 옛 UI 잔존) — 07~ 및 프로토타입이 최신.
 
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
-완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 + 우측 디테일바 완료** — 전부 브라우저 E2E 검증. 다음:
+
+### 🗺️ 마일스톤 7 잔여 실행 계획 (2026-07-04 배정 — 순서·선행조건·defer 전부 포함)
+> 목적: 여태 "defer"로 나열만 됐던 것들을 **순서·선행작업과 함께 배정**. 로드맵 정본은 `ARCHITECTURE.md §13`(마일스톤 6=실데이터, 7=웹이식 (a)뷰 (b)write-path (c)선행스키마).
+
+**Phase A — 남은 뷰 이식** (securities-list·FilterPanel 재사용):
+1. **15 리서치**(ResearchBrowser) — securities-list 재사용. **선행: SecurityPicker(종목 검색 드롭다운) 이식**(B6 Cmd+K 검색모달과 공유 컴포넌트 → 함께 or 먼저).
+2. **11~13 스크리너** — securities-list + core screener 로직(`screener.test.ts` 있음) + FilterPanel. 3뷰(리스트/히트맵/4분면).
+3. **18 휴지통** — `deleted_at` 있음. restore/deleteForever 서버액션(뮤테이션)만.
+4. **17 보관함** — 🔶 **선행: 스키마 `plans.archived_at` 마이그레이션**(아래 S1). 이후 archive/restore 뮤테이션.
+
+**Phase B — write-path 기능 (현재 defer 해소)**:
+5. **SecurityPeek 팝오버** — 순수 프론트, security-mapper 재사용. 소규모.
+6. **Cmd+K 전역 검색모달**(SearchModal) — securities-list + plans 검색. SecurityPicker와 공유(A1과 묶기).
+7. **시나리오 작성 모달(플랜 시나리오)** — SecurityPicker + ScenarioAuthor 폼 → scenarios insert(서버액션). "새 시나리오"/"+시나리오추가"/onAddScenario no-op 해소(플랜 대상은 지금 가능).
+8. 🔴 **플랜 생성(compose 플로우)** — **핵심 기능·규모 큼**. 종목·전략·관점·시나리오 입력 위저드 → plans+scenarios insert. onCreatePlan no-op 해소. 백엔드(plans insert+RLS)는 준비됨. ⚠️ 22스크린 목록에 없던 누락 기능 — 여기 명시.
+9. **adhoc 종목 시나리오** — 🔶 **선행: 스키마 `scenarios.plan_id` nullable + `ticker` 마이그레이션**(아래 S2). 이후 작성모달 adhoc 경로 + 시나리오모니터/종목상세의 생략된 SECURITY_SCENARIOS 부활.
+
+**Phase C — 실데이터 (= 마일스톤 6, 웹이식과 병행/후속)**:
+- mock seam 3종(`change`/`spark`/차트 시계열) → 실 시세. `security_price_history` 백필 + 실시간 WS. **교체 지점**: `mockChange`(security-mapper)·`genSpark`·`trajectory.ts`·`gap-history.ts`·`fin-history.ts`.
+
+**🔶 선행 스키마 마이그레이션 2건 (묶어서 처리 권장 → `pnpm db:types` 재생성)**:
+- **S1**: `plans.archived_at timestamptz` (→ A4 보관함).
+- **S2**: `scenarios.plan_id` nullable + `scenarios.ticker text` (→ B9 adhoc 시나리오).
+
+**권장 순서**: A1+B6(SecurityPicker 공유) → A2 스크리너 → A3 휴지통 → B5 peek → S1→A4 보관함 → B7 작성모달 → B8 플랜생성 → S2→B9 adhoc. C(실데이터)는 마일스톤6에서.
+
+---
+완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 + 우측 디테일바 완료** — 전부 브라우저 E2E 검증. (아래는 이력·이음새 상세)
 1. ✅ **07 대시보드(현황)·16 인사이트 완료(2026-07-04)** — 07=`components/plan/dashboard-view.tsx`(트리맵·헤드라인·액션큐)+openPlan `?tab=` 딥링크+plan `sector`. E2E(트리맵 8타일·시장그룹 KR/US·액션큐 2·dash-row→체결 딥링크). 16=`components/insights/insights-screen.tsx`+`(shell)/insights/page.tsx`. 10=`components/scenarios/scenarios-screen.tsx`+`(shell)/scenarios/page.tsx`(전 플랜 시나리오 모니터+상태/종목/케이스 그룹+공용 FilterPanel). E2E 완료(콘솔 0). 상세는 MEMORY.md. **공용 이식됨: `components/plan/filter-panel.tsx`(watchlist/screener/archive 언블록) + `components/plan/dash-stat.tsx`.** **🎯 다음 = 11~13 스크리너 · 14 관심종목 · 15 리서치 · 17 보관함 · 18 휴지통 · 19~22 종목상세.**
    - ✅ **19~22 종목상세 + 14 관심종목 완료(2026-07-04)**: 종목상세=`securities/[ticker]/`+`security-detail.tsx`(헤더·차트·계절성·4탭·관심토글·**이 종목의 시나리오**·**종목 메모**[journal_entries]). 관심종목=`watchlist/`+`securities-list.ts`(공용 종목리스트 레이어). E2E 전부 검증(시나리오 딥링크·메모 CRUD·change 혼합부호). 상세는 MEMORY.md.
    - ⚠️ **남은 화면**: **15 리서치**(ResearchBrowser — securities-list 재사용, SecurityPicker 필요) · **11~13 스크리너**(securities-list + core screener 로직 + FilterPanel) · 17 보관함(**archived_at 마이그레이션 선행**) · 18 휴지통(deleted_at 있음, restore/deleteForever 뮤테이션).
