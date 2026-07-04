@@ -1,18 +1,18 @@
 # NEXT-ACTION
 
-## ⚠️⚠️ 새 디자인 핸드오프 도입 (2026-07-03) — 참조 교체됨, core 재조정 미결
+## ⚠️⚠️ 새 디자인 핸드오프 도입 (2026-07-03) — 참조 교체됨, ~~core 재조정 미결~~ → **재조정 no-op 확정(2026-07-04)**
 `Downloads/키스톤파이널.zip` = **갱신·확장된 디자인 핸드오프** 도입. 사용자 결정 = **"참조만 교체 + core 재조정은 별도"**.
 - **교체 완료(참조):** `design_handoff_keystone/` 번들 전체 + root `screens/`(6→**22장**) + root 스펙 5종(ARCHITECTURE/DATA_MODEL/API/HANDOFF/README) = 전부 신버전. 새 스크린 22장 = 07 대시보드/08 보드/09 타임라인 + 10 시나리오모니터 + 11~13 스크리너 + 14 관심종목 + 15 리서치 + 16 인사이트 + 17 보관함 + 18 휴지통 + 19/19b/21/22 종목상세.
-- **불변(의도적):** root `source/`(=구 프로토타입, 골든 원본) + `packages/core` + 골든 102 — **건드리지 않음**. 즉 지금 `screens/`(신) ↔ root `source/`(구) 사이에 의도된 임시 불일치 존재.
-- **🔴 미결 태스크 — source/core 재조정:** 새 핸드오프 `source/*.jsx`가 순수로직(`data.jsx`/`ledger.jsx`/`valuation.jsx` 등)까지 전부 바뀜. root `source/`를 신버전으로 올리려면 **core를 신 로직에 맞춰 갱신 + 골든 재생성**을 순수로직 diff와 함께 신중히 해야 함(그냥 덮으면 골든 깨짐). 뷰 이식 더 진행하기 전에 이 재조정을 먼저 할지 결정 필요.
+- **불변(의도적):** root `source/`(=구 프로토타입, 골든 원본) + `packages/core` + 골든 102 — **건드리지 않음**.
+- **✅ source/core 재조정 = 실측 no-op (2026-07-04 검증, 종결):** `~~새 핸드오프 source/*.jsx가 순수로직까지 전부 바뀜~~`은 **오판이었음**. root `source/` ↔ `design_handoff_keystone/source/` 32개 파일을 실제 대조하니 **유일한 차이는 라인엔딩(root=CRLF, 신=LF)** — 라인엔딩+공백 정규화 시 30개 파일 **바이트 동일**. 실제 로직 델타는 `App.jsx`(2줄)·`P4Views.jsx`(5줄) **둘뿐이고 전부 `ResearchBrowser` 뷰 코드**(`onOpenPlan` prop + `NPlansBadge` 추가) — **순수로직 아님**, 아직 웹 미이식된 15 리서치 화면 코드라 그때 자연 흡수. **골든 생성기가 읽는 파일(data/securities/valuation/futuretest/icons/DetailView/ledger)은 전부 동일 → core 수정·골든 재생성 불필요.** 골든 102/102 green 유지. `diff -q`가 32파일 전부 changed로 보인 건 CRLF에 속은 것. (원인: 새 핸드오프 zip이 LF로 재저장됨.)
 - **🟡 새 핸드오프가 명시한 설계 변경(이식 시 반영):** ① **인박스 스누즈(나중에) 제거** → 트리아지 처리완료·음소거·기록만, 탭 전체/안읽음 (01 인박스 이식 전 필수) ② **종목 리서치 통합** — Statements+Simulator 폐기, 보안상세 진입. 사이드바 도구 = 관심종목·인사이트·종목리서치·시나리오·스크리너·보관함·휴지통 ③ 밸류에이션 멀티메서드 밴드차트·종목 월별 히트맵·크로스뷰 필터팝오버(GICS+KR/US)·스탯 스트립.
 - 참고: 새 README 규칙 = **"스크린샷 vs 라이브 프로토타입 불일치 시 프로토타입(source/) 승리"**. 01-06 캡처는 구버전(스누즈 등 옛 UI 잔존) — 07~ 및 프로토타입이 최신.
 
 ## 다음 세션 즉시 액션 — 마일스톤 7 계속 (웹 이식, 6보다 선행 확정 2026-07-03)
 완료: apps/web + Auth/온보딩 + 앱 셸 + **03 플랜 리스트** + 사이드바 도구 섹션. **04 플랜 상세 8탭 + 우측 디테일바 완료** — 전부 브라우저 E2E 검증. 다음:
-1. **🎯 07 대시보드(현황, screens/07-plans-dashboard) — 플랜 4번째 표시모드** ← 다음 작업. 지금 `plans-screen.tsx`에서 placeholder(`mode === "dashboard"`). 헤드라인 스탯 스트립(진행중·검토·평균수익률·보유·확인필요) + 포트폴리오 히트맵(트리맵, 크기=평가액·색=수익률, group by 시장/포트폴리오/섹터) + "지금 확인할 종목" 액션큐. 원본 = `design_handoff_keystone/source/Dashboard.jsx`.
-   - 이후 새 핸드오프 스크린: 10 시나리오모니터 · 11~13 스크리너 · 14 관심종목 · 15 리서치 · 16 인사이트 · 17 보관함 · 18 휴지통 · 19~22 종목상세.
-   - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리. **새 핸드오프 `design_handoff_keystone/source/*.jsx`가 최신 로직 기준**(root `source/`는 구버전 — 재조정 미결). "핸들러≠렌더" grep 확인.
+1. ✅ **07 대시보드(현황)·16 인사이트 완료(2026-07-04)** — 07=`components/plan/dashboard-view.tsx`(트리맵·헤드라인·액션큐)+openPlan `?tab=` 딥링크+plan `sector`. E2E(트리맵 8타일·시장그룹 KR/US·액션큐 2·dash-row→체결 딥링크). 16=`components/insights/insights-screen.tsx`+`(shell)/insights/page.tsx`(전용 라우트). E2E(시나리오적중률·관점성과 scatter 63dot·프로세스건강도 funnel·승률손익비, 콘솔 0). 상세는 MEMORY.md. **🎯 다음 = 새 핸드오프 확장분: 10 시나리오모니터 · 11~13 스크리너 · 14 관심종목 · 15 리서치 · 17 보관함 · 18 휴지통 · 19~22 종목상세.** (08 보드·09 타임라인은 기존재)
+   - 순수 로직은 @keystone/core에서 import, 데이터는 supabase 쿼리. **로직 기준은 root `source/`=`design_handoff_keystone/source/` (동일 — 라인엔딩만 차이, 재조정 no-op 확정).** "핸들러≠렌더" grep 확인.
+   - ⏸️ 잔여: 상단 필터 패널(FilterPanel) · GET /fx·/quote Route Handler · 인박스 사이드바 unread 뱃지+트리아지 DB 동기화(openPlan 탭 딥링크는 07에서 해소됨).
    - ✅ **원본 6개 스크린(01~06) 전부 완료(2026-07-03)**: 01 인박스(3-pane 트리아지, 체결 DB왕복, 스누즈 제거)·02 일지(`components/journal/*`, 플랜 노트 피드+since 트랙, patchNotes 재사용)·03 리스트·04 상세(8탭+우측바)·05 전략편집기(`components/strategy/*`, 읽기전용 4탭, core 프리셋)·06 청산(인박스 리더 청산카드). 
    - ⏸️ **인박스 후속(묶음)**: 사이드바 unread 뱃지 + 트리아지 DB 동기화(트리아지가 DB로 가야 서버계산 가능). openPlan 탭 딥링크. 종목 저널(일지 SECS)은 종목상세 이식 때.
    - ✅ **04 상세 완료(2026-07-03)**: 8탭(시나리오·전략·재무제표·투자지표·밸류에이션·인사이트·체결·활동) + **우측 디테일바(PropsSidebar)** — 포지션/청산요약·속성(종목/생성/수정)·현황·메모(CRUD)·시나리오요약 + 접기토글(**기본 접힘**, `rightCollapsed` 로컬 state 비영속). closeoutSummary는 웹 lib(`lib/closeout.ts`)로 core computeLedger 재사용 → 골든 무손상
