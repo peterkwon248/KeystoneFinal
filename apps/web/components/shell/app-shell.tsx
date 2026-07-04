@@ -1,13 +1,14 @@
 // 앱 셸 — 사이드바 + 메인 프레임 (프로토타입 App.jsx의 .app 레이아웃 대응).
 // 메뉴/설정 모달 상태와 사이드바 접기를 관리한다.
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar, type SidebarPortfolio, type SidebarView } from "./sidebar";
 import { WorkspaceMenu, SettingsModal } from "./workspace-menu";
 import { CustomizeModal } from "./customize-modal";
 import { PanelIcon } from "@/components/icons";
 import { PrefsProvider } from "./prefs";
 import { SidebarConfigProvider } from "./sidebar-config";
+import { SearchModal } from "@/components/search/search-modal";
 
 export function AppShell({
   userId, sidebarPrefs, portfolios, plansTotal, activeCount, views, banner, signOutAction, children,
@@ -26,6 +27,20 @@ export function AppShell({
   const [settings, setSettings] = useState(false);
   const [customize, setCustomize] = useState(false);
   const [sbHidden, setSbHidden] = useState(false);
+  const [search, setSearch] = useState(false);
+
+  // source/App.jsx:454 이식 — ⌘K/Ctrl+K로 전역 검색모달 토글, Escape로 닫기.
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearch((v) => !v);
+      }
+      if (e.key === "Escape") setSearch(false);
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, []);
 
   return (
     <PrefsProvider>
@@ -42,6 +57,7 @@ export function AppShell({
               views={views}
               onWsMenu={() => setWsMenu(true)}
               onCollapse={() => setSbHidden(true)}
+              onSearch={() => setSearch(true)}
             />
           )}
           {sbHidden && (
@@ -62,6 +78,7 @@ export function AppShell({
         )}
         {settings && <SettingsModal onClose={() => setSettings(false)} />}
         {customize && <CustomizeModal onClose={() => setCustomize(false)} />}
+        {search && <SearchModal userId={userId} onClose={() => setSearch(false)} />}
       </div>
      </SidebarConfigProvider>
     </PrefsProvider>
