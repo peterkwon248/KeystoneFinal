@@ -18,6 +18,8 @@ export interface UINote extends PlanNote {
 /** 리스트/보드/타임라인이 쓰는 Plan + DB 식별자 */
 export interface UIPlan extends Plan {
   dbId: string;
+  // 대시보드 히트맵 섹터 그룹핑용 — securities.sector({en,ko}) 또는 없으면 null.
+  sector: { en: string; ko: string } | null;
 }
 
 /* DB scenario case → 프로토타입 시나리오 라벨/색.
@@ -70,7 +72,7 @@ export interface DbPlanRow {
   closed_at: string | null;
   created_at: string;
   updated_at: string;
-  securities: { name: L10n; market: string; last_close: number | null; shares_out: number | null } | null;
+  securities: { name: L10n; market: string; last_close: number | null; shares_out: number | null; sector: L10n | null } | null;
   scenarios: {
     case_t: string; label: L10n | null; target: number; thesis: L10n | null;
     status: ScenarioStatus; color: string | null; is_auto: boolean; sort: number;
@@ -225,6 +227,7 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
     notes,
     tpPrice: typeof cf.tpPrice === "number" ? cf.tpPrice : null,
     slPrice: typeof cf.slPrice === "number" ? cf.slPrice : null,
+    sector: row.securities?.sector ?? null,
   };
 }
 
@@ -232,7 +235,7 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
 export const PLAN_SELECT = `
   id, human_id, portfolio_id, ticker, currency, name, status, strategy_id, exec_id,
   eps, shares_out, realized_pl, custom_fields, closed_at, created_at, updated_at,
-  securities(name, market, last_close, shares_out),
+  securities(name, market, last_close, shares_out, sector),
   scenarios(case_t, label, target, thesis, status, color, is_auto, sort),
   executions(side, exec_date, price, quantity, amount, round_no),
   rules(id, enabled, condition, action, last_fired)

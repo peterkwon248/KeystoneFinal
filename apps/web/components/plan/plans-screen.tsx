@@ -14,6 +14,7 @@ import type { UIPlan } from "@/lib/plan-mapper";
 import { ListView } from "./list-view";
 import { BoardView } from "./board-view";
 import { TimelineView, type TlMode, type TlOverlays, type TlYMode } from "./timeline-view";
+import { DashboardView } from "./dashboard-view";
 import { DisplayPanel, type ViewMode } from "./display-panel";
 import type { Grouping, Ordering } from "./group";
 
@@ -46,7 +47,7 @@ export function PlansScreen({ plans, portfolios, activePf }: {
 
   const pf = activePf ? portfolios.find((p) => p.id === activePf) : null;
 
-  const openPlan = (p: UIPlan) => router.push(`/plans/${p.dbId}`);
+  const openPlan = (p: UIPlan, tab?: string) => router.push(`/plans/${p.dbId}${tab ? `?tab=${tab}` : ""}`);
   const onMove = async (dbId: string, status: string) => {
     await supabaseBrowser().from("plans").update({ status: status as PlanStatus }).eq("id", dbId);
     router.refresh();
@@ -100,7 +101,7 @@ export function PlansScreen({ plans, portfolios, activePf }: {
       <div className="body-row">
         {mode === "board" ? <BoardView plans={visible} t={t} lang={lang} onOpen={openPlan} onMove={onMove} props={listProps} ordering={ordering} />
           : mode === "timeline" ? <TimelineView plans={visible} t={t} lang={lang} onOpen={openPlan} mode={tlMode} setMode={setTlMode} ordering={ordering} grouping={grouping} overlays={tlOverlays} yMode={tlYMode} portfolios={portfolios} />
-          : mode === "dashboard" ? <div className="body-main"><div className="empty-state"><Lic name="layout-dashboard" size={28} color="var(--fg-4)" /><div className="es-title">{lang === "ko" ? "대시보드 뷰는 다음 단계에서 이식됩니다" : "Dashboard view lands in a later step"}</div></div></div>
+          : mode === "dashboard" ? <DashboardView plans={visible} t={t} lang={lang} onOpen={openPlan} grouping={grouping} ordering={ordering} />
           : <ListView plans={visible} t={t} lang={lang} onOpen={openPlan} grouping={grouping} ordering={ordering} showEmpty={showEmpty} props={listProps} portfolios={portfolios} />}
       </div>
 

@@ -3,7 +3,7 @@
 // 순수 로직은 @keystone/core, 데이터는 UIPlan(plan-mapper), 픽커 영속은 patchPlanAction.
 "use client";
 import { useState, useTransition, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Fin, I18nDict, Lang, PlanStatus } from "@keystone/core/types";
 import { EXEC_STRATEGIES, STATUS_ORDER } from "@keystone/core/reference";
 import { planReturn } from "@keystone/core/analytics";
@@ -34,7 +34,13 @@ export function PlanDetail({ plan, portfolios, fin }: {
   const { lang } = usePrefs();
   const t: I18nDict = I18N[lang];
   const router = useRouter();
-  const [tab, setTab] = useState("scenarios");
+  const sp = useSearchParams();
+  // 초기 탭은 URL ?tab= 딥링크에서(대시보드 로우 → 체결 탭). 알 수 없는 값이면 시나리오로 폴백.
+  const [tab, setTab] = useState(() => {
+    const q = sp.get("tab");
+    const known = ["scenarios", "strategy", "financials", "indicators", "valuation", "insights", "executions", "activity"];
+    return q && known.includes(q) ? q : "scenarios";
+  });
   // 우측 디테일바 — screens/04 기준(우측바 안 보임)이므로 접힘 기본.
   const [rightCollapsed, setRightCollapsed] = useState(true);
   const [, startTransition] = useTransition();
