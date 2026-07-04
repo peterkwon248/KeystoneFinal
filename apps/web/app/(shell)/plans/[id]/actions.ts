@@ -97,3 +97,32 @@ export async function applyValuationTargetsAction(
   }
   revalidatePath(`/plans/${planId}`);
 }
+
+/** 시나리오 탭 "새 시나리오" 저장 — scenarios insert. unique(plan_id,case_t) 제약 없음이라
+ *  같은 case 로 여러 개 추가 가능(P5Scenarios ScenarioAuthor 저장 동치, plan-scoped 이므로 종목 선택 없음).
+ *  label/color 는 case_t 로부터 재구성(plan-mapper SC_CASE 와 동일 매핑). status 는 스키마 default 'pending'.
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. RLS 로 소유 플랜만. */
+export type AddScenarioInput = { caseT: "bull" | "base" | "bear"; target: number; thesis: string };
+
+export async function addPlanScenario(planId: string, input: AddScenarioInput) {
+  const supabase = await supabaseServer();
+  const caseLabel = {
+    bull: { en: "Bull", ko: "상단" },
+    base: { en: "Base", ko: "중간" },
+    bear: { en: "Bear", ko: "하단" },
+  }[input.caseT];
+  const color = { bull: "var(--r-bull)", base: "var(--r-base)", bear: "var(--r-bear)" }[input.caseT];
+  const { error } = await supabase.from("scenarios").insert({
+    plan_id: planId,
+    case_t: input.caseT,
+    label: caseLabel,
+    target: input.target,
+    thesis: input.thesis ? { en: input.thesis, ko: input.thesis } : null,
+    status: "pending",
+    color,
+    is_auto: false,
+    sort: 999,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${planId}`);
+}

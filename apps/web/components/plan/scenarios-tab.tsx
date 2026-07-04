@@ -9,8 +9,10 @@ import type { I18nDict, Lang } from "@keystone/core/types";
 import { STRATEGIES } from "@keystone/core/reference";
 import { scAutoStatus } from "@keystone/core/analytics";
 import { fmtMoney, fmtCompact, toDispCur } from "@keystone/core/format";
+import { Lic } from "@/components/icons";
 import type { UIPlan } from "@/lib/plan-mapper";
 import { GapTab } from "./gap-tab";
+import { ScenarioAuthorModal } from "./scenario-author-modal";
 
 // 시나리오 미니 상태 pill 색 (source/icons.jsx SC_STATUS_COLOR 그대로 — 순수 프레젠테이션).
 const SC_STATUS_COLOR: Record<string, { bg: string; fg: string }> = {
@@ -82,6 +84,7 @@ function ConvergenceTest({ plan, lang }: { plan: UIPlan; lang: Lang }) {
 
 export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lang: Lang }) {
   const ko = lang === "ko";
+  const [modalOpen, setModalOpen] = useState(false);
   const fw = STRATEGIES.find((s) => s.id === plan.strategyId);
   const swingField = fw && fw.fields ? fw.fields.find((f) => f.swing) : null;
   const swingLab = swingField ? swingField.label[lang] : ko ? "가정 PER" : "Assumed P/E";
@@ -161,10 +164,15 @@ export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lan
             </div>
           );
         })()}
+        <div className="sc-add" onClick={() => setModalOpen(true)}>
+          <Lic name="plus" size={16} color="var(--fg-4)" />{t.addScenarioHere}
+        </div>
       </div>
 
       <GapTab plan={plan} t={t} lang={lang} part="head" />
       <ConvergenceTest plan={plan} lang={lang} />
+
+      {modalOpen && <ScenarioAuthorModal plan={plan} onClose={() => setModalOpen(false)} />}
     </div>
   );
 }
