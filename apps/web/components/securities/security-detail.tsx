@@ -20,15 +20,15 @@ import type { Fin } from "@keystone/core/types";
 import { STRATEGIES } from "@keystone/core/reference";
 import { planReturn } from "@keystone/core/analytics";
 import { I18N } from "@keystone/core/i18n";
-import { fmtMoney, fmtMktCap, fmtShares } from "@keystone/core/format";
+import { fmtMoney, fmtMktCap, fmtShares, fmtCompact } from "@keystone/core/format";
 import { Flag, Lic, StatusIcon } from "@/components/icons";
 import { usePrefs } from "@/components/shell/prefs";
 import type { UIPlan } from "@/lib/plan-mapper";
-import type { UISecurity } from "@/lib/security-mapper";
+import type { UISecurity, SecNote } from "@/lib/security-mapper";
 import { FinancialsTab } from "@/components/plan/financials-tab";
 import { IndicatorsTab } from "@/components/plan/indicators-tab";
 import { ValuationTab } from "@/components/plan/valuation-tab";
-import { toggleWatch } from "@/app/(shell)/securities/[ticker]/actions";
+import { toggleWatch, addSecNote, editSecNote, deleteSecNote } from "@/app/(shell)/securities/[ticker]/actions";
 
 /* ---- placeholder price chart (source/SecurityView.jsx 4-75) — mock spark, 실데이터 마일스톤6 ---- */
 function SecurityChart({ security, height = 190 }: { security: UISecurity; height?: number }) {
@@ -222,11 +222,12 @@ function SeasonalityHeatmap({ security, lang }: { security: UISecurity; lang: La
 }
 
 /* ---- security detail (source/SecurityView.jsx 194-314) ---- */
-export function SecurityDetailScreen({ security, secPlan, fin, plans }: {
+export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes }: {
   security: UISecurity;
   secPlan: UIPlan;
   fin: Fin | null;
   plans: UIPlan[];
+  secNotes: SecNote[];
 }) {
   const { lang }: { lang: Lang } = usePrefs();
   const t: I18nDict = I18N[lang];
@@ -238,6 +239,9 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans }: {
   const [, watchForce] = useReducer((x: number) => x + 1, 0);
 
   const linked = plans.filter(p => p.ticker === s.ticker);
+  // 이 종목의 (플랜) 시나리오 — 새 fetch 없이 linked 재사용. adhoc 시나리오는 defer(미이식).
+  const planScens: { sc: UIPlan["scenarios"][number]; plan: UIPlan }[] = [];
+  linked.forEach(p => p.scenarios.forEach(sc => planScens.push({ sc, plan: p })));
   const eps = s.eps ?? 0;
   const per = eps > 0 ? s.price / eps : 0;
   const capStr = fmtMktCap(s.price * s.sharesOut * 1e6, s.cur);
@@ -264,6 +268,63 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans }: {
   };
 
   const epsStr = s.cur === "USD" ? "$" + eps.toFixed(2) : "₩" + eps.toLocaleString();
+
+  // ---- 종목 메모(journal_entries 공유) compose/edit/delete. 서버액션 후 router.refresh()로 재fetch. ----
+  const [secDraft, setSecDraft] = useState("");
+  const [secEditId, setSecEditId] = useState<string | null>(null);
+  const [secEditText, setSecEditText] = useState("");
+  const [secBusy, setSecBusy] = useState(false);
+
+  const submitSecNote = async () => {
+    const body = secDraft.trim();
+    if (!body || secBusy) return;
+    setSecBusy(true);
+    try {
+      await addSecNote(s.ticker, body);
+      setSecDraft("");
+      router.refresh();
+    } finally {
+      setSecBusy(false);
+    }
+  };
+  const startSecEdit = (n: SecNote) => { setSecEditId(n.id); setSecEditText(n.body); };
+  const cancelSecEdit = () => { setSecEditId(null); setSecEditText(""); };
+  const commitSecEdit = async () => {
+    if (secEditId == null) return;
+    const body = secEditText.trim();
+    if (!body || secBusy) return;
+    setSecBusy(true);
+    try {
+      await editSecNote(secEditId, body);
+      cancelSecEdit();
+      router.refresh();
+    } finally {
+      setSecBusy(false);
+    }
+  };
+  const removeSecNote = async (id: string) => {
+    if (secBusy) return;
+    setSecBusy(true);
+    try {
+      await deleteSecNote(id);
+      if (secEditId === id) cancelSecEdit();
+      router.refresh();
+    } finally {
+      setSecBusy(false);
+    }
+  };
+  // created_at → 표시 문자열(간단): 오늘이면 시:분, 아니면 로컬 날짜(ko/en). 원본 n.when stamp 대체.
+  const noteWhen = (iso: string): string => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const now = Date.now();
+    const diffMs = now - d.getTime();
+    const oneDay = 86400000;
+    if (diffMs >= 0 && diffMs < oneDay && d.getDate() === new Date(now).getDate()) {
+      return d.toLocaleTimeString(lang === "ko" ? "ko-KR" : "en-US", { hour: "2-digit", minute: "2-digit" });
+    }
+    return d.toLocaleDateString(lang === "ko" ? "ko-KR" : "en-US", { year: "numeric", month: "short", day: "numeric" });
+  };
 
   return (
     <div className="detail-main">
@@ -318,7 +379,36 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans }: {
             <button className="v-btn v-btn--primary" onClick={() => { /* defer: 플랜 생성 플로우 */ }}><Lic name="plus" size={15} cls="icon-sm" color="var(--fg-on-accent)" />{t.createPlanHere}</button>
           </div>
 
-          {/* SecurityScenarios(266) defer — adhoc 시나리오 데이터모델 없음(시나리오 모니터와 동일). */}
+          {/* 이 종목의 시나리오(source/P5Scenarios.jsx 108-145 SecurityScenarios의 플랜 시나리오 부분).
+              adhoc 시나리오는 defer(데이터모델 없음) — linked(플랜) 재사용, 새 fetch 0.
+              행 클릭 → 해당 플랜 시나리오 탭 딥링크. "+시나리오 추가"는 adhoc 작성 모달 defer(no-op). */}
+          {planScens.length === 0 ? (
+            <div style={{ marginTop: 24 }}>
+              <div className="se-section-h">{t.scenarioOn}</div>
+              <div className="sc-add" style={{ minHeight: 72 }} onClick={() => { /* defer: adhoc 시나리오 작성 */ }}>
+                <Lic name="plus" size={16} color="var(--fg-4)" />{t.addScenarioHere}
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginTop: 24 }}>
+              <div className="se-section-h" style={{ display: "flex", alignItems: "center" }}>{t.scenarioOn} <span className="grp-count" style={{ marginLeft: 6 }}>{planScens.length}</span>
+                <button className="v-btn" style={{ marginLeft: "auto", height: 26, padding: "0 9px" }} onClick={() => { /* defer: adhoc 시나리오 작성 */ }}><Lic name="plus" size={13} cls="icon-sm" color="inherit" />{t.addScenarioHere}</button>
+              </div>
+              {planScens.map(({ sc, plan }, i) => {
+                const ret = (sc.target / s.price - 1) * 100;
+                return (
+                  <div className="scn-row scn-row-click" key={plan.id + ":" + i} onClick={() => router.push(`/plans/${plan.dbId}?tab=scenarios`)} title={lang === "ko" ? plan.id + " 시나리오 열기" : "Open " + plan.id + " scenarios"}>
+                    <span className="scsum-dot" style={{ background: sc.color }} />
+                    <span style={{ font: "var(--fw-semi) 13px var(--font-sans)", color: "var(--fg)", width: 46 }}>{sc.label[lang]}</span>
+                    <span className="scn-thesis">{sc.thesis?.[lang] ?? ""}</span>
+                    <span className="scn-tag"><span className="fl-auto">{plan.id}</span></span>
+                    <span className="mono" style={{ width: 92, textAlign: "right", color: "var(--fg-2)" }}>{fmtCompact(sc.target, s.cur)}</span>
+                    <span className={"mono " + (ret >= 0 ? "pos" : "neg")} style={{ width: 56, textAlign: "right", fontWeight: 600 }}>{ret >= 0 ? "+" : ""}{ret.toFixed(0)}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           <div className="se-section-h" style={{ marginTop: 24 }}>{t.plansOn} <span className="grp-count">{linked.length}</span></div>
           {linked.length ? <Fragment>{linked.slice(0, planLimit).map(p => {
@@ -334,7 +424,37 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans }: {
               </div>
             );
           })}{linked.length > planLimit && <button className="note-more" style={{ margin: "4px 0 8px" }} onClick={() => setPlanLimit(l => l + 40)}>{lang === "ko" ? `더 보기 (${linked.length - planLimit}개 남음)` : `Show more (${linked.length - planLimit} left)`}</button>}</Fragment> : <div style={{ padding: "16px 0", color: "var(--fg-4)", font: "var(--fw-medium) 13px var(--font-sans)" }}>{t.noPlansYet}</div>}
-          {/* 종목 메모 섹션(282-310) defer — 전용 notes 테이블 없음(마일스톤 후속). */}
+          {/* 종목 메모(source/SecurityView.jsx 282-310) — journal_entries 공유(plan_id=null·ticker).
+              compose textarea(⌘/Ctrl+Enter) + edit/delete. "일지에도 함께 모입니다"(같은 테이블). */}
+          <div className="sec-memo">
+            <div className="se-section-h" style={{ marginTop: 24 }}>{lang === "ko" ? "종목 메모" : "Security notes"} <span className="grp-count">{secNotes.length}</span></div>
+            <div className="note-compose">
+              <textarea className="note-input" rows={2} placeholder={lang === "ko" ? "이 종목을 왜 보는지·리서치를 기록하세요… (⌘/Ctrl+Enter)" : "Why you're watching this… (⌘/Ctrl+Enter)"} value={secDraft}
+                onChange={e => setSecDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submitSecNote(); }} />
+              {secDraft.trim() && <button className="v-btn v-btn--primary note-save" onClick={submitSecNote} disabled={secBusy}>{lang === "ko" ? "기록" : "Log"}</button>}
+            </div>
+            {secNotes.length === 0 ? <div className="note-empty">{lang === "ko" ? "아직 메모가 없습니다. 일지에도 함께 모입니다." : "No notes yet. These also collect in the Journal."}</div>
+              : secNotes.map(n => (
+                <div className="note-item" key={n.id}>
+                  <div className="note-meta"><span className="note-when">{noteWhen(n.createdAt)}</span>
+                    {secEditId !== n.id && <span className="note-acts">
+                      <button className="note-edit" title={lang === "ko" ? "수정" : "Edit"} onClick={() => startSecEdit(n)}><Lic name="pencil" size={11} color="currentColor" /></button>
+                      <button className="note-del" title={t.delete} onClick={() => removeSecNote(n.id)} disabled={secBusy}><Lic name="x" size={12} color="currentColor" /></button>
+                    </span>}
+                  </div>
+                  {secEditId === n.id
+                    ? <div className="note-edit-box">
+                        <textarea className="note-input" autoFocus rows={3} value={secEditText} onChange={e => setSecEditText(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) commitSecEdit(); if (e.key === "Escape") cancelSecEdit(); }} />
+                        <div className="note-edit-acts">
+                          <button className="note-cancel" onClick={cancelSecEdit}>{lang === "ko" ? "취소" : "Cancel"}</button>
+                          <button className="v-btn v-btn--primary note-save" onClick={commitSecEdit} disabled={secBusy}>{lang === "ko" ? "저장" : "Save"}</button>
+                        </div>
+                      </div>
+                    : <div className="note-text">{n.body}</div>}
+                </div>
+              ))}
+          </div>
         </Fragment>}
       </div>
     </div>

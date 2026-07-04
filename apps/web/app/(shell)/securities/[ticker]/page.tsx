@@ -8,7 +8,7 @@ import { mapDbPlan, PLAN_SELECT, type DbPlanRow } from "@/lib/plan-mapper";
 import { buildPlanFin, type DbFinRow } from "@/lib/fin-mapper";
 import {
   mapSecurity, secPlanOf, SECURITY_SELECT, SECURITY_FIN_SELECT,
-  type DbSecurityRow, type DbSecurityFinRow,
+  type DbSecurityRow, type DbSecurityFinRow, type DbSecNoteRow, type SecNote,
 } from "@/lib/security-mapper";
 import { SecurityDetailScreen } from "@/components/securities/security-detail";
 
@@ -22,13 +22,20 @@ export default async function SecurityDetailPage({ params }: { params: Promise<{
     .from("securities").select(SECURITY_SELECT).eq("ticker", ticker).maybeSingle();
   if (!secRow) notFound();
 
-  // 재무(security_financials) + 관심 여부 + 관련 플랜을 병렬로.
-  const [{ data: finRows }, watchRes, { data: planRows }] = await Promise.all([
+  // 재무(security_financials) + 관심 여부 + 관련 플랜 + 종목 메모(journal_entries)를 병렬로.
+  const [{ data: finRows }, watchRes, { data: planRows }, noteRes] = await Promise.all([
     supabase.from("security_financials").select(SECURITY_FIN_SELECT).eq("ticker", ticker).order("fiscal_year", { ascending: false }),
     user
       ? supabase.from("watchlist").select("id").eq("user_id", user.id).eq("ticker", ticker).maybeSingle()
       : Promise.resolve({ data: null }),
     supabase.from("plans").select(PLAN_SELECT).is("deleted_at", null).order("updated_at", { ascending: false }),
+    // 종목 메모: 이 종목 스코프(plan_id=null, ticker) — RLS로 소유자 것만. 최신순.
+    user
+      ? supabase.from("journal_entries")
+          .select("id,body,price_snapshot,created_at")
+          .eq("ticker", ticker).is("plan_id", null)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
   ]);
 
   const watched = !!(watchRes as { data: unknown }).data;
@@ -48,11 +55,19 @@ export default async function SecurityDetailPage({ params }: { params: Promise<{
   );
   const secPlan = secPlanOf(security);
 
+  // 종목 메모(journal_entries 공유) → UI가 읽는 형태. 상대시간/날짜는 클라이언트에서 포맷.
+  const secNotes: SecNote[] = ((noteRes as { data: DbSecNoteRow[] | null }).data ?? []).map((n) => ({
+    id: n.id,
+    body: n.body,
+    price: n.price_snapshot != null ? Number(n.price_snapshot) : null,
+    createdAt: n.created_at,
+  }));
+
   // DB 우선·시드 폴백 — plans/[id] page.tsx와 동일 산식(lib/fin-mapper). eps는 플랜 유도값(없으면 0).
   const fin = buildPlanFin(
     security.ticker, security.cur, (finRows ?? []) as unknown as DbFinRow[],
     security.price, security.eps ?? 0, security.sharesOut,
   );
 
-  return <SecurityDetailScreen security={security} secPlan={secPlan} fin={fin} plans={plans} />;
+  return <SecurityDetailScreen security={security} secPlan={secPlan} fin={fin} plans={plans} secNotes={secNotes} />;
 }
