@@ -9,6 +9,23 @@ import {
   type DbSecurityRow, type UISecurity,
 } from "@/lib/security-mapper";
 
+/**
+ * securities 전체 + 유저 watchlist로 watched 플래그 세팅 (리서치 화면용).
+ * financials 없이(빈 배열) 매핑 — 리서치 리스트도 eps 미사용. ticker asc 정렬.
+ */
+export async function fetchAllSecurities(
+  supabase: SupabaseClient<Database>,
+  userId: string | null,
+): Promise<UISecurity[]> {
+  const [secRes, watchRes] = await Promise.all([
+    supabase.from("securities").select(SECURITY_SELECT).order("ticker", { ascending: true }),
+    userId ? supabase.from("watchlist").select("ticker").eq("user_id", userId) : Promise.resolve({ data: [] as { ticker: string }[] }),
+  ]);
+  const watched = new Set(((watchRes.data ?? []) as { ticker: string }[]).map((r) => r.ticker));
+  const rows = (secRes.data ?? []) as unknown as DbSecurityRow[];
+  return rows.map((r) => mapSecurity(r, [], watched.has(r.ticker)));
+}
+
 /** watchlist join securities select 절 — securities 컬럼은 SECURITY_SELECT와 동형(중첩 관계). */
 export const SECURITIES_LIST_SELECT = `ticker, sort, securities:securities!inner ( ${SECURITY_SELECT} )`;
 

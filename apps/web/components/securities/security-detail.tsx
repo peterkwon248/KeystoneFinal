@@ -13,7 +13,7 @@
 //  - SWC≠tsc 함정 회피: JSX 안 제네릭 앵글브래킷 캐스트 없음. SVG(SecurityChart/SeasonalityHeatmap 좌표)
 //    계산은 전부 return 이전 함수 본문에서. cell/tone/withU 등 헬퍼는 hoist.
 "use client";
-import { Fragment, useMemo, useReducer, useState } from "react";
+import { Fragment, useEffect, useMemo, useReducer, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { I18nDict, Lang } from "@keystone/core/types";
 import type { Fin } from "@keystone/core/types";
@@ -29,6 +29,7 @@ import { FinancialsTab } from "@/components/plan/financials-tab";
 import { IndicatorsTab } from "@/components/plan/indicators-tab";
 import { ValuationTab } from "@/components/plan/valuation-tab";
 import { toggleWatch, addSecNote, editSecNote, deleteSecNote } from "@/app/(shell)/securities/[ticker]/actions";
+import { pushSecRecent } from "@/lib/sec-recents";
 
 /* ---- placeholder price chart (source/SecurityView.jsx 4-75) — mock spark, 실데이터 마일스톤6 ---- */
 function SecurityChart({ security, height = 190 }: { security: UISecurity; height?: number }) {
@@ -233,6 +234,9 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes }
   const t: I18nDict = I18N[lang];
   const router = useRouter();
   const s = security;
+
+  // 프로토타입 App.jsx:471 openSecurityFull의 pushSecRecent(ticker) 대응 — 종목상세 진입 시 최근본종목 기록.
+  useEffect(() => { pushSecRecent(s.ticker); }, [s.ticker]);
 
   const [planLimit, setPlanLimit] = useState(40);
   const [watched, setWatched] = useState(s.watched);
