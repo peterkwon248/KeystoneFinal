@@ -21,7 +21,7 @@
 | 4 | 재무 어댑터 (DART/EDGAR) | ✅ 2026-07-02 (apps/server, 14/14 동기화, 실측 교차검증) |
 | 5 | 시세 폴링 + FX | ✅ 2026-07-02 (KIS/Finnhub 14/14 + dividend_yield + FX) ← **MVP 데이터 레이어 완료** |
 | 7 | 웹 이식 (6보다 선행 결정) | 🔄 2026-07-04(2차 세션) — **원본 6개 스크린(01~06) + 07·16·10·19~22·14 완료**(위 세션). **이번 세션 6기능 추가(커밋 1605d98~bd5456c, push됨)**: **15 리서치**(`research/`+`security-picker.tsx`[공용]+`sec-recents`+`fetchAllSecurities`) · **플랜 리스트 필터**(`plan-filters.ts`+`plans-screen` 필터패널/칩) · **11~13 스크리너**(`screener/`+`screener-ref/data.ts`, 4레이아웃 리스트/보드/히트맵/4분면, core finOf+gradeWithFw) · **18 휴지통**(`trash/` restore/deleteForever) · **Cmd+K 검색모달**(`search/search-modal.tsx`+app-shell Cmd+K 리스너) · **플랜 시나리오 작성모달**(`scenario-author-modal.tsx`+addPlanScenario). **Phase A 뷰 이식 사실상 완료**. 남은 것 = **17 보관함**(S1 스키마)·**B8 플랜생성 위저드**(핵심·큼)·**B5 SecurityPeek**·**B9 adhoc 시나리오**(S2 스키마). 🗺️ 잔여 계획은 NEXT-ACTION + ARCHITECTURE §13. ✅ source/core 재조정 no-op 종결 |
-| 6 | 실시간 WS **+ 과거 시세 히스토리 백필** | 차트 실데이터의 전제. **웹 mock seam 3종(`change`/`spark`/차트)이 여기서 실데이터로 교체** — 교체지점 mockChange·genSpark·trajectory/gap-history/fin-history |
+| 6 | 실시간 WS **+ 과거 시세 히스토리 백필** | 🔄 **스키마 기반 착수(2026-07-05 2차)**: 마이그레이션 `20260705000700`(security_price_history OHLCV + notifications) + `GET /api/ohlc`(app/api 첫 핸들러, resample 1d/1wk/1mo). **US 프로바이더 = Tiingo 결정**(Finnhub 무료 candle=US 401 아웃, AV 무료=5년 백필 불가). 남은 것=키(.env)+Tiingo가입 후 KIS일봉/Tiingo 어댑터→sync:ohlc 백필→seam교체(mockChange·genSpark·trajectory/gap-history/fin-history/screener-ref SEC_SEED·하드코딩 기준일 2026,5,*)→발동 워커(rules→notifications). **블록: apps/server/.env 없음** |
 | 8·9 | 모바일 / 구독 | |
 
 ## 커밋/PR 히스토리
@@ -29,9 +29,12 @@
 - `e1e8967` 마일스톤 1: 모노레포 + packages/core + 골든 테스트 (2026-07-02, main 직푸시)
 - **2026-07-04(2차 세션) 6기능 이식 (main 직푸시):** `1605d98` 15 리서치+SecurityPicker · `bd33df7` 플랜 리스트 필터 · `354467f` 11~13 스크리너(4레이아웃) · `4d5970f` 18 휴지통 · `e2a5fbc` Cmd+K 검색모달 · `bd5456c` 플랜 시나리오 작성모달
 - **2026-07-05 세션 (S1/S2 스키마 + 보관함 + adhoc + 플랜생성 + 규칙자동화 v1):** 마이그레이션 2건(`20260704000100_archive_adhoc`·`20260705000100_rule_flags`) + 아래 "이번 세션" 이음새들. 단일 커밋 `session:` (main 직푸시)
+- **2026-07-05 2차 세션 (규칙자동화 완성 + 뷰 write-path + 마일스톤6 착수, 3커밋 push):** `696d2fd` 규칙자동화 스텝4(편집/삭제 CRUD+인라인 작성폼+자동배지)+v2(4전략 새 트리거 time/weight/trailing/path, **전량 웹레이어**) · `e6a41ba` 밸류애버리징 경로 오버레이(옵션2)+B5 SecurityPeek(전체상세 슬라이드오버)+시나리오 편집/삭제 CRUD · `b6c7650` Phase C 스키마 기반(price_history+notifications 마이그레이션+/api/ohlc)+Tiingo 결정. 전부 브라우저 E2E·골든 102·core 무수정
 
 ## 핵심 기술 사실
 - `packages/core` 골든 테스트: `pnpm --filter @keystone/core test` / 골든 재생성: `... goldens` (scripts/generate-goldens.mjs가 source/*.jsx를 vm에서 eval)
+- **골든 함정 = 카탈로그 배열 deep-equal**: `i18n-reference.test`가 core `RULE_TRIGS`/`RULE_ACTS`/`EXEC_STRATEGIES`를 읽기전용 `source/` 골든과 **deep-equal** → **core에 항목 추가 시 골든 깨지고 재생성 불가**(생성기가 source 재슬라이스). evalRule은 골든 replay되나 trig 집합이 closed 아니라 다른 곳 추가는 무해. **해법 = `closeout.ts` 패턴(core 감싸고 웹레이어 확장)**: 규칙 v2 신규 트리거는 `lib/rule-trigs-v2.ts`(웹 카탈로그+findTrig 병합) + `lib/rule-eval-v2.ts`(evalRuleV2가 기존은 core evalRule 위임·신규는 콕핏 수학 미러). 새 condition은 jsonb라 마이그레이션 불필요
+- **웹 확장 타입 패턴**: `UIRule extends Rule`(id/isAuto/cond)·`UIScenario extends Scenario`(dbId/caseT) — core 타입(골든) 무수정, PLAN_SELECT에 id 추가·UIPlan에서 배열 오버라이드. 편집/삭제 타겟팅에 DB id 필수
 - i18n 비대칭: `tip_trough_peak` ko 전용 (en 577/ko 578) — 원본 그대로
 - i18n 중복 키 dedup(last-wins): `simulator`, `scThesisPh`
 - format 모듈은 모듈 상태(KEYSTONE_FX=1380, KEYSTONE_DISP) 보유 — 실앱에서 FX API로 교체 지점
