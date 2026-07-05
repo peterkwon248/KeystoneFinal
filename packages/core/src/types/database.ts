@@ -199,6 +199,70 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: Json | null
+          created_at: string
+          id: string
+          kind: string
+          payload: Json | null
+          plan_id: string | null
+          read_at: string | null
+          rule_id: string | null
+          ticker: string | null
+          title: Json | null
+          user_id: string
+        }
+        Insert: {
+          body?: Json | null
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json | null
+          plan_id?: string | null
+          read_at?: string | null
+          rule_id?: string | null
+          ticker?: string | null
+          title?: Json | null
+          user_id: string
+        }
+        Update: {
+          body?: Json | null
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json | null
+          plan_id?: string | null
+          read_at?: string | null
+          rule_id?: string | null
+          ticker?: string | null
+          title?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_positions"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "notifications_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           archived_at: string | null
@@ -620,6 +684,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "security_financials_ticker_fkey"
+            columns: ["ticker"]
+            isOneToOne: false
+            referencedRelation: "securities"
+            referencedColumns: ["ticker"]
+          },
+        ]
+      }
+      security_price_history: {
+        Row: {
+          as_of: string
+          close: number
+          date: string
+          high: number | null
+          low: number | null
+          open: number | null
+          source: string | null
+          ticker: string
+          volume: number | null
+        }
+        Insert: {
+          as_of?: string
+          close: number
+          date: string
+          high?: number | null
+          low?: number | null
+          open?: number | null
+          source?: string | null
+          ticker: string
+          volume?: number | null
+        }
+        Update: {
+          as_of?: string
+          close?: number
+          date?: string
+          high?: number | null
+          low?: number | null
+          open?: number | null
+          source?: string | null
+          ticker?: string
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_price_history_ticker_fkey"
             columns: ["ticker"]
             isOneToOne: false
             referencedRelation: "securities"
