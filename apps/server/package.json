@@ -10,12 +10,14 @@
     "sync:ohlc": "tsx src/sync-ohlc.ts",
     "sync:daily": "tsx src/sync-daily.ts",
     "stream:quotes": "tsx src/stream-quotes.ts",
-    "check:fx": "tsx src/check-fx.ts"
+    "check:fx": "tsx src/check-fx.ts",
+    "check:calendar": "tsx scripts/trading-calendar.check.ts"
   },
   "dependencies": {
     "@keystone/core": "workspace:*",
     "@supabase/supabase-js": "^2.58.0",
     "fflate": "^0.8.2",
+    "korean-lunar-calendar": "^0.4.0",
     "ws": "^8.21.0"
   },
   "devDependencies": {

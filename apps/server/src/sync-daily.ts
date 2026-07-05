@@ -4,10 +4,11 @@
 //   pnpm --filter @keystone/server sync:daily -- --force          # 가드 무시(수동 실행)
 //   pnpm --filter @keystone/server sync:daily -- --market US
 //
-// ⚠️ 거래일 가드 = 주말(토/일, 서버 로컬시간)만 스킵. 공휴일 달력은 미반영(후속: 거래소 휴장일 캘린더).
-//    양 시장(KR/US) 휴일/타임존이 달라 완전한 "거래일" 판정은 스케줄러 시각 선택 + 휴장일 API 몫.
-// OHLCV upsert(ticker,date)·last_close update는 멱등 → 중복 실행 안전.
+// 거래일 가드 = 주말 + 공휴일(KR/US)까지 판정. 각 시장 로컬 타임존 기준(trading-calendar.ts).
+//    대상 시장이 하나도 거래일이 아니면 스킵. --force로 무시. US=규칙계산·KR=음력계산(무유지보수).
+// OHLCV upsert(ticker,date)·last_close update는 멱등 → 중복/오판 실행 안전.
 import { spawnSync } from "node:child_process";
+import { classifyDay, type Market } from "./trading-calendar.js";
 
 function parseArgs(argv: string[]) {
   const get = (flag: string) => { const i = argv.indexOf(flag); return i >= 0 ? argv[i + 1] : undefined; };
@@ -29,16 +30,32 @@ function run(script: string, extra: string[]): number {
 
 function main() {
   const { force, market, tickers, years } = parseArgs(process.argv.slice(2));
+  const upMarket = market?.toUpperCase();
 
-  // 거래일 가드 — 주말 스킵(서버 로컬시간). --force로 무시.
-  const dow = new Date().getDay(); // 0=일, 6=토
-  if ((dow === 0 || dow === 6) && !force) {
-    console.log("[daily] skip: 주말(비거래일). --force 로 강제 실행 가능.");
+  // --market은 주면 KR|US만 유효 — 무효값은 가드/자식 대상 불일치를 막기 위해 즉시 종료.
+  if (upMarket && upMarket !== "KR" && upMarket !== "US") {
+    console.error(`[daily] 무효 --market "${market}" (KR|US만 허용).`);
+    process.exitCode = 1;
     return;
   }
 
+  // 거래일 가드 — 대상 시장(--market 있으면 그것, 없으면 KR+US) 중 하나도 거래일이 아니면 스킵.
+  // 각 시장 로컬 타임존 기준 주말·공휴일 판정. --force로 무시.
+  //   ⚠️ KR/US는 타임존이 달라 자정 근처 호출 시 판정 기준일이 다를 수 있음 — 각 시장 마감 직후 개별 호출 권장.
+  const targets: Market[] = upMarket ? [upMarket as Market] : ["KR", "US"];
+  const statuses = targets.map((m) => ({ m, ...classifyDay(m) }));
+  for (const s of statuses) {
+    if (s.fallback) console.warn(`[daily] ⚠️ ${s.m}: ${s.reason}`);
+  }
+  const open = statuses.filter((s) => s.trading);
+  if (open.length === 0 && !force) {
+    console.log(`[daily] skip: 비거래일 — ${statuses.map((s) => `${s.m} ${s.reason}`).join(" · ")}. --force 로 강제 실행 가능.`);
+    return;
+  }
+  console.log(`[daily] 거래일: ${statuses.map((s) => `${s.m}=${s.reason}`).join(", ")}`);
+
   const passthru: string[] = [];
-  if (market) passthru.push("--market", market);
+  if (upMarket) passthru.push("--market", upMarket);
   if (tickers) passthru.push("--tickers", tickers);
 
   // ① OHLCV 증분 백필(차트·밴드 실 시계열) → ② 시세 스냅샷(last_close + 배당수익률).

@@ -1,6 +1,36 @@
 # NEXT-ACTION
 
-## ⭐ 다음 세션 최우선 (2026-07-05 5차 갱신)
+## ⭐⭐ 다음 세션 최우선 (2026-07-06 6차 갱신) — **클라우드 Supabase 연결이 첫 작업** (⚠️ 다른 컴퓨터로 이어감)
+
+> **다음 세션 첫 할 일 = 클라우드 Supabase 연결 (기본 연결, OAuth 제외).** 사용자가 무료 플랜 클라우드 프로젝트를 **이미 생성함**:
+> - **Project ref**: `oaowmmrdxoofjmtroeir` · **URL**: `https://oaowmmrdxoofjmtroeir.supabase.co` · **리전**: 싱가포르(ap-southeast-1) · **무료 티어**
+> - **대기 중(사용자 제공 필요)**: ① anon public 키 ② service_role 키(시크릿) ③ DB 비밀번호 ④ `pnpm supabase login`(CLI 인증, 새 컴퓨터에서 1회).
+> - **진행 순서(정보 받으면)**: `supabase link --project-ref oaowmmrdxoofjmtroeir`(DB비번 필요) → `supabase db push`(마이그레이션 12개) → seed.sql 클라우드 주입(전략·14종목·재무) → 루트 `.env` + `apps/web/.env.local` 클라우드 값 교체 → **대시보드 Auth**(이메일 확인 OFF=소프트인증·site_url 프로덕션) → 웹을 클라우드에 물려 이메일 로그인+Realtime 스모크.
+> - **클라우드 준비도 = 매우 좋음**(explore 확인): 하드코딩 로컬주소 0(전부 env 기반)·Realtime 마이그레이션(`20260705000800_live_quotes.sql`) 클라우드 호환·`dev-seed-plans.mjs`는 env 우선이라 로컬전용 무해. 바꿀 지점 = env 2곳 + config.toml site_url/redirect(163행)뿐.
+> - ⚠️ 시크릿(service_role·DB비번)은 gitignore된 `.env`에만, **절대 커밋 금지**. link/push는 **로컬 .env를 안 건드림**(access token+DB비번으로 동작) → 마이그레이션 푸시까지는 로컬 세팅 무손.
+> - **OAuth 4종(구글/애플/카카오/네이버)은 다음 스텝**(기본 연결 검증 후). config.toml에 프로바이더 섹션 현재 없음 → 추가 필요.
+
+### 이번(6차) 완료 — 공휴일 캘린더 (미커밋→커밋됨)
+**거래일 판정 캘린더 `trading-calendar.ts`(신규)로 `sync:daily` 가드를 주말만→주말+공휴일(KR/US)로 정교화. 완전 자동·무유지보수:**
+- **US** = 규칙 계산(nth-weekday·부활절 computus·관측규칙·신정 토요일 예외) — 무한 년도.
+- **KR** = 고정휴일 + 음력명절(`korean-lunar-calendar` 오프라인 변환) + **대체공휴일 규칙**(설/추석=일요일·겹침 트리거, 나머지=토+일) + KRX 자체휴장(근로자의날 5/1·연말 12/31) — ~2050까지, 초과 시 주말만 폴백+경고.
+- 각 시장 로컬 타임존 판정. 대상 시장 중 하나도 거래일 아니면 스킵·`--force` 오버라이드·무효 `--market` 거부.
+- **검증**: 자체검증(`check:calendar`)이 US/KR 2025~2027 전량을 권위 캘린더(ICE 공식·KRX KIND)와 대조 ALL PASS(대체공휴일 토/일/겹침·체이닝 포함) · tsc 클린 · 골든 102 · 코드리뷰(핵심 알고리즘 결함0, MEDIUM 1건 수정).
+- **사용자 결정 경로**: 하드코딩 테이블 → (무유지보수 요구) → 계산 방식 확정. 라이브러리 통합(Python exchange_calendars·npm date-holidays) 검토했으나 **"공휴일 라이브러리≠거래소 캘린더"**(US: 연방공휴일≠NYSE, KR: 5/1·12/31은 KRX 자체) + 현 구현 이미 검증됨 → **현 구현 유지** 결정.
+
+### 이번(6차) 확정 — "관심종목 헤드라인 뉴스"는 오표기·신규기능 보류
+- `source/` grep 결과 프로토타입에 **뉴스 기능 없음**. 코드의 "헤드라인" = `dash-headline` 통계 스트립(종목/상승/하락/평균등락)이고 이미 라이브(지난 세션 `ceda2d3`). "뉴스"는 잉여 단어.
+- 뉴스는 진짜 넣으려면 신규기능(Finnhub company-news 등) + KR 소스 결여 → **지금 안 함** 결정.
+- → **WS 폴리시 잔여의 진짜 미완 = 인트라데이 실틱 축적 E2E 하나**(코드 완비, 평일 장중 실틱 대기=데이터 게이트).
+
+### 6차 이후 남은 백로그
+- [ ] **클라우드 Supabase 연결**(위 최우선) → 이후 OAuth 4종.
+- [ ] **실 거래소 틱 실검증** — 평일 장중 `stream:quotes` 실틱 흐름 + intraday_prices 축적(오늘 06:57 KST 개장 전이라 미검증).
+- [ ] **마일스톤 8~9** — 모바일 Expo / 월구독.
+
+---
+
+## 다음 세션 최우선 (2026-07-05 5차 갱신)
 **2026-07-05 5차 세션 완료 — 실시간 인프라 폴리시 + 배지 + 크론 + 위키, 4커밋 push:** ①**사이드바 unread 뱃지**(`83663cc` — 서버 `computeInboxUnread`[inbox/page 동일 파생·카운트 lang 독립] + `InboxBadgeProvider` 클라이언트 컨텍스트로 세션 중 라이브 갱신) ②**WS폴리시 provider DELETE 처리**(`ceda2d3` — `payload.old.ticker`[replica identity PK]로 맵 제거→DB last_close 폴백) ③**관심종목 헤드라인 라이브**(`ceda2d3` — `useLiveQuotes()` 전체맵 훅 추가·securities를 맨위에서 라이브 오버레이→상승/하락/평균등락·필터·정렬 라이브) ④**인트라데이 차트 라인**(`e3e8128` — **신규 `intraday_prices` 영속 시계열** 마이그레이션+워커 append·`SecurityChart` 추세/당일 토글=서버 시드+`useLiveQuote` append) ⑤**sync:daily 크론 오케스트레이터**(`69bceb8` — 거래일 가드[주말 스킵·--force]+ohlc→quotes 순차·자식은 `node --import tsx`로 DEP0190 회피) ⑥**실 거래소 틱 검증=연결·구독 레이어 확인**(KIS/Finnhub WS open+subscribe 성공; 실틱은 평일 장중 데이터 게이트) ⑦**LLM Wiki 5차 컴파일**(신규 토픽 `realtime-live-data`+첫 컨셉 `silent-failures`·4토픽 확장·raw 3건 폴딩). **전부 브라우저 E2E·골든 102·web/서버 tsc 0·core 무수정.**
 
 > **🚀 다음 세션 후보:** ①**실 거래소 틱 실검증**(평일 장중 `pnpm --filter @keystone/server stream:quotes` — 실틱 흐르는지 + intraday_prices 축적 확인) ②**공휴일 캘린더**(sync:daily 거래일 가드 정교화 — 현재 주말만 스킵·시장별 휴장일 미반영) ③**WS 폴리시 잔여**(인트라데이 실틱 축적 E2E·관심종목 헤드라인 뉴스 라이브 집계) ④**클라우드 Supabase 연결**(로컬 완성됨·마이그레이션·소셜 OAuth 4종) ⑤**마일스톤 8~9**(모바일 Expo / 월구독).

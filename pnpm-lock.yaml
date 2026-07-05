@@ -26,6 +26,9 @@ importers:
       fflate:
         specifier: ^0.8.2
         version: 0.8.3
+      korean-lunar-calendar:
+        specifier: ^0.4.0
+        version: 0.4.0
       ws:
         specifier: ^8.21.0
         version: 8.21.0
@@ -873,6 +876,10 @@ packages:
   js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
 
+  korean-lunar-calendar@0.4.0:
+    resolution: {integrity: sha512-kJXyH3sI/butJxCBtsLXlMJsl5qqNKNjduf1Na0s7XXwP+D/Wdlx0R0/S5ygxPVFSXf/JZ3bBKaCP6bGWhgZ0w==}
+    engines: {node: '>= 16.14.0'}
+
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
 
@@ -1662,6 +1669,8 @@ snapshots:
   jose@6.2.3: {}
 
   js-tokens@9.0.1: {}
+
+  korean-lunar-calendar@0.4.0: {}
 
   loupe@3.2.1: {}
 
