@@ -1,6 +1,11 @@
 # NEXT-ACTION
 
-## ⭐ 다음 세션 최우선 (2026-07-05 2차 갱신)
+## ⭐ 다음 세션 최우선 (2026-07-05 4차 갱신)
+**2026-07-05 4차 세션 완료 — "정적 앱 → 살아있는 실데이터 앱", 6커밋 push, 프로덕션 빌드 ✓:** ①**날짜앵커 real-now**(frozen 6/26→실제 오늘, rolling 창 재설계로 todayT NaN 해소, `inferYearWeb`가 골든 보호 core inferYear 복제) ②**실시간 WS 스트리밍**(KIS/Finnhub WS→`stream-quotes` worker→`live_quotes`→**Supabase Realtime**→UI 라이브, 커스텀 SSE 없음) ③**마지막 mock seam 실데이터화**(gap iv/screener perLo·perHi — "백필 아니라 seam 교체"였음, 재무 5년 이미 DB) ④**인박스 트리아지 DB 동기화**(옵션2, `inbox_triage`) ⑤**adhoc 시나리오 CRUD**. **mock seam 0개 · 마일스톤 6 완료 · 워크로그 Remaining Tasks 전부 done.**
+
+> **🚀 다음 세션 후보 (백로그 소진됨 — 신규):** ①**실 거래소 틱 검증**(평일 장중 `pnpm --filter @keystone/server stream:quotes` — 오늘 일요일 장외라 시뮬레이션만 검증됨) ②**사이드바 unread 뱃지**(서버 buildInboxNotes+triage 계산, `inboxUnread` prop 준비됨) ③**WS 폴리시**(provider DELETE 이벤트 처리·인트라데이 차트 라인·관심종목 헤드라인 라이브) ④**자동 재동기화 cron**(sync:ohlc/quotes 매 거래일) ⑤**마일스톤 8~9**(모바일 Expo / 구독) ⑥**클라우드 Supabase 연결**(로컬 완성됨).
+
+## 이전: 다음 세션 최우선 (2026-07-05 2차)
 **2026-07-05 2차 세션 완료(전부 브라우저 E2E, core 무수정, 골든 102 유지):** 규칙 자동화 스텝4(CRUD+작성폼+자동배지) · 규칙 자동화 v2(4전략 새 트리거, 웹레이어) · 밸류애버리징 경로 오버레이(옵션2) · B5 SecurityPeek(전체상세 슬라이드오버) · **시나리오 인라인 편집/삭제 CRUD**(updatePlanScenario·deletePlanScenario, UIScenario에 dbId/caseT, 마이그레이션 없음) · **Phase C 스키마 기반**(price_history·notifications 마이그레이션 + /api/ohlc) + **Tiingo 키 발급·검증**. 4커밋 전부 push(`696d2fd`·`e6a41ba`·`b6c7650`·`6ff1bb7`).
 
 > **🚀 다음 세션 즉시 착수 = Phase C 데이터 파이프라인** (아래 5번 항목 "🎯 다음 세션 착수 순서"). **블로커 전부 해소**: 루트 `.env`에 DART/Finnhub/KIS + Tiingo 키 전부 있고 실호출 검증됨. security_price_history 테이블·/api/ohlc 엔드포인트도 준비됨. → **Tiingo/KIS 일봉 어댑터 + sync:ohlc CLI + 14종목 백필**부터 시작하면 됨.
