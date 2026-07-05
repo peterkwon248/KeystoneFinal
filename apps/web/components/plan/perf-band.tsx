@@ -31,7 +31,7 @@ function closeoutSummary(plan: UIPlan) {
 }
 
 export function PerfBand({ plan, lang, t }: { plan: UIPlan; lang: Lang; t: I18nDict }) {
-  const tj = planTrajectory(plan);
+  const tj = planTrajectory(plan, plan.priceCloses);
   const [hov, setHov] = useState<{ s: typeof tj.samples[number]; ex: typeof tj.execs[number] | null; frac: number } | null>(null);
   const W = 760, H = 200, padL = 8, padR = 8, padT = 26, padB = 26;
   const t0 = tj.startT, t1 = Math.max(tj.endT, tj.todayT);
@@ -168,7 +168,7 @@ export function PerfBand({ plan, lang, t }: { plan: UIPlan; lang: Lang; t: I18nD
       </div>
       {tj.hasPosition && tj.peakRet != null && (
         <div className="perfband-journey">
-          <span className="pbj-k" title={t.tip_pb_mock}>{t.pb_journey}<i className="pbj-mock">{t.pb_mock}</i></span>
+          <span className="pbj-k" title={tj.isMockPath ? t.tip_pb_mock : undefined}>{t.pb_journey}{tj.isMockPath && <i className="pbj-mock">{t.pb_mock}</i>}</span>
           <span className="pbj-stat" title={t.tip_pb_peak}>{t.pb_peak}<b className="mono pos">+{tj.peakRet.toFixed(1)}%</b></span>
           <span className="pbj-stat" title={t.tip_pb_trough}>{t.pb_trough}<b className={"mono " + (tj.troughRet! >= 0 ? "pos" : "neg")}>{tj.troughRet! >= 0 ? "+" : ""}{tj.troughRet!.toFixed(1)}%</b></span>
           <span className="pbj-stat" title={t.tip_pb_mdd}>{t.pb_mdd}<b className="mono neg">{tj.mdd.toFixed(1)}%</b></span>

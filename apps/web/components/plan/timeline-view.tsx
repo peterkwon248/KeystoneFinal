@@ -29,7 +29,7 @@ function TrajectoryRow({ plan, mode, overlays, yMode = "price", yDomain = null }
   plan: UIPlan; mode: TlMode; overlays?: TlOverlays; yMode?: TlYMode; yDomain?: { lo: number; hi: number } | null;
 }) {
   const ov = overlays || { avg: true, band: true, execs: true, transitions: true };
-  const tj = planTrajectory(plan);
+  const tj = planTrajectory(plan, plan.priceCloses);
   const x = (t: number) => TL_NAMEW + t * TL_COLW + TL_COLW * 0.5;
   const rowTop = 6, rowH = TL_ROWH - 12;
   const pts = tj.samples;

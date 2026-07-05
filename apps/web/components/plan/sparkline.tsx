@@ -2,10 +2,10 @@
 // (mock 시장가 경로 + 실제 승패 틴트).
 "use client";
 import type { Plan } from "@keystone/core/types";
-import { planTrajectory } from "@/lib/trajectory";
+import { planTrajectory, type PriceClose } from "@/lib/trajectory";
 
-export function Sparkline({ plan, w = 62, h = 22 }: { plan: Plan; w?: number; h?: number }) {
-  const tj = planTrajectory(plan);
+export function Sparkline({ plan, closes, w = 62, h = 22 }: { plan: Plan; closes?: PriceClose[]; w?: number; h?: number }) {
+  const tj = planTrajectory(plan, closes);
   if (!tj.hasPosition) return <span className="spark-empty" style={{ width: w, display: "inline-block" }} />;
   const xs = tj.samples.map((s) => s.mkt);
   const lo = Math.min(...xs), hi = Math.max(...xs), span = (hi - lo) || 1;

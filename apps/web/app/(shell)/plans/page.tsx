@@ -2,6 +2,7 @@
 // 서버에서 plans+scenarios+executions+securities를 읽어 프로토타입 Plan 형태로 매핑한다.
 import { supabaseServer } from "@/lib/supabase/server";
 import { mapDbPlan, PLAN_SELECT, type DbPlanRow } from "@/lib/plan-mapper";
+import { attachPriceCloses } from "@/lib/price-history-map";
 import { pfColor, type PfLite } from "@/lib/pf-palette";
 import { PlansScreen } from "@/components/plan/plans-screen";
 
@@ -17,7 +18,7 @@ export default async function PlansPage({ searchParams }: {
   ]);
 
   const now = new Date();
-  const plans = ((rows ?? []) as unknown as DbPlanRow[]).map((r) => mapDbPlan(r, now));
+  const plans = await attachPriceCloses(((rows ?? []) as unknown as DbPlanRow[]).map((r) => mapDbPlan(r, now)));
   const portfolios: PfLite[] = (pfRows ?? []).map((p, i) => ({ id: p.id, name: p.name, color: pfColor(i) }));
 
   return <PlansScreen plans={plans} portfolios={portfolios} activePf={pf ?? null} />;

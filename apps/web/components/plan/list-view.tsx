@@ -30,7 +30,7 @@ function PlanRow({ plan, lang, onOpen, focused, props }: {
         <span className="pr-ticker"><Flag market={plan.cur === "KRW" ? "KR" : "US"} size={13} /> {plan.tickerName[lang]} · <span className="mono">{plan.ticker}</span></span>
       </span>
       <span className="pr-spacer" />
-      {show("spark") && <span className="pr-spark"><Sparkline plan={plan} /></span>}
+      {show("spark") && <span className="pr-spark"><Sparkline plan={plan} closes={plan.priceCloses} /></span>}
       {show("gauge") && <span className="pr-gauge"><ScenarioGauge plan={plan} lang={lang} /></span>}
       {show("return") && <span className={"pr-return" + (ret ? (ret.rate >= 0 ? " tint-pos" : " tint-neg") : "")}>
         {ret ? <>

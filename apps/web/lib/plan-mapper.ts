@@ -5,6 +5,7 @@ import type { Currency, L10n, Plan, PlanNote, PlanStatus, Scenario, ScenarioStat
 import { MON_EN } from "@keystone/core/format";
 import { SC_LABEL_MAP } from "@keystone/core/analytics";
 import { findTrig } from "./rule-trigs-v2";
+import type { PriceClose } from "./trajectory";
 
 // 커스텀 필드는 디자인에서 제거됨(source PropsSidebar 에 핸들러만 남은 vestigial 코드) — 웹에 이식하지 않음.
 
@@ -24,6 +25,10 @@ export interface UIPlan extends Plan {
   rules: UIRule[];
   // 시나리오는 웹 확장(UIScenario) — dbId/caseT 부가(편집·삭제 타겟팅).
   scenarios: UIScenario[];
+  // 실 종가 히스토리(선택) — 있으면 planTrajectory가 mock 대신 실 시세 경로를 그린다.
+  // 서버에서 loadPriceCloses로 채워 첨부. 없으면 seededWalk 폴백(마일스톤6 seam).
+  // (core Plan.priceHistory는 PricePoint{q,v} 별개 필드라 이름 분리.)
+  priceCloses?: PriceClose[];
 }
 
 /* DB scenario case → 프로토타입 시나리오 라벨/색.

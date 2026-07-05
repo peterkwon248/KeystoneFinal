@@ -154,7 +154,7 @@ export function PlanDetail({ plan, portfolios, fin }: {
               </div>
               <div className="metric" title={t.tip_progress}><div className="metric-lab">{t.progress}</div><div className="metric-val sm">{fillPct != null ? plan.round + "/" + plan.divisions : "—"}</div>{plan.totalInvested > 0 && <div className="metric-sub">{t.invested} {fmtCompact(plan.totalInvested, plan.cur)}</div>}</div>
             </>}
-            <div className="metric-spark"><Sparkline plan={plan} w={96} h={34} /></div>
+            <div className="metric-spark"><Sparkline plan={plan} closes={plan.priceCloses} w={96} h={34} /></div>
           </div>
 
           <div className="dt-tabs">

@@ -211,7 +211,7 @@ function DashRow({ plan, t, lang, onOpen }: { plan: UIPlan; t: I18nDict; lang: L
           <span className={"dash-pl-amt mono " + (ret.amt >= 0 ? "pos" : "neg")}>{ret.amt >= 0 ? "+" : ""}{fmtCompact(ret.amt, plan.cur)}</span>
         </> : <span className="dim mono">—</span>}
       </div>
-      <div className="dash-c dash-spark">{hasPos ? <Sparkline plan={plan} w={72} h={26} /> : <span className="spark-empty" />}</div>
+      <div className="dash-c dash-spark">{hasPos ? <Sparkline plan={plan} closes={plan.priceCloses} w={72} h={26} /> : <span className="spark-empty" />}</div>
     </div>
   );
 }
