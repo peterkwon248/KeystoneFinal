@@ -1,28 +1,41 @@
 // source/trajectory.jsx의 planTrajectory/seededWalk/trajMonthIdx 이식본.
-// 시장가 경로는 프로토타입과 동일한 결정론적 MOCK (Sep~Jun 앵커 창) —
-// 실제 히스토리컬 시세는 마일스톤 6+에서 교체된다. 평단 경로/체결/전이는 실데이터 파생.
+// 궤적 창은 refNow(실 today) 월로 끝나는 최근 10개월 rolling 창(real-now 기준) —
+// 실 종가가 있으면 그 시점 종가로, 없으면 결정론적 mock(seededWalk)로 시장가 경로를 그린다.
+// 평단 경로/체결/전이는 실데이터 파생.
 import type { Plan } from "@keystone/core/types";
 import { planReturn } from "@keystone/core/analytics";
 import { MON_EN } from "@keystone/core/format";
-import { REF_YEAR, refNow } from "./clock";
+import { refNow } from "./clock";
 
-export const TRAJ_MONTHS = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-
-// 궤적 창의 기준 연도 = REF_YEAR(clock.ts, KS_REF 파생). 월인덱스(Sep~Jun)를 실 달력 날짜로
-// 되돌릴 때 쓴다. "today"도 KS_REF에서 파생(planTrajectory). 날짜 앵커 실제화는 별도 태스크.
-const MONTH_NUM: Record<string, number> = { Sep: 9, Oct: 10, Nov: 11, Dec: 12, Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6 };
+// 궤적 창 = refNow(실 today) 월로 끝나는 최근 10개월 rolling 창. 각 슬롯은 {월약칭, 월번호(1-12),
+// 실연도}를 안다. 예: 오늘 7월이면 창 = Oct'25 … Jul'26 (oldest→newest). 10<12개월이라 창 내
+// 월약칭은 유일 → indexOf 파싱 안전. year-less "Mon D" exec/note는 이 창 기준으로 월인덱스를 얻는다.
+const WINDOW_LEN = 10;
+function buildWindow() {
+  const now = refNow(); const endY = now.getFullYear(), endM0 = now.getMonth();
+  const out: { mon: string; num: number; year: number }[] = [];
+  for (let k = WINDOW_LEN - 1; k >= 0; k--) { const d = new Date(endY, endM0 - k, 1); out.push({ mon: MON_EN[d.getMonth()], num: d.getMonth() + 1, year: d.getFullYear() }); }
+  return out;
+}
+const WINDOW = buildWindow();
+export const TRAJ_MONTHS = WINDOW.map((w) => w.mon);
 
 /** 실 종가(오름차순). planTrajectory에 넘기면 mock 경로 대신 실 시세로 시장가 경로를 그린다. */
 export interface PriceClose { date: string; close: number }
 
-/** 분수 월인덱스 t(Sep=0…Jun=9) → 실 달력 ISO(YYYY-MM-DD). Sep~Dec는 전년, Jan~Jun은 REF_YEAR. */
+/** 분수 월인덱스 t(0…WINDOW_LEN-1) → 실 달력 ISO(YYYY-MM-DD). 슬롯의 실연도·월번호 사용. */
 function monthIdxToISO(t: number): string {
   const mi = Math.max(0, Math.min(TRAJ_MONTHS.length - 1, Math.floor(t)));
-  const m = MONTH_NUM[TRAJ_MONTHS[mi]];
-  const year = m >= 9 ? REF_YEAR - 1 : REF_YEAR;
+  const slot = WINDOW[mi];
   const frac = Math.max(0, Math.min(0.999, t - mi));
   const day = Math.max(1, Math.min(28, Math.round(frac * 28) || 1)); // 28 캡 = 월말 초과·2월 무효날짜 회피
-  return `${year}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  return `${slot.year}-${String(slot.num).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/** 분수 월인덱스 mi → 그 슬롯의 실 연도(perf-band 툴팁 날짜용). */
+export function trajSlotYear(mi: number): number {
+  const c = Math.max(0, Math.min(WINDOW.length - 1, Math.floor(mi)));
+  return WINDOW[c].year;
 }
 
 /** iso 시점의 종가 = iso 이하 마지막 봉(휴장/주말은 직전 거래일로 forward-fill). closes는 오름차순 가정. */
@@ -78,8 +91,8 @@ export function planTrajectory(p: Plan, closes?: PriceClose[]): Trajectory {
     .filter((e): e is TrajExec => e.t != null)
     .sort((a, b) => a.t - b.t);
   const createdT = trajMonthIdx(p.createdAt) ?? 0;
-  // 앱 기준 '오늘' = REF_YEAR의 월/일(KS_REF). trajMonthIdx는 "Mon D" 파싱.
-  const todayT = trajMonthIdx(`${MON_EN[refNow().getMonth()]} ${refNow().getDate()}`) as number;
+  // 앱 기준 '오늘' = refNow(실 today)의 월/일. trajMonthIdx는 "Mon D" 파싱(이제 rolling 창에 포함).
+  const todayT = (trajMonthIdx(`${MON_EN[refNow().getMonth()]} ${refNow().getDate()}`) ?? (TRAJ_MONTHS.length - 1)) as number;
   let startT = execs.length ? Math.min(execs[0].t, createdT) : createdT;
   const endT = p.closedAt ? (trajMonthIdx(p.closedAt) ?? todayT) : todayT;
   // give very-recent plans a minimum visual width by stretching the START backward —

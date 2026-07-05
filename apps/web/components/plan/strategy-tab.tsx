@@ -16,7 +16,7 @@ import { Lic } from "@/components/icons";
 import { evalRuleV2 } from "@/lib/rule-eval-v2";
 import { findTrig } from "@/lib/rule-trigs-v2";
 import type { UIPlan } from "@/lib/plan-mapper";
-import { REF_YEAR } from "@/lib/clock";
+import { inferYearWeb } from "@/lib/clock";
 import type { PlanGoal, RuleInput } from "@/app/(shell)/plans/[id]/actions";
 
 // 다음-액션 카드 / 통계 / 오버레이 마커의 동적 형태 — 프로토타입이 형태를 자유롭게 조립하므로 완화 타입 사용.
@@ -133,7 +133,7 @@ export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal, onCreateRu
           const amtF = (ex.fields || []).find((f) => f.key === "amount");
           const amtStr = amtF ? String(amtF.default).replace(/[^0-9.,]/g, "") : "";
           const MENJS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-          const parseD = (s: string) => { const m = (s || "").match(/([A-Za-z]{3})\s*(\d+)/); return (m && MON3[m[1]]) ? new Date(REF_YEAR - 1, MON3[m[1]] - 1, +m[2]) : null; };
+          const parseD = (s: string) => { const m = (s || "").match(/([A-Za-z]{3})\s*(\d+)/); return (m && MON3[m[1]]) ? new Date(inferYearWeb(MON3[m[1]], +m[2]), MON3[m[1]] - 1, +m[2]) : null; };
           const fmtMD = (d: Date) => ko ? `${d.getMonth() + 1}월 ${d.getDate()}일` : `${MENJS[d.getMonth()]} ${d.getDate()}`;
           const DAY = 86400000;
           const buys = (plan.executions || []).filter((e) => e.side === "buy").map((e) => ({ ...e, d: parseD(e.date) })).filter((e): e is typeof e & { d: Date } => !!e.d).sort((a, b) => a.d.getTime() - b.d.getTime());

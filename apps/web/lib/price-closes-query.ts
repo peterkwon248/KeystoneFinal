@@ -4,10 +4,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@keystone/core/types";
 import type { PriceClose } from "@/lib/trajectory";
+import { refNow } from "@/lib/clock";
 
-// 궤적 창 시작 앵커 — planTrajectory의 REF_YEAR(2026) 프레임(Sep 2025~Jun 2026). 여유분 포함.
-// 날짜 앵커 실제화(→ now())는 별도 태스크.
-export const CLOSES_WINDOW_START = "2025-08-01";
+// 궤적 창 시작 앵커 — trajectory의 rolling 10개월 창(refNow 기준)보다 1개월 여유 있게 refNow에서
+// 11개월 전 1일로 파생한다. clock.ts는 core format만 import하므로 이 파일의 client-safe 성질 유지.
+export const CLOSES_WINDOW_START = (() => {
+  const s = refNow();
+  const d = new Date(s.getFullYear(), s.getMonth() - 11, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+})();
 
 /** 티커 배열 → {ticker: 오름차순 종가[]}. 전달된 클라이언트로 배치 IN + max_rows 페이지네이션. */
 export async function fetchClosesWith(

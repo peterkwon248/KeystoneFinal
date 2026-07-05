@@ -8,20 +8,28 @@ import { EXEC_STRATEGIES, PLAN_STATUS, STATUS_ORDER } from "@keystone/core/refer
 import { planReturn } from "@keystone/core/analytics";
 import { fmtMoney, MON_EN } from "@keystone/core/format";
 import { Flag, StatusIcon } from "@/components/icons";
-import { planTrajectory } from "@/lib/trajectory";
+import { planTrajectory, TRAJ_MONTHS, trajSlotYear } from "@/lib/trajectory";
 import { refNow } from "@/lib/clock";
 import { orderPlans, type Grouping, type Ordering } from "./group";
 import type { PfLite } from "@/lib/pf-palette";
 import type { UIPlan } from "@/lib/plan-mapper";
 
-const TL_MONTHS = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-const TL_MONTH_LABEL: Record<string, { en: string; ko: string }> = { Sep: { en: "Sep", ko: "9월" }, Oct: { en: "Oct", ko: "10월" }, Nov: { en: "Nov", ko: "11월" }, Dec: { en: "Dec", ko: "12월" }, Jan: { en: "Jan '26", ko: "1월" }, Feb: { en: "Feb", ko: "2월" }, Mar: { en: "Mar", ko: "3월" }, Apr: { en: "Apr", ko: "4월" }, May: { en: "May", ko: "5월" }, Jun: { en: "Jun", ko: "6월" } };
+// 월 축은 trajectory의 rolling 창(TRAJ_MONTHS, real-now 기준)을 그대로 소비한다.
+const TL_MONTHS = TRAJ_MONTHS;
+// 월 라벨: ko="N월", en=월약칭. 연도가 바뀌는 첫 슬롯(또는 1월)엔 trajSlotYear로 '`YY 표기를 붙인다.
+const MON_KO_LABEL: Record<string, string> = { Jan: "1월", Feb: "2월", Mar: "3월", Apr: "4월", May: "5월", Jun: "6월", Jul: "7월", Aug: "8월", Sep: "9월", Oct: "10월", Nov: "11월", Dec: "12월" };
+const TL_MONTH_LABEL: { en: string; ko: string }[] = TL_MONTHS.map((m, i) => {
+  const yr = trajSlotYear(i);
+  const prevYr = i > 0 ? trajSlotYear(i - 1) : yr;
+  const showY = i === 0 || yr !== prevYr || m === "Jan";
+  return { en: showY ? `${m} '${String(yr).slice(2)}` : m, ko: MON_KO_LABEL[m] || m };
+});
 const TL_COLW = 116;
 const TL_NAMEW = 210;
 const TL_ROWH = 56;
-// 앱 기준 '오늘' 월인덱스 = KS_REF(refNow)의 TL_MONTHS 위치 + 일/31. (frozen 프레임에선 Jun)
+// 앱 기준 '오늘' 월인덱스 = refNow(실 today)의 TL_MONTHS 위치 + 일/31. (rolling 창 막달 = refNow 월)
 const _todayIdx = TL_MONTHS.indexOf(MON_EN[refNow().getMonth()]);
-const TODAY_T = (_todayIdx >= 0 ? _todayIdx : 9) + refNow().getDate() / 31;
+const TODAY_T = (_todayIdx >= 0 ? _todayIdx : TL_MONTHS.length - 1) + refNow().getDate() / 31;
 
 export type TlMode = "performance" | "journey";
 export type TlYMode = "price" | "pct";
@@ -156,7 +164,7 @@ export function TimelineView({ plans, t, lang, onOpen, mode: modeProp, setMode: 
     if (px < TL_NAMEW) { setHover(null); return; }
     const ent = planEntries.find((en) => py >= en.top && py < en.top + TL_ROWH);
     if (!ent || !ent.plan) { setHover(null); return; }
-    const tt = Math.max(0, Math.min(9.99, xToT(px)));
+    const tt = Math.max(0, Math.min(TL_MONTHS.length - 0.01, xToT(px)));
     setHover({ plan: ent.plan, top: ent.top, t: tt, clientX: e.clientX, clientY: e.clientY });
   };
 
@@ -167,8 +175,8 @@ export function TimelineView({ plans, t, lang, onOpen, mode: modeProp, setMode: 
     if (hover.t >= tj.startT - 0.3 && hover.t <= Math.max(tj.endT, tj.todayT) + 0.3) {
       const s = tj.samples.reduce((a, b) => (Math.abs(b.t - hover.t) < Math.abs(a.t - hover.t) ? b : a));
       const pl = s.avg != null ? ((s.mkt / s.avg - 1) * 100) : null;
-      const mi = Math.max(0, Math.min(9, Math.round(hover.t)));
-      tip = { plan: p, mkt: s.mkt, avg: s.avg, pl, month: TL_MONTH_LABEL[TL_MONTHS[mi]][lang], x: hover.clientX, y: hover.clientY };
+      const mi = Math.max(0, Math.min(TL_MONTHS.length - 1, Math.round(hover.t)));
+      tip = { plan: p, mkt: s.mkt, avg: s.avg, pl, month: TL_MONTH_LABEL[mi][lang], x: hover.clientX, y: hover.clientY };
     }
   }
 
@@ -199,7 +207,7 @@ export function TimelineView({ plans, t, lang, onOpen, mode: modeProp, setMode: 
         <div style={{ minWidth: TL_NAMEW + width, position: "relative" }}>
           <div className="tl-axis">
             <div className="tl-month" style={{ width: TL_NAMEW, borderLeft: 0, position: "sticky", left: 0, background: "var(--bg-app)", zIndex: 5 }} />
-            {TL_MONTHS.map((m) => <div key={m} className="tl-month" style={{ width: TL_COLW }}><span className="tl-mlabel">{TL_MONTH_LABEL[m][lang]}</span></div>)}
+            {TL_MONTHS.map((m, mi) => <div key={m} className="tl-month" style={{ width: TL_COLW }}><span className="tl-mlabel">{TL_MONTH_LABEL[mi][lang]}</span></div>)}
           </div>
           <div style={{ position: "relative" }} ref={areaRef} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
             <div className="tl-today" style={{ left: todayX, top: 0, bottom: 0 }} />

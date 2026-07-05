@@ -15,7 +15,7 @@ import { Lic } from "@/components/icons";
 import { MiniDropdown } from "./mini-dropdown";
 import { gapHistory } from "@/lib/gap-history";
 import type { UIPlan } from "@/lib/plan-mapper";
-import { refNow, REF_YEAR } from "@/lib/clock";
+import { refNow, inferYearWeb } from "@/lib/clock";
 
 /* ---- EditableNum — 목표가 인라인 편집(현재가 대비 퀵칩). 이번 이식에선 onCommit이 optional. ---- */
 function EditableNum({
@@ -239,7 +239,7 @@ export function GapTab({
   const gapNow = (px - iv) / iv * 100;
   const MON: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
   // 내 매수(진입) 시점 → 차트 x좌표 (computeLedger 없음 → hasCF=false, 첫 매수일 사용)
-  const entryDate = (() => { if (!plan.avgPrice) return null; const buys = (plan.executions || []).filter((e) => e.side === "buy").slice().reverse(); const es = buys.length ? buys[0].date : plan.createdAt; if (!es) return null; const m = es.match(/([A-Za-z]{3})\s*(\d+)/); if (!m || MON[m[1]] == null) return null; const ref = refNow(); let d = new Date(REF_YEAR, MON[m[1]], +m[2]); if (d > ref) d = new Date(REF_YEAR - 1, MON[m[1]], +m[2]); return d; })();
+  const entryDate = (() => { if (!plan.avgPrice) return null; const buys = (plan.executions || []).filter((e) => e.side === "buy").slice().reverse(); const es = buys.length ? buys[0].date : plan.createdAt; if (!es) return null; const m = es.match(/([A-Za-z]{3})\s*(\d+)/); if (!m || MON[m[1]] == null) return null; const yr = inferYearWeb(MON[m[1]] + 1, +m[2]); return new Date(yr, MON[m[1]], +m[2]); })();
   const rn = refNow(); const nowDate = new Date(rn.getFullYear(), rn.getMonth(), 1), firstDate = new Date(rn.getFullYear(), rn.getMonth() - (n - 1) * 3, 1);
   const entryFrac = entryDate ? (entryDate.getTime() - firstDate.getTime()) / ((nowDate.getTime() - firstDate.getTime()) || 1) : null;
   const xEntry = entryFrac != null ? PX + (W - 2 * PX) * Math.max(0, Math.min(1, entryFrac)) : null;
@@ -248,11 +248,11 @@ export function GapTab({
   const entryInfo = (() => { const buys = (plan.executions || []).filter((e) => e.side === "buy"); if (!buys.length || !(plan.avgPrice && plan.avgPrice > 0)) return null; const first = buys.slice().reverse()[0]; const ret = (px - plan.avgPrice) / plan.avgPrice * 100; const upToVal = (iv - plan.avgPrice) / plan.avgPrice * 100; return { entryPx: first.price, rounds: buys.length, avg: plan.avgPrice, ret, upToVal }; })();
   // 개별 체결(내 매수·매도)을 가격선 위 다이아몬드로 — "내 행동을 차트에" (date→x는 entryDate과 동일 매핑)
   const fillMarks = (() => {
-    const ref = refNow(), ko = lang === "ko";
+    const ko = lang === "ko";
     return (plan.executions || []).map((e) => {
       if (!e.date || !(e.price > 0)) return null;
       const m = e.date.match(/([A-Za-z]{3})\s*(\d+)/); if (!m || MON[m[1]] == null) return null;
-      let d = new Date(REF_YEAR, MON[m[1]], +m[2]); if (d > ref) d = new Date(REF_YEAR - 1, MON[m[1]], +m[2]);
+      const d = new Date(inferYearWeb(MON[m[1]] + 1, +m[2]), MON[m[1]], +m[2]);
       const frac = (d.getTime() - firstDate.getTime()) / ((nowDate.getTime() - firstDate.getTime()) || 1);
       if (frac < -0.02 || frac > 1.04 || e.price < min || e.price > max) return null;
       const buy = e.side === "buy";
@@ -268,8 +268,7 @@ export function GapTab({
       if (!s) return null;
       if (/today|오늘/i.test(s)) return new Date(ref);
       const m = s.match(/([A-Za-z]{3})\s*(\d+)/); if (!m || MON[m[1]] == null) return null;
-      let d = new Date(REF_YEAR, MON[m[1]], +m[2]); if (d > ref) d = new Date(REF_YEAR - 1, MON[m[1]], +m[2]);
-      return d;
+      return new Date(inferYearWeb(MON[m[1]] + 1, +m[2]), MON[m[1]], +m[2]);
     };
     const place = (d: Date) => { const frac = (d.getTime() - firstDate.getTime()) / ((nowDate.getTime() - firstDate.getTime()) || 1); if (frac < -0.02 || frac > 1.04) return null; const xp = PX + (W - 2 * PX) * Math.max(0, Math.min(1, frac)); return { x: xp, leftPct: Math.max(2, Math.min(80, (xp / W) * 100)), dlab: (d.getMonth() + 1) + "/" + d.getDate() }; };
     const out: { kind: string; x: number; leftPct: number; dlab: string; label: string; text: string }[] = [];
@@ -341,7 +340,7 @@ export function GapTab({
             const m = entryStr.match(/([A-Za-z]{3})\s*(\d+)/);
             if (!m || MON[m[1]] == null) return null;
             const now = refNow();
-            let yr = REF_YEAR; let d0 = new Date(yr, MON[m[1]], +m[2]); if (d0 > now) { yr = REF_YEAR - 1; d0 = new Date(yr, MON[m[1]], +m[2]); }
+            const yr = inferYearWeb(MON[m[1]] + 1, +m[2]); const d0 = new Date(yr, MON[m[1]], +m[2]);
             const days = Math.max(0, Math.round((now.getTime() - d0.getTime()) / 86400000));
             const dateLab = `${String(yr).slice(2)}.${String(MON[m[1]] + 1).padStart(2, "0")}.${String(+m[2]).padStart(2, "0")}`;
             return <div className="gap-dwell">

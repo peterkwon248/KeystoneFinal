@@ -10,7 +10,7 @@ import { fmtMoney, fmtCompact, fmtDate, fmtRel } from "@keystone/core/format";
 import { Lic, PanelIcon } from "@/components/icons";
 import type { UINote, UIPlan } from "@/lib/plan-mapper";
 import { closeoutSummary } from "@/lib/closeout";
-import { refNow, REF_YEAR } from "@/lib/clock";
+import { refNow, inferYearWeb } from "@/lib/clock";
 
 // 보유 기간: createdAt("Feb 18")부터 앱 frozen 현재(2026-06)까지 개월 수. source/DetailView.jsx:6 verbatim.
 function holdingPeriod(createdAt: string | undefined, lang: Lang): string {
@@ -19,7 +19,8 @@ function holdingPeriod(createdAt: string | undefined, lang: Lang): string {
   const m = createdAt.match(/([A-Za-z]{3})\s*(\d+)/);
   if (!m || MON[m[1]] == null) return "—";
   const now = refNow();
-  let mo = (now.getFullYear() * 12 + now.getMonth()) - ((REF_YEAR - 1) * 12 + MON[m[1]]);
+  const yr = inferYearWeb(MON[m[1]] + 1, +m[2]);
+  let mo = (now.getFullYear() * 12 + now.getMonth()) - (yr * 12 + MON[m[1]]);
   if (mo < 0) mo += 12;
   if (mo < 1) return lang === "ko" ? "1개월 미만" : "<1mo";
   if (mo < 12) return mo + (lang === "ko" ? "개월" : "mo");

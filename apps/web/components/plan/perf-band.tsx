@@ -7,7 +7,7 @@ import type { I18nDict, Lang } from "@keystone/core/types";
 import { computeLedger, planReturn } from "@keystone/core/analytics";
 import { fmtCompact, fmtDate } from "@keystone/core/format";
 import { PLAN_STATUS } from "@keystone/core/reference";
-import { planTrajectory, trajMonthIdx, TRAJ_MONTHS } from "@/lib/trajectory";
+import { planTrajectory, trajMonthIdx, TRAJ_MONTHS, trajSlotYear } from "@/lib/trajectory";
 import type { UIPlan } from "@/lib/plan-mapper";
 
 // source/ledger.jsx closeoutSummary — 청산 플랜 회고 요약 (executions + 저장 realizedPL 파생).
@@ -70,9 +70,12 @@ export function PerfBand({ plan, lang, t }: { plan: UIPlan; lang: Lang; t: I18nD
     setHov({ s, ex, frac: (x(s.t) - padL) / (W - padL - padR) });
   };
   const trajDate = (tt: number) => {
+    // rolling 창의 실 연도를 직접 얻어 표시(year-less "Mon D"를 core inferYear에 맡기면 July 슬롯이
+    // 전년으로 오추론됨). 툴팁 전용이라 골든 무관 — "Mon D" + 연도가 바뀌는 경우 연도까지 표기.
     const mi = Math.max(0, Math.min(TRAJ_MONTHS.length - 1, Math.floor(tt)));
     const day = Math.max(1, Math.min(31, Math.round((tt - mi) * 31) || 1));
-    return fmtDate(TRAJ_MONTHS[mi] + " " + day, lang);
+    const yr = trajSlotYear(mi);
+    return fmtDate(`${TRAJ_MONTHS[mi]} ${day}, ${yr}`, lang);
   };
   const hovRet = hov && hov.s.avg != null ? (hov.s.mkt / hov.s.avg - 1) * 100 : null;
   return (
