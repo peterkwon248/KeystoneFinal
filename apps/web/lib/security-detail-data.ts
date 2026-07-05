@@ -8,10 +8,11 @@ import {
   mapSecurity, secPlanOf, SECURITY_SELECT, SECURITY_FIN_SELECT,
   type DbSecurityRow, type DbSecurityFinRow, type DbSecNoteRow, type SecNote,
 } from "@/lib/security-mapper";
+import { refNow } from "@/lib/clock";
 import type { UIPlan } from "@/lib/plan-mapper";
 import type { UISecurity } from "@/lib/security-mapper";
 import type { Fin } from "@keystone/core/types";
-import type { SecScenario } from "@/components/securities/security-detail";
+import type { SecScenario, IntradayPoint } from "@/components/securities/security-detail";
 
 export interface SecurityDetailData {
   security: UISecurity;
@@ -20,6 +21,13 @@ export interface SecurityDetailData {
   plans: UIPlan[];
   secNotes: SecNote[];
   secScenarios: SecScenario[];
+  intraday: IntradayPoint[];
+}
+
+// 당일 시작(앱 canonical now=refNow, real-now). 인트라데이 라인은 당일 틱만.
+function startOfTodayIso(): string {
+  const n = refNow();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate()).toISOString();
 }
 
 export async function loadSecurityDetail(ticker: string): Promise<SecurityDetailData | null> {
@@ -31,8 +39,9 @@ export async function loadSecurityDetail(ticker: string): Promise<SecurityDetail
     .from("securities").select(SECURITY_SELECT).eq("ticker", ticker).maybeSingle();
   if (!secRow) return null;
 
-  // 재무(security_financials) + 관심 여부 + 관련 플랜 + 종목 메모(journal_entries) + adhoc 시나리오를 병렬로.
-  const [{ data: finRows }, watchRes, { data: planRows }, noteRes, scenRes] = await Promise.all([
+  // 재무(security_financials) + 관심 여부 + 관련 플랜 + 종목 메모(journal_entries) + adhoc 시나리오
+  //  + 당일 인트라데이 시세(intraday_prices)를 병렬로.
+  const [{ data: finRows }, watchRes, { data: planRows }, noteRes, scenRes, { data: intradayRows }] = await Promise.all([
     supabase.from("security_financials").select(SECURITY_FIN_SELECT).eq("ticker", ticker).order("fiscal_year", { ascending: false }),
     user
       ? supabase.from("watchlist").select("id").eq("user_id", user.id).eq("ticker", ticker).maybeSingle()
@@ -52,6 +61,11 @@ export async function loadSecurityDetail(ticker: string): Promise<SecurityDetail
           .eq("ticker", ticker).is("plan_id", null)
           .order("sort", { ascending: true })
       : Promise.resolve({ data: null }),
+    // 당일 인트라데이 시세(전역 읽기) — 오름차순. 차트 당일 라인 시드(세션 중 live_quotes로 append).
+    supabase.from("intraday_prices")
+      .select("ts, price")
+      .eq("ticker", ticker).gte("ts", startOfTodayIso())
+      .order("ts", { ascending: true }),
   ]);
 
   const watched = !!(watchRes as { data: unknown }).data;
@@ -100,7 +114,11 @@ export async function loadSecurityDetail(ticker: string): Promise<SecurityDetail
     thesis: r.thesis ?? undefined,
   }));
 
-  return { security, secPlan, fin, plans, secNotes, secScenarios };
+  // 당일 인트라데이 점 → IntradayPoint[]. numeric은 string으로 올 수 있어 Number 정규화.
+  const intraday: IntradayPoint[] = ((intradayRows ?? []) as { ts: string; price: number | string }[])
+    .map((r) => ({ ts: r.ts, price: Number(r.price) }));
+
+  return { security, secPlan, fin, plans, secNotes, secScenarios, intraday };
 }
 
 interface DbSecScenarioRow {

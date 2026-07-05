@@ -168,6 +168,35 @@ export type Database = {
         }
         Relationships: []
       }
+      intraday_prices: {
+        Row: {
+          change_pct: number | null
+          price: number
+          ticker: string
+          ts: string
+        }
+        Insert: {
+          change_pct?: number | null
+          price: number
+          ticker: string
+          ts: string
+        }
+        Update: {
+          change_pct?: number | null
+          price?: number
+          ticker?: string
+          ts?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intraday_prices_ticker_fkey"
+            columns: ["ticker"]
+            isOneToOne: false
+            referencedRelation: "securities"
+            referencedColumns: ["ticker"]
+          },
+        ]
+      }
       journal_entries: {
         Row: {
           body: string

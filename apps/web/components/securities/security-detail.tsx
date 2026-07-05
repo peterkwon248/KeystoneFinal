@@ -13,7 +13,7 @@
 //  - SWC≠tsc 함정 회피: JSX 안 제네릭 앵글브래킷 캐스트 없음. SVG(SecurityChart/SeasonalityHeatmap 좌표)
 //    계산은 전부 return 이전 함수 본문에서. cell/tone/withU 등 헬퍼는 hoist.
 "use client";
-import { Fragment, useEffect, useMemo, useReducer, useState, useTransition } from "react";
+import { Fragment, useEffect, useMemo, useReducer, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { I18nDict, Lang } from "@keystone/core/types";
 import type { Fin } from "@keystone/core/types";
@@ -37,20 +37,54 @@ import { refNow } from "@/lib/clock";
 import { useLiveQuote } from "@/components/live-quotes-provider";
 import { LiveDot } from "@/components/live-dot";
 
-/* ---- placeholder price chart (source/SecurityView.jsx 4-75) — mock spark, 실데이터 마일스톤6 ---- */
-function SecurityChart({ security, height = 190 }: { security: UISecurity; height?: number }) {
-  const sp = security.spark || [];
+/* ---- price chart (source/SecurityView.jsx 4-75) — 추세(daily spark) + 당일(intraday) 토글.
+   인트라데이 라인 = 서버 시드(intraday_prices 당일) + 세션 중 live_quotes 신규 틱 append(리로드 없이 성장). ---- */
+function SecurityChart({ security, intraday = [], lang, height = 190 }: {
+  security: UISecurity; intraday?: IntradayPoint[]; lang?: Lang; height?: number;
+}) {
+  const ko = lang === "ko";
+  // 인트라데이 점: 서버 시드 + 라이브 append(마지막과 price 다를 때만 새 점).
+  const lq = useLiveQuote(security.ticker);
+  const [ticks, setTicks] = useState<IntradayPoint[]>(() => intraday);
+  useEffect(() => { setTicks(intraday); }, [intraday]); // 서버 재시드(라우트 변경/refresh) 반영.
+  const livePrice = lq ? lq.price : null;
+  useEffect(() => {
+    if (livePrice == null) return;
+    setTicks((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.price === livePrice) return prev;
+      return [...prev, { ts: new Date().toISOString(), price: livePrice }];
+    });
+  }, [livePrice]);
+
+  const hasIntraday = ticks.length >= 2;
+  const [mode, setMode] = useState<"trend" | "intraday">(intraday.length >= 2 ? "intraday" : "trend");
+  // 인트라데이가 처음 생기면(장중 세션 중 0→n) 1회 자동 전환. 이후엔 수동 토글 유지.
+  const autoSwitched = useRef(intraday.length >= 2);
+  useEffect(() => {
+    if (!autoSwitched.current && hasIntraday) { autoSwitched.current = true; setMode("intraday"); }
+  }, [hasIntraday]);
+
+  const useIntra = mode === "intraday" && hasIntraday;
+  const sp = useIntra ? ticks.map((p) => p.price) : (security.spark || []);
   const n = sp.length;
   const min = Math.min(...sp), max = Math.max(...sp);
   const W = 800, H = 200, pad = 12;
-  const x = (i: number) => (i / (n - 1)) * W;
+  const x = (i: number) => (n <= 1 ? 0 : (i / (n - 1)) * W);
   const y = (v: number) => H - pad - ((v - min) / (max - min || 1)) * (H - pad * 2);
   const line = sp.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
   const area = `${line} L${W} ${H} L0 ${H} Z`;
-  const up = security.change >= 0;
+  // 색: 인트라데이=첫 틱 대비 마지막, 추세=security.change.
+  const up = useIntra ? (sp[n - 1] >= sp[0]) : (security.change >= 0);
   const col = up ? "var(--pos)" : "var(--neg)";
   return (
     <div className="sec-chart-wrap">
+      {hasIntraday && (
+        <div className="rb-modebar" style={{ margin: "0 0 8px", width: "fit-content" }}>
+          <div className={"rb-mode" + (mode === "trend" ? " on" : "")} onClick={() => setMode("trend")}>{ko ? "추세" : "Trend"}</div>
+          <div className={"rb-mode" + (mode === "intraday" ? " on" : "")} onClick={() => setMode("intraday")} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>{ko ? "당일" : "Intraday"}{lq && <LiveDot />}</div>
+        </div>
+      )}
       <svg className="sec-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ height }}>
         <defs>
           <linearGradient id="secfill" x1="0" y1="0" x2="0" y2="1">
@@ -240,13 +274,17 @@ export interface SecScenario {
   thesis?: { en: string; ko: string };
 }
 
-export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, secScenarios = [], embedded = false }: {
+/** 당일 인트라데이 시세 점 — 서버가 intraday_prices(당일, 오름차순) 매핑해 전달. 차트 당일 라인 시드. */
+export interface IntradayPoint { ts: string; price: number }
+
+export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, secScenarios = [], intraday = [], embedded = false }: {
   security: UISecurity;
   secPlan: UIPlan;
   fin: Fin | null;
   plans: UIPlan[];
   secNotes: SecNote[];
   secScenarios?: SecScenario[];
+  intraday?: IntradayPoint[];
   embedded?: boolean;
 }) {
   const { lang }: { lang: Lang } = usePrefs();
@@ -390,7 +428,7 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, 
           </button>
         </div>
 
-        <SecurityChart security={s} />
+        <SecurityChart security={s} intraday={intraday} lang={lang} />
         <div className="sec-chart-cap"><Lic name="info" size={12} cls="icon-sm" color="var(--fg-4)" />{t.chartNote}</div>
 
         <div className="metric-row" style={{ marginTop: 18 }}>

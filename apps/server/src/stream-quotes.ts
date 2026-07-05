@@ -50,6 +50,7 @@ async function main() {
         change_pct: t.changePct,
         ts: new Date(t.ts).toISOString(),
       }));
+      // ① 최신 스냅샷(live_quotes, 티커당 1행 덮어쓰기) — Realtime 브로드캐스트 소스.
       const { error: upErr } = await db.from("live_quotes").upsert(rows, { onConflict: "ticker" });
       if (upErr) {
         console.error(`[stream] upsert error: ${upErr.message}`);
@@ -57,6 +58,11 @@ async function main() {
       } else {
         console.log(`[stream] flushed ${rows.length} quotes (total ticks ${tickCount})`);
       }
+      // ② 인트라데이 이력(intraday_prices, append) — 차트 당일 라인 소스. (ticker,ts) 충돌은 무시.
+      const { error: intErr } = await db
+        .from("intraday_prices")
+        .upsert(rows, { onConflict: "ticker,ts", ignoreDuplicates: true });
+      if (intErr) console.error(`[stream] intraday insert error: ${intErr.message}`);
     } finally {
       flushing = false;
     }
