@@ -8,6 +8,7 @@
     "sync:financials": "tsx src/sync-financials.ts",
     "sync:quotes": "tsx src/sync-quotes.ts",
     "sync:ohlc": "tsx src/sync-ohlc.ts",
+    "sync:daily": "tsx src/sync-daily.ts",
     "stream:quotes": "tsx src/stream-quotes.ts",
     "check:fx": "tsx src/check-fx.ts"
   },
