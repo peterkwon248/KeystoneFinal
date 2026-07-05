@@ -5,6 +5,7 @@ import type { Lang } from "@keystone/core/types";
 import { fmtCompact } from "@keystone/core/format";
 import { EXEC_STRATEGIES } from "@keystone/core/reference";
 import type { UIPlan } from "@/lib/plan-mapper";
+import { refNow } from "@/lib/clock";
 
 /** 알림에 붙는 규칙(있을 때) */
 export type InboxRule = UIPlan["rules"][number];
@@ -87,7 +88,7 @@ export function ibxBucket(last: string): "today" | "earlier" {
   if (/^today/i.test(s)) return "today";
   if (/^now$/i.test(s)) return "today";
   if (/^\d+\s*h$/i.test(s)) return "today"; // "8h" = 24시간 이내 → 오늘
-  const now = new Date();
+  const now = refNow(); // 앱 canonical 'now'(KS_REF) — fmtDate 연도추론·워커 last_fired와 동일 기준
   if (s === `${IBX_MON[now.getMonth()]} ${now.getDate()}`) return "today"; // 오늘 날짜의 "Mon D"
   return "earlier";
 }
