@@ -12,10 +12,45 @@ const DOMAINS = {
   real: "https://openapi.koreainvestment.com:9443",
   vts: "https://openapivts.koreainvestment.com:29443",
 } as const;
+// 실시간 WS 도메인 (Stage A — H0STCNT0 체결가 구독). REST와 별개 포트.
+const WS_DOMAINS = {
+  real: "ws://ops.koreainvestment.com:21000",
+  vts: "ws://ops.koreainvestment.com:31000",
+} as const;
 const CACHE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../.cache");
 
 function base(): string {
   return DOMAINS[env.kisEnv()];
+}
+
+/** 현재 KIS_ENV에 맞는 실시간 WS 엔드포인트. */
+export function kisWsUrl(): string {
+  return WS_DOMAINS[env.kisEnv()];
+}
+
+/** 실시간 WS 접속키(approval_key) 발급. REST access_token과 별개 키이며
+ *  세션당 1회 발급이면 충분해 캐시하지 않는다. body 필드명은 `secretkey`(REST와 다름). */
+export async function kisApprovalKey(): Promise<string> {
+  const res = await fetch(`${base()}/oauth2/Approval`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "client_credentials",
+      appkey: env.kisAppKey(),
+      secretkey: env.kisAppSecret(),
+    }),
+  });
+  const body = (await res.json()) as {
+    approval_key?: string;
+    error_code?: string;
+    error_description?: string;
+  };
+  if (!res.ok || !body.approval_key) {
+    throw new Error(
+      `KIS approval_key: ${body.error_code ?? res.status} ${body.error_description ?? ""}`.trim(),
+    );
+  }
+  return body.approval_key;
 }
 
 interface CachedToken {

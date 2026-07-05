@@ -199,6 +199,35 @@ export type Database = {
           },
         ]
       }
+      live_quotes: {
+        Row: {
+          change_pct: number | null
+          price: number
+          ticker: string
+          ts: string
+        }
+        Insert: {
+          change_pct?: number | null
+          price: number
+          ticker: string
+          ts?: string
+        }
+        Update: {
+          change_pct?: number | null
+          price?: number
+          ticker?: string
+          ts?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_quotes_ticker_fkey"
+            columns: ["ticker"]
+            isOneToOne: true
+            referencedRelation: "securities"
+            referencedColumns: ["ticker"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: Json | null
