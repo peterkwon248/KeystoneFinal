@@ -42,6 +42,42 @@ export async function fetchClosesWith(
   return out;
 }
 
+/**
+ * 여러 티커의 연간 종가 배치 = {ticker: {연도(YYYY): 그 해 마지막 거래일 종가}}.
+ * 스크리너(다수 종목 PER 밴드 실측)용 — fetchAnnualCloses 의 배치판. 배치 IN + 페이지네이션.
+ */
+export async function fetchAnnualClosesBatch(
+  supabase: SupabaseClient<Database>,
+  tickers: string[],
+  fromYear: number,
+): Promise<Record<string, Record<string, number>>> {
+  const out: Record<string, Record<string, number>> = {};
+  const uniq = [...new Set(tickers.filter(Boolean))];
+  if (!uniq.length) return out;
+
+  const from = `${fromYear}-01-01`;
+  const PAGE = 1000;
+  // 오름차순 정렬로 연도별 마지막(=그 해 최종 거래일) 종가가 자연히 덮어써지게 한다.
+  const rows: { ticker: string; date: string; close: number }[] = [];
+  for (let f = 0; ; f += PAGE) {
+    const { data, error } = await supabase
+      .from("security_price_history")
+      .select("ticker, date, close")
+      .in("ticker", uniq)
+      .gte("date", from)
+      .order("date", { ascending: true })
+      .range(f, f + PAGE - 1);
+    if (error) throw error;
+    const page = (data ?? []) as { ticker: string; date: string; close: number }[];
+    rows.push(...page);
+    if (page.length < PAGE) break;
+  }
+  for (const r of rows) {
+    (out[r.ticker] ??= {})[r.date.slice(0, 4)] = Number(r.close);
+  }
+  return out;
+}
+
 /** 단일 티커의 연간 종가 = {연도(YYYY): 그 해 마지막 거래일 종가}. 멀티플 밴드 차트(fin-history)용. */
 export async function fetchAnnualCloses(
   supabase: SupabaseClient<Database>,

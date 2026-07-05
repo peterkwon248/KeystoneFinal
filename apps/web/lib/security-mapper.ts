@@ -213,5 +213,6 @@ export const SECURITY_SELECT = `
   ticker, name, market, currency, sector, gics, exchange, shares_out, last_close
 `;
 
-/** security_financials select 절 — eps는 스키마에 없어 있으면 읽고 없으면 무시(관대). */
-export const SECURITY_FIN_SELECT = `fiscal_year, revenue, operating_margin, net_margin, roe, gross_margin, debt_ratio, current_ratio, dividend_yield, revenue_growth, unit`;
+/** security_financials select 절 — eps는 스키마에 없어 있으면 읽고 없으면 무시(관대).
+ *  ticker 포함 — 스크리너가 다종목 배치 로드 후 ticker로 그룹핑(buildPlanFin)한다. */
+export const SECURITY_FIN_SELECT = `ticker, fiscal_year, revenue, operating_margin, net_margin, roe, gross_margin, debt_ratio, current_ratio, dividend_yield, revenue_growth, unit`;

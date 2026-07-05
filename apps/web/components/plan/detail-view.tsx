@@ -170,7 +170,7 @@ export function PlanDetail({ plan: basePlan, portfolios, fin }: {
             ))}
           </div>
 
-          {tab === "scenarios" ? <ScenariosTab plan={plan} t={t} lang={lang} />
+          {tab === "scenarios" ? <ScenariosTab plan={plan} fin={fin} t={t} lang={lang} />
             : tab === "strategy" ? <StrategyTab plan={plan} t={t} lang={lang} onToggleRule={onToggleRule} onSetGoal={onSetGoal} onCreateRule={onCreateRule} onUpdateRule={onUpdateRule} onDeleteRule={onDeleteRule} />
             : tab === "financials" ? <FinancialsTab plan={plan} fin={fin} t={t} lang={lang} />
             : tab === "indicators" ? <IndicatorsTab plan={plan} fin={fin} t={t} lang={lang} />

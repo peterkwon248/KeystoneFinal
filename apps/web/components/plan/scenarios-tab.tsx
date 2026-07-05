@@ -5,7 +5,7 @@
 "use client";
 import type { ReactNode } from "react";
 import { useRef, useState, useTransition } from "react";
-import type { I18nDict, Lang } from "@keystone/core/types";
+import type { Fin, I18nDict, Lang } from "@keystone/core/types";
 import { STRATEGIES } from "@keystone/core/reference";
 import { scAutoStatus } from "@keystone/core/analytics";
 import { fmtMoney, fmtCompact, toDispCur } from "@keystone/core/format";
@@ -83,7 +83,7 @@ function ConvergenceTest({ plan, lang }: { plan: UIPlan; lang: Lang }) {
   );
 }
 
-export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lang: Lang }) {
+export function ScenariosTab({ plan, fin, t, lang }: { plan: UIPlan; fin?: Fin | null; t: I18nDict; lang: Lang }) {
   const ko = lang === "ko";
   const [modalOpen, setModalOpen] = useState(false);
   const [editSc, setEditSc] = useState<UIPlan["scenarios"][number] | null>(null);
@@ -104,7 +104,7 @@ export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lan
 
   return (
     <div>
-      <GapTab plan={plan} t={t} lang={lang} part="track" />
+      <GapTab plan={plan} fin={fin} t={t} lang={lang} part="track" />
 
       <div className="sc-grid">
         {plan.scenarios.map((s, i) => {
@@ -177,7 +177,7 @@ export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lan
         </div>
       </div>
 
-      <GapTab plan={plan} t={t} lang={lang} part="head" />
+      <GapTab plan={plan} fin={fin} t={t} lang={lang} part="head" />
       <ConvergenceTest plan={plan} lang={lang} />
 
       {(modalOpen || editSc) && <ScenarioAuthorModal plan={plan}

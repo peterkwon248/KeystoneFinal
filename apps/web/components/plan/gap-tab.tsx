@@ -7,7 +7,7 @@
 // optional + 가드 처리 — 편집/뮤테이션은 후속 증분에서 서버 액션으로 배선한다.
 "use client";
 import { Fragment, useEffect, useRef, useState } from "react";
-import type { I18nDict, Lang, Scenario } from "@keystone/core/types";
+import type { Fin, I18nDict, Lang, Scenario } from "@keystone/core/types";
 import { STRATEGIES } from "@keystone/core/reference";
 import { gaugeData, planActionLines } from "@keystone/core/analytics";
 import { fmtMoney, fmtCompact } from "@keystone/core/format";
@@ -152,9 +152,9 @@ function gapPrefsLoad(): GapPrefs {
 }
 
 export function GapTab({
-  plan, t, lang, onPatchPlan, onUpdateScenario, part, onGotoValuation,
+  plan, fin, t, lang, onPatchPlan, onUpdateScenario, part, onGotoValuation,
 }: {
-  plan: UIPlan; t: I18nDict; lang: Lang;
+  plan: UIPlan; fin?: Fin | null; t: I18nDict; lang: Lang;
   part?: "track" | "head";
   onPatchPlan?: (id: string, patch: Record<string, unknown>) => void;
   onUpdateScenario?: (id: string, idx: number, patch: Record<string, unknown>) => void;
@@ -175,8 +175,9 @@ export function GapTab({
   const FW_BAND: Record<string, string> = { PER: "PER", PBR: "PBR", PSR: "PSR", EV: "EV", DDM: "DIVY", DCF: "PER" };
   const [bandType, setBandType] = useState(FW_BAND[fwModel] || "PER");
 
-  // ── mock 이음새: plan.priceHistory/ivHistory/scenarioHistory 대신 gapHistory(plan) 합성.
-  const H = gapHistory(plan);
+  // ── 이음새: plan.priceHistory/ivHistory/scenarioHistory 대신 gapHistory 합성.
+  //    fin(실 재무)+plan.annualCloses(실 연간 종가) 있으면 실측, 없으면 TUNE mock 폴백(마일스톤6 seam).
+  const H = gapHistory(plan, fin, plan.annualCloses);
   const px = plan.currentPrice;
   const sc = plan.scenarios || [];
   const tOf = (en: string, fb: number) => { const s = sc.find((x) => x.label && x.label.en === en); return s ? s.target : fb; };

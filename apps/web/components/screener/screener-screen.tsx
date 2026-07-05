@@ -14,7 +14,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSecurityPeek } from "@/components/securities/security-peek";
-import type { I18nDict, Lang } from "@keystone/core/types";
+import type { Fin, I18nDict, Lang } from "@keystone/core/types";
 import { I18N } from "@keystone/core/i18n";
 import { STRATEGIES, MARKETS } from "@keystone/core/reference";
 import { IND_THRESH, lensThreshOf } from "@keystone/core/screener";
@@ -193,7 +193,12 @@ function viewLoad(): { fwId?: string; sortKey?: SortKey; groupBy?: GroupBy; layo
   try { return JSON.parse(localStorage.getItem(LSK) || "{}"); } catch { return {}; }
 }
 
-export function ScreenerScreen({ securities, plans }: { securities: UISecurity[]; plans: UIPlan[] }) {
+export function ScreenerScreen({ securities, plans, finByTicker, closesByTicker }: {
+  securities: UISecurity[]; plans: UIPlan[];
+  // 실 재무·연간 종가(마일스톤6 seam) — 서버가 배치 로드해 buildScored 에 주입. 없으면 SEC_SEED 폴백.
+  finByTicker?: Record<string, Fin | null>;
+  closesByTicker?: Record<string, Record<string, number>>;
+}) {
   const { lang }: { lang: Lang } = usePrefs();
   const t = I18N[lang];
   const ko = lang === "ko";
@@ -245,7 +250,7 @@ export function ScreenerScreen({ securities, plans }: { securities: UISecurity[]
   }, [securities, lang]);
 
   // scored — lib 순수 함수(원본 414-432). 렌즈/plans/focus 변화에만 재계산.
-  const scored = useMemo(() => buildScored(securities, plans, fwId, focus), [securities, plans, fwId, focus]);
+  const scored = useMemo(() => buildScored(securities, plans, fwId, focus, finByTicker, closesByTicker), [securities, plans, fwId, focus, finByTicker, closesByTicker]);
 
   // 필터 적용(원본 434-448).
   const fmatch = (r: ScoredRow): boolean => {
