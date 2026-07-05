@@ -24,7 +24,7 @@ import { InsightsTab } from "./insights-tab";
 import { PropsSidebar } from "./props-sidebar";
 import type { UINote, UIPlan } from "@/lib/plan-mapper";
 import type { PfLite } from "@/lib/pf-palette";
-import { applyValuationTargetsAction, archivePlan, patchNotesAction, patchPlanAction, setGoalAction, softDeletePlan, toggleRuleAction, type PlanGoal } from "@/app/(shell)/plans/[id]/actions";
+import { applyValuationTargetsAction, archivePlan, createRuleAction, deleteRuleAction, patchNotesAction, patchPlanAction, setGoalAction, softDeletePlan, toggleRuleAction, updateRuleAction, type PlanGoal, type RuleInput } from "@/app/(shell)/plans/[id]/actions";
 
 interface TabDef { key: string; label: string; num?: number; tip?: { ko: string[]; en: string[] } }
 
@@ -54,6 +54,12 @@ export function PlanDetail({ plan, portfolios, fin }: {
     startTransition(() => { void toggleRuleAction(plan.dbId, ruleId, enabled); });
   const onSetGoal = (goal: PlanGoal | null) =>
     startTransition(() => { void setGoalAction(plan.dbId, goal); });
+  const onCreateRule = (input: RuleInput) =>
+    startTransition(() => { void createRuleAction(plan.dbId, input); });
+  const onUpdateRule = (ruleId: string, input: RuleInput) =>
+    startTransition(() => { void updateRuleAction(plan.dbId, ruleId, input); });
+  const onDeleteRule = (ruleId: string) =>
+    startTransition(() => { void deleteRuleAction(plan.dbId, ruleId); });
   // 밸류에이션 탭 "시나리오에 적용" — 슬롯 적정가(bull/base/bear)를 scenarios.target 에 기록.
   // base target 갱신 → plan-mapper 가 iv 를 파생하므로 iv 는 자동 반영(별도 필드 없음).
   const onApplyTargets = (targets: { bull: number; base: number; bear: number }) =>
@@ -160,7 +166,7 @@ export function PlanDetail({ plan, portfolios, fin }: {
           </div>
 
           {tab === "scenarios" ? <ScenariosTab plan={plan} t={t} lang={lang} />
-            : tab === "strategy" ? <StrategyTab plan={plan} t={t} lang={lang} onToggleRule={onToggleRule} onSetGoal={onSetGoal} />
+            : tab === "strategy" ? <StrategyTab plan={plan} t={t} lang={lang} onToggleRule={onToggleRule} onSetGoal={onSetGoal} onCreateRule={onCreateRule} onUpdateRule={onUpdateRule} onDeleteRule={onDeleteRule} />
             : tab === "financials" ? <FinancialsTab plan={plan} fin={fin} t={t} lang={lang} />
             : tab === "indicators" ? <IndicatorsTab plan={plan} fin={fin} t={t} lang={lang} />
             : tab === "valuation" ? <ValuationTab plan={plan} fin={fin} t={t} lang={lang} onApplyTargets={onApplyTargets} />

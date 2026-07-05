@@ -4,7 +4,7 @@
 import type { Currency, L10n, Plan, PlanNote, PlanStatus, Scenario, ScenarioStatus, Execution, Rule } from "@keystone/core/types";
 import { MON_EN } from "@keystone/core/format";
 import { SC_LABEL_MAP } from "@keystone/core/analytics";
-import { RULE_TRIGS } from "@keystone/core/reference";
+import { findTrig } from "./rule-trigs-v2";
 
 // 커스텀 필드는 디자인에서 제거됨(source PropsSidebar 에 핸들러만 남은 vestigial 코드) — 웹에 이식하지 않음.
 
@@ -87,10 +87,11 @@ export interface DbPlanRow {
 export interface UIRule extends Rule {
   isAuto?: boolean;
   ruleSource?: string | null;
+  cond?: DbRuleCondition;   // 원본 condition(jsonb) — v2 eval이 target/band/count/unit 사용
 }
 
 /* DB rules.condition jsonb — 트리거 인코딩 (dev-seed-plans.mjs가 쓰고 여기서 디코드) */
-interface DbRuleCondition { type: string; op?: string; value?: number }
+export interface DbRuleCondition { type: string; op?: string; value?: number; count?: number; unit?: string; anchor?: string; target?: number; band?: number }
 /* DB rules.action jsonb — 액션 인코딩 (action.type = RULE_ACTS id) */
 interface DbRuleAction { type: string }
 
@@ -105,7 +106,27 @@ function decodeTrig(c: DbRuleCondition | null): { trig?: string; trigVal?: strin
     case "loc": return { trig: "loc_hit" };
     case "bull_target": return { trig: "target_hit" };
     case "buy_fill": return { trig: "buy_exec" };
+    case "time": return { trig: "time_due" };
+    case "weight": return { trig: "weight_off" };
+    case "trailing": return { trig: "trail_stop", trigVal: c.value != null ? String(c.value) : undefined };
+    case "path": return { trig: "path_gap" };
     default: return {};
+  }
+}
+
+/** Rule.trig(+trigVal) → condition(type/op/value) — decodeTrig의 역함수. 규칙 편집/추가 시 사용. */
+export function encodeTrig(trig: string | undefined, trigVal: string | undefined): DbRuleCondition | null {
+  const raw = trigVal != null ? parseFloat(String(trigVal).replace(/[^0-9.\-]/g, "")) : NaN;
+  const value = isNaN(raw) ? undefined : raw;
+  switch (trig) {
+    case "price_le": return { type: "price", op: "lte", value };
+    case "price_ge": return { type: "price", op: "gte", value };
+    case "ret_ge": return { type: "return", op: "gte", value };
+    case "ret_le": return { type: "return", op: "lte", value };
+    case "loc_hit": return { type: "loc" };
+    case "target_hit": return { type: "bull_target" };
+    case "buy_exec": return { type: "buy_fill" };
+    default: return null;
   }
 }
 
@@ -159,11 +180,11 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
   const iv = baseSc ? baseSc.target : undefined;
 
   // DB rules(condition/action/last_fired) → 리치 Rule (StrategyTab이 trig/act 드롭다운·evalRule에 사용).
-  // name은 DB에 없어(코스메틱) trig의 RULE_TRIGS ko/en에서 파생. 시드 룰은 모두 custom/edited=false.
+  // name은 DB에 없어(코스메틱) trig의 카탈로그(core RULE_TRIGS + v2) ko/en에서 파생. 시드 룰은 모두 custom/edited=false.
   const rules: UIRule[] = (row.rules ?? []).map((r) => {
     const { trig, trigVal } = decodeTrig(r.condition);
     const act = r.action?.type;
-    const td = trig ? RULE_TRIGS.find((x) => x.id === trig) : null;
+    const td = findTrig(trig);
     const name: L10n = td ? { en: td.en, ko: td.ko } : { en: "Rule", ko: "규칙" };
     // custom = 구조화 트리거 표시 경로(ruleDesc). auto 규칙은 자동 배지로 구분하므로 custom=false.
     return {
@@ -173,6 +194,7 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
       when: { en: "", ko: "" }, then: { en: "", ko: "" },
       custom: !r.is_auto, edited: r.edited,
       isAuto: r.is_auto, ruleSource: r.source,
+      cond: r.condition ?? undefined,
     };
   });
 

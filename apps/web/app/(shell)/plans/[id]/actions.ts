@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Json, PlanStatus } from "@keystone/core/types";
 import type { UINote } from "@/lib/plan-mapper";
+import { encodeTrig } from "@/lib/plan-mapper";
 import { autoRulesFor } from "@/lib/rules-from-strategy";
 
 type PlanPatch = { status?: PlanStatus; portfolioId?: string | null; execId?: string | null };
@@ -79,6 +80,49 @@ export async function addExecutionAction(planId: string, input: ExecInput) {
 export async function toggleRuleAction(id: string, ruleId: string, enabled: boolean) {
   const supabase = await supabaseServer();
   const { error } = await supabase.from("rules").update({ enabled }).eq("id", ruleId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${id}`);
+}
+
+/** 규칙 작성/편집 입력 — trig(RULE_TRIGS id) + trigVal(hasValue일 때) + act(RULE_ACTS id). */
+export type RuleInput = { trig: string; trigVal?: string; act: string };
+
+/** 규칙 추가(커스텀) — is_auto=false·edited=false·source=null 로 insert. RLS로 소유 플랜만.
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. */
+export async function createRuleAction(id: string, input: RuleInput) {
+  const supabase = await supabaseServer();
+  const condition = encodeTrig(input.trig, input.trigVal);
+  if (!condition) throw new Error("invalid trigger");
+  const { error } = await supabase.from("rules").insert({
+    plan_id: id, enabled: true,
+    condition: condition as unknown as Json,
+    action: { type: input.act } as unknown as Json,
+    is_auto: false, edited: false, source: null,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${id}`);
+}
+
+/** 규칙 편집 — condition/action 갱신 + edited=true(자동 규칙이면 재생성에서 보존, 커스텀엔 무해).
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. RLS로 소유 플랜의 규칙만. */
+export async function updateRuleAction(id: string, ruleId: string, input: RuleInput) {
+  const supabase = await supabaseServer();
+  const condition = encodeTrig(input.trig, input.trigVal);
+  if (!condition) throw new Error("invalid trigger");
+  const { error } = await supabase.from("rules").update({
+    condition: condition as unknown as Json,
+    action: { type: input.act } as unknown as Json,
+    edited: true,
+  }).eq("id", ruleId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${id}`);
+}
+
+/** 규칙 삭제 — 행 제거. RLS로 소유 플랜의 규칙만.
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. */
+export async function deleteRuleAction(id: string, ruleId: string) {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.from("rules").delete().eq("id", ruleId);
   if (error) throw new Error(error.message);
   revalidatePath(`/plans/${id}`);
 }

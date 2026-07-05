@@ -3,8 +3,10 @@
 // 설계: memory rules-automation-design. WHEN(조건)→THEN(동작), 파라메트릭(상대%) 저장 + 평가 시 라이브 계산.
 //
 // v1 스코프 = "loc_pct/tp_pct 필드를 가진 전략" = 무한매수법 + 전 플랜 목표.
-//   그리드/밸류리밸런싱은 절대 파라미터(밴드 ₩, 가치선 V)를 사용자가 선설정해야 의미있어 v2로 미룸
-//   (제네릭 default 60k/90k로 자동생성하면 ₩2M 종목에 헛규칙 → 오히려 오작동). 필드가 없으니 여기선 자연히 [] 반환.
+// v2 스코프 = 시간(interval+amount→time)·비중(equity_w|target_w→weight)·트레일링(stop+lookback→trailing)·
+//   경로(target_path→path). 신규 트리거는 core RULE_TRIGS(골든)에 못 넣어 웹 래퍼(rule-eval-v2)가
+//   표시·평가하고, 여기서는 필드 주도로 물질화만 한다(closeout.ts 패턴). 그리드는 절대 파라미터
+//   문제(밴드 ₩/가치선 V 자동생성 헛규칙)로 여전히 미룸.
 //
 // condition/action(jsonb)은 plan-mapper decodeTrig가 해독하는 형태:
 //   loc(op lte)→loc_hit · return(op gte)→ret_ge · price(op gte/lte)→price_ge/le. action.type=RULE_ACTS id.
@@ -15,7 +17,7 @@ import type { PlanGoal } from "@/app/(shell)/plans/[id]/actions";
 /** 물질화 규칙 스펙 — 서버액션이 rules insert 시 사용(plan_id·is_auto·source 부착). */
 export interface RuleSpec {
   name: { en: string; ko: string };
-  condition: { type: string; op?: string; value?: number };
+  condition: { type: string; op?: string; value?: number; count?: number; unit?: string; target?: number; band?: number };
   action: { type: string };
   source: string; // 출처 태그: 'strategy:<execId>:<kind>' | 'goal:<type>'
 }
@@ -54,6 +56,59 @@ export function rulesFromStrategy(execId: string | null | undefined, _plan?: UIP
       action: { type: "notify_sell" },
       source: `strategy:${ex.id}:tp`,
     });
+  }
+  // ex2 시간(정액분할매수): interval + amount → time 트리거. 가격 무관 정액 매수 알림.
+  const interval = ex.fields?.find((f) => f.key === "interval");
+  const hasAmount = ex.fields?.some((f) => f.key === "amount");
+  if (interval && hasAmount) {
+    const unitMap: Record<string, string> = { Daily: "day", Weekly: "week", Biweekly: "biweek", Monthly: "month" };
+    const unit = unitMap[String(interval.default)] ?? "week";
+    specs.push({
+      name: { en: "Scheduled buy", ko: "정액 적립 매수" },
+      condition: { type: "time", count: 1, unit },
+      action: { type: "notify_buy" },
+      source: `strategy:${ex.id}:time`,
+    });
+  }
+  // ex6 비중(6:4 자산배분/리밸런싱): equity_w|target_w → weight 트리거. band는 콕핏과 동일하게 파생.
+  const wKey = ex.fields?.find((f) => f.key === "equity_w" || f.key === "target_w")?.key;
+  if (wKey) {
+    const tw = fieldNum(ex, wKey);
+    if (tw != null && tw > 0) {
+      const band = Math.max(3, Math.round(tw * 0.25));
+      specs.push({
+        name: { en: "Rebalance to weight", ko: "목표 비중 리밸런싱" },
+        condition: { type: "weight", target: tw, band },
+        action: { type: "notify" },
+        source: `strategy:${ex.id}:weight`,
+      });
+    }
+  }
+  // ex7 트레일링(모멘텀): stop + lookback → trailing 트리거. 고점 대비 스탑% 청산.
+  const hasStop = ex.fields?.some((f) => f.key === "stop");
+  const hasLook = ex.fields?.some((f) => f.key === "lookback");
+  if (hasStop && hasLook) {
+    const stopN = fieldNum(ex, "stop");
+    const stop = stopN != null ? Math.abs(stopN) : 15;
+    specs.push({
+      name: { en: "Trailing stop", ko: "트레일링 스탑" },
+      condition: { type: "trailing", value: stop },
+      action: { type: "notify_sell" },
+      source: `strategy:${ex.id}:trail`,
+    });
+  }
+  // ex3 경로(밸류애버리징) — 미니멀: target_path → path 트리거(가치 경로 이탈 알림).
+  const hasPath = ex.fields?.some((f) => f.key === "target_path");
+  if (hasPath) {
+    const V = fieldNum(ex, "target_path");
+    if (V != null && V > 0) {
+      specs.push({
+        name: { en: "Value-path gap", ko: "가치 경로 이탈" },
+        condition: { type: "path", op: "lte", value: V },
+        action: { type: "notify" },
+        source: `strategy:${ex.id}:path`,
+      });
+    }
   }
   return specs;
 }

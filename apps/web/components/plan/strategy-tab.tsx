@@ -3,30 +3,36 @@
 //   콕핏 6개 오버레이(isTime/isVR/isWeight/isGrid/isMomentum/isPrice)·자금배치·통계·타임라인·실시간 규칙평가·규칙카드 전부 재현.
 //   순수 로직(evalRule/ruleWarn/RULE_*/locStratVal/FIELD_TIPS)은 @keystone/core, 뷰 헬퍼(ruleDesc/locLast/MON3)만 로컬.
 // 동작 상태:
-//   ✅ 실연결(서버 액션): 규칙 on/off 토글, 목표(수익률/가격) 설정·삭제.
-//   ⏸ 후속 증분(TODO m7): 규칙 트리거/액션 변경, 규칙 이름 편집, trigVal 입력, 규칙 추가/삭제 — 표시만(비영속·inert).
+//   ✅ 실연결(서버 액션): 규칙 on/off 토글, 목표(수익률/가격) 설정·삭제,
+//      규칙 추가/편집/삭제(인라인 트리거-제약 폼 — 편집 시 edited=true로 재생성에서 보존).
 // stratDiagram(rules-viz) 블록은 프로토타입에서 정의되지 않은 dead guard라 이식 제외.
 "use client";
 import { Fragment, useState, type ReactNode } from "react";
 import type { I18nDict, Lang } from "@keystone/core/types";
 import { EXEC_STRATEGIES, RULE_TRIGS, RULE_ACTS, RULE_LEGACY_DESC, RULE_STATE_LABEL, FIELD_TIPS, locStratVal } from "@keystone/core/reference";
-import { evalRule, ruleWarn } from "@keystone/core/analytics";
+import { ruleWarn } from "@keystone/core/analytics";
 import { fmtMoney, toDispCur, getFxRate } from "@keystone/core/format";
 import { Lic } from "@/components/icons";
+import { evalRuleV2 } from "@/lib/rule-eval-v2";
+import { findTrig } from "@/lib/rule-trigs-v2";
 import type { UIPlan } from "@/lib/plan-mapper";
-import type { PlanGoal } from "@/app/(shell)/plans/[id]/actions";
+import type { PlanGoal, RuleInput } from "@/app/(shell)/plans/[id]/actions";
 
 // 다음-액션 카드 / 통계 / 오버레이 마커의 동적 형태 — 프로토타입이 형태를 자유롭게 조립하므로 완화 타입 사용.
 interface NextAct { tone: string; icon: string; label: string; detail: string }
 interface StatTip { h: string; rows: [string, string][]; note?: string }
 interface StatItem { k: string; v: string; sub?: string; tone?: string; tip?: StatTip }
 
-export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal }: {
+export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal, onCreateRule, onUpdateRule, onDeleteRule }: {
   plan: UIPlan; t: I18nDict; lang: Lang;
   onToggleRule: (ruleId: string, enabled: boolean) => void;
   onSetGoal: (goal: PlanGoal | null) => void;
+  onCreateRule: (input: RuleInput) => void;
+  onUpdateRule: (ruleId: string, input: RuleInput) => void;
+  onDeleteRule: (ruleId: string) => void;
 }) {
   const ko = lang === "ko";
+  const CORE_TRIG_IDS = new Set(RULE_TRIGS.map((x) => x.id));
   const ex = (typeof EXEC_STRATEGIES !== "undefined") ? EXEC_STRATEGIES.find((s) => s.id === plan.execId) : null;
   const goalDispCur = toDispCur(1, plan.cur).cur;
   const goalFromDisp = (v: number) => goalDispCur === plan.cur ? v : (plan.cur === "KRW" ? v * getFxRate() : v / getFxRate());
@@ -37,15 +43,47 @@ export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal }: {
   const openGoalEdit = (type: "return" | "price", nativeVal: number | null) => { setGType(type); setGVal(nativeVal == null ? "" : String(type === "price" ? Math.round(goalToDisp(nativeVal) * (goalDispCur === "USD" ? 100 : 1)) / (goalDispCur === "USD" ? 100 : 1) : nativeVal)); setGoalEdit(true); };
   const saveGoal = () => { const raw = parseFloat(String(gVal).replace(/[^0-9.\-]/g, "")); if (!isFinite(raw)) return; const v = gType === "price" ? goalFromDisp(raw) : raw; onSetGoal({ type: gType, value: v }); setGoalEdit(false); };
   const removeGoal = () => { onSetGoal(null); setGoalEdit(false); };
+  // 규칙 편집/추가 인라인 폼. editId = 편집 중 ruleId, "new" = 추가 폼, null = 없음.
+  const [ruleEditId, setRuleEditId] = useState<string | null>(null);
+  const [eTrig, setETrig] = useState("price_le");
+  const [eVal, setEVal] = useState("");
+  const [eAct, setEAct] = useState("notify");
+  const openRuleEdit = (r: UIPlan["rules"][number]) => { setETrig(r.trig || "price_le"); setEVal(r.trigVal ?? ""); setEAct(r.act || "notify"); setRuleEditId(r.id); };
+  const openRuleNew = () => { setETrig("price_le"); setEVal(""); setEAct("notify"); setRuleEditId("new"); };
+  const saveRule = () => { const input: RuleInput = { trig: eTrig, trigVal: eVal, act: eAct }; if (ruleEditId === "new") onCreateRule(input); else if (ruleEditId) onUpdateRule(ruleEditId, input); setRuleEditId(null); };
   const stratName = ex ? ex.name[lang] : (ko ? "전략" : "Strategy");
   const diverged = plan.rules.some((r) => !r.custom && (r.edited || !r.on));
   // 뷰 헬퍼(순수 로직 아님) — ruleDesc/locLast/MON3.
   const ruleDesc = (r: UIPlan["rules"][number]) => {
-    if (r.custom) { const tt = RULE_TRIGS.find((x) => x.id === r.trig), aa = RULE_ACTS.find((x) => x.id === r.act); return [tt ? (ko ? tt.descKo : tt.descEn) : "", aa ? (ko ? aa.descKo : aa.descEn) : ""].filter(Boolean).join(" "); }
+    if (r.custom) { const tt = findTrig(r.trig), aa = RULE_ACTS.find((x) => x.id === r.act); return [tt ? (ko ? tt.descKo : tt.descEn) : "", aa ? (ko ? aa.descKo : aa.descEn) : ""].filter(Boolean).join(" "); }
     const d = RULE_LEGACY_DESC[r.name.ko] || RULE_LEGACY_DESC[r.name.en]; return d ? (ko ? d.ko : d.en) : (ko ? "이 규칙의 조건이 충족되면 지정한 동작을 실행합니다." : "Runs the action when the condition is met.");
   };
   const MON3: Record<string, number> = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
   const locLast = (s: string) => { if (s === "Never") return t.never; if (!ko) return s; let r = s.replace("Today", "오늘"); r = r.replace(/([A-Z][a-z]{2})\s+(\d+)/, (m, mon, d) => MON3[mon] ? `${MON3[mon]}월 ${d}일` : m); return r; };
+  // 규칙 추가/편집 인라인 폼 — RULE_TRIGS/RULE_ACTS 드롭다운 + trigVal(hasValue일 때만).
+  const ruleEditor = (isNew: boolean) => {
+    const trigDef = RULE_TRIGS.find((x) => x.id === eTrig);
+    return (
+      <div className="rule-card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="rule-flow" style={{ flexWrap: "wrap", gap: 8 }}>
+          <span className="rule-blk when">{t.when}</span>
+          <select className="mono" value={eTrig} onChange={(e) => setETrig(e.target.value)} style={{ font: "var(--fw-medium) 12px var(--font-sans)", padding: "4px 8px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--bg-2)", color: "var(--fg-1)" }}>
+            {RULE_TRIGS.map((x) => <option key={x.id} value={x.id}>{ko ? x.ko : x.en}</option>)}
+          </select>
+          {trigDef?.hasValue && <span className="rule-blk cond rule-valblk" style={{ padding: 0 }}><input className="mono" value={eVal} onChange={(e) => setEVal(e.target.value)} placeholder="0" style={{ width: 64, font: "var(--fw-medium) 12px var(--font-sans)", padding: "4px 6px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--bg-2)", color: "var(--fg-1)", textAlign: "right" }} />{trigDef.unit && <span style={{ marginLeft: 4, color: "var(--fg-3)" }}>{trigDef.unit}</span>}</span>}
+          <span className="rule-arrow"><Lic name="arrow-right" size={15} cls="icon-sm" color="var(--fg-4)" /></span>
+          <span className="rule-blk then">{t.then}</span>
+          <select className="mono" value={eAct} onChange={(e) => setEAct(e.target.value)} style={{ font: "var(--fw-medium) 12px var(--font-sans)", padding: "4px 8px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--bg-2)", color: "var(--fg-1)" }}>
+            {RULE_ACTS.map((x) => <option key={x.id} value={x.id}>{ko ? x.ko : x.en}</option>)}
+          </select>
+        </div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button className="sc-goal-cancel" onClick={() => setRuleEditId(null)}>{ko ? "취소" : "Cancel"}</button>
+          <button className="v-btn v-btn--primary" onClick={saveRule}>{ko ? "저장" : "Save"}</button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -452,7 +490,7 @@ export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal }: {
         );
       })()}
       {/* stratDiagram(rules-viz) 블록은 프로토타입에서 정의되지 않은 dead guard라 이식 제외 (spec §45). */}
-      {(() => { const live = plan.rules.filter((r) => r.on).map((r) => ({ r, e: evalRule(plan, r, ko) })); const firing = live.filter((x) => x.e.state === "fired"); return (
+      {(() => { const live = plan.rules.filter((r) => r.on).map((r) => ({ r, e: evalRuleV2(plan, r, ko) })); const firing = live.filter((x) => x.e.state === "fired"); return (
         <div className="rules-live">
           <div className="rules-live-top"><span className={"rules-live-dot " + (firing.length ? "on" : "")} /><span className="rules-live-h">{ko ? "실시간 규칙 평가" : "Live rule check"}</span><span className="rules-live-sub">{ko ? `현재가 ${fmtMoney(plan.currentPrice, plan.cur)} 기준` : `at ${fmtMoney(plan.currentPrice, plan.cur)}`}</span></div>
           {firing.length > 0 ? <div className="rules-live-msg">{firing.map((x, i) => <span className="rules-live-chip fired" key={i}><Lic name="zap" size={12} cls="icon-sm" color="var(--pos)" />{x.r.name[lang]}</span>)}</div>
@@ -460,24 +498,27 @@ export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal }: {
           <div className="rules-live-foot">{ko ? "실제 시세 연동 전이라 플랜의 현재가 데이터로 판정합니다." : "Evaluated on the plan's current-price data (no live feed yet)."}</div>
         </div>
       ); })()}
-      {plan.rules.map((r) => { const td = r.trig ? RULE_TRIGS.find((x) => x.id === r.trig) : null; const ad = r.act ? RULE_ACTS.find((x) => x.id === r.act) : null; const ev = evalRule(plan, r, ko); return (
+      {plan.rules.map((r) => { const td = findTrig(r.trig); const ad = r.act ? RULE_ACTS.find((x) => x.id === r.act) : null; const ev = evalRuleV2(plan, r, ko);
+        if (ruleEditId === r.id) return <div key={r.id}>{ruleEditor(false)}</div>;
+        return (
         <div className="rule-card" key={r.id}>
           <div className="rule-head">
             {/* ✅ 실연결: on/off 토글은 서버 액션 */}
             <span className={"toggle" + (r.on ? " on" : "")} onClick={() => onToggleRule(r.id, !r.on)} />
-            {/* ⏸ TODO(m7): 규칙 이름 편집 — 서버 액션 연결 전까지 읽기 전용 */}
             <span className="rule-name">{r.name[lang]}</span>
             <span className="fin-term rule-help"><span className="ind-q">?</span><span className="fin-tip"><b>{r.name[lang]}</b><span className="fin-tip-def">{ruleDesc(r)}</span></span></span>
             {r.on && <span className={"rule-state " + ev.state} title={ev.meta}><span className="rule-state-dot" />{RULE_STATE_LABEL[ev.state][lang]}</span>}
             {(() => { const w = ruleWarn(plan, r, ko); return w ? <span className="rule-warn fin-term"><Lic name="alert-triangle" size={12} cls="icon-sm" color="var(--r-paused)" /><span className="fin-tip fin-tip-r"><b>{ko ? "필드 누락" : "Missing field"}</b><span className="fin-tip-def">{w}</span></span></span> : null; })()}
-            <span className={"rule-tag " + (r.custom ? "mine" : "strat")}>{r.custom ? (ko ? "내 규칙" : "Custom") : stratName}{!r.custom && r.edited ? " · " + (ko ? "수정" : "edited") : ""}</span>
+            <span className={"rule-tag " + (r.custom ? "mine" : "strat")}>{r.custom ? (ko ? "내 규칙" : "Custom") : (ko ? "자동" : "Auto")}{!r.custom && r.edited ? " · " + (ko ? "수정" : "edited") : ""}</span>
             <span className="rule-last">{t.lastTriggered}: {locLast(r.last)}</span>
-            {/* ⏸ TODO(m7): 규칙 삭제 — 서버 액션 연결 전까지 미노출 */}
+            <span className="rule-edit-actions" style={{ marginLeft: "auto", display: "inline-flex", gap: 4 }}>
+              {CORE_TRIG_IDS.has(r.trig || "") && <button className="iconbtn" onClick={() => openRuleEdit(r)} title={ko ? "수정" : "Edit"}><Lic name="pencil" size={12} /></button>}
+              {r.custom && <button className="iconbtn" onClick={() => onDeleteRule(r.id)} title={ko ? "삭제" : "Remove"}><Lic name="x" size={12} /></button>}
+            </span>
           </div>
           <div className="rule-flow">
             <span className="rule-blk when">{t.when}</span>
             {td ? <Fragment>
-              {/* ⏸ TODO(m7): 트리거 변경(MiniDropdown)/trigVal 입력 — 서버 액션 연결 전까지 읽기 전용 표시 */}
               <span className="rule-blk cond">{ko ? td.ko : td.en}</span>
               {td.hasValue && <span className="rule-blk cond rule-valblk"><span className="mono">{r.trigVal ?? ""}</span>{td.unit}</span>}
               <span className="fin-term rule-help"><span className="ind-q">?</span><span className="fin-tip"><b>{ko ? td.ko : td.en}</b><span className="fin-tip-def">{ko ? td.descKo : td.descEn}</span></span></span>
@@ -485,7 +526,6 @@ export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal }: {
             <span className="rule-arrow"><Lic name="arrow-right" size={15} cls="icon-sm" color="var(--fg-4)" /></span>
             <span className="rule-blk then">{t.then}</span>
             {ad ? <Fragment>
-              {/* ⏸ TODO(m7): 액션 변경(MiniDropdown) — 서버 액션 연결 전까지 읽기 전용 표시 */}
               <span className="rule-blk cond">{ko ? ad.ko : ad.en}</span>
               <span className="fin-term rule-help"><span className="ind-q">?</span><span className="fin-tip fin-tip-r"><b>{ko ? ad.ko : ad.en}</b><span className="fin-tip-def">{ko ? ad.descKo : ad.descEn}</span></span></span>
             </Fragment> : <span className="rule-blk cond">{(r.then || {})[lang]}</span>}
@@ -493,8 +533,9 @@ export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal }: {
         </div>
       ); })}
       {!plan.rules.length && <div style={{ padding: "32px 0", textAlign: "center", color: "var(--fg-4)", font: "var(--fw-medium) 13px var(--font-sans)" }}>{lang === "ko" ? "규칙이 없습니다" : "No rules"}</div>}
-      {/* ⏸ TODO(m7): 규칙 추가 — 서버 액션 연결 전까지 inert */}
-      <button className="add-row" style={{ marginTop: 6, width: "100%" }} disabled><Lic name="plus" size={15} color="var(--fg-4)" />{t.addRule}</button>
+      {ruleEditId === "new"
+        ? ruleEditor(true)
+        : <button className="add-row" style={{ marginTop: 6, width: "100%" }} onClick={openRuleNew}><Lic name="plus" size={15} color="var(--fg-4)" />{t.addRule}</button>}
     </div>
   );
 }
