@@ -18,6 +18,7 @@ import type { PfLite } from "@/lib/pf-palette";
 import type { UIPlan, UINote } from "@/lib/plan-mapper";
 import { patchNotesAction } from "@/app/(shell)/plans/[id]/actions";
 import { flattenNotes, wlab, type JournalEntry } from "@/lib/journal";
+import { refNow } from "@/lib/clock";
 import { JournalReader, type CtxBadge } from "./journal-reader";
 
 // 종목 저장소(SECURITIES/s.journal)는 이번 스코프 밖 — 웹엔 아직 종목 저장소가 없다.
@@ -87,7 +88,7 @@ export function JournalScreen({ plans, portfolios }: { plans: UIPlan[]; portfoli
 
   const addNote = () => {
     const v = draft.trim(); if (!v || !targetPlan) return;
-    const d = new Date(2026, 5, 22);
+    const d = refNow();
     const stamp = { en: `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()]} ${d.getDate()}`, ko: `${d.getMonth() + 1}월 ${d.getDate()}일` };
     const snap = targetPlan.currentPrice;
     const entry: UINote = { id: "nt" + Date.now(), when: stamp, text: v, price: snap };

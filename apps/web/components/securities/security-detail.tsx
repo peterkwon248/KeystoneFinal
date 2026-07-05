@@ -32,6 +32,7 @@ import { IndicatorsTab } from "@/components/plan/indicators-tab";
 import { ValuationTab } from "@/components/plan/valuation-tab";
 import { toggleWatch, addSecNote, editSecNote, deleteSecNote } from "@/app/(shell)/securities/[ticker]/actions";
 import { pushSecRecent } from "@/lib/sec-recents";
+import { refNow } from "@/lib/clock";
 
 /* ---- placeholder price chart (source/SecurityView.jsx 4-75) — mock spark, 실데이터 마일스톤6 ---- */
 function SecurityChart({ security, height = 190 }: { security: UISecurity; height?: number }) {
@@ -112,7 +113,7 @@ function SeasonalityHeatmap({ security, lang }: { security: UISecurity; lang: La
   const [hotCol, setHotCol] = useState<number | null>(null);
   const [metricId, setMetricId] = useState("return");
   const [pick, setPick] = useState(false);
-  const curYear = 2026, curMonth = 5; // 앱 'now' ≈ 2026-06 (KS_REF 기준)
+  const curYear = refNow().getFullYear(), curMonth = refNow().getMonth(); // 앱 'now' = KS_REF
   const { years, grids } = useMemo(() => seasBuild(security, curYear, curMonth), [security.ticker, security.price, security.eps]);
   const metric = SEAS_METRICS.find(m => m.id === metricId) || SEAS_METRICS[0];
   const grid = grids[metricId];

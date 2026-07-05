@@ -15,6 +15,7 @@ import { Lic } from "@/components/icons";
 import { MiniDropdown } from "./mini-dropdown";
 import { gapHistory } from "@/lib/gap-history";
 import type { UIPlan } from "@/lib/plan-mapper";
+import { refNow, REF_YEAR } from "@/lib/clock";
 
 /* ---- EditableNum — 목표가 인라인 편집(현재가 대비 퀵칩). 이번 이식에선 onCommit이 optional. ---- */
 function EditableNum({
@@ -230,7 +231,7 @@ export function GapTab({
   const stepPathFn = (pts: number[]) => { if (!pts.length) return ""; let d = `M${x(0).toFixed(1)} ${y(pts[0]).toFixed(1)}`; for (let i = 1; i < pts.length; i++) { d += ` L${x(i).toFixed(1)} ${y(pts[i - 1]).toFixed(1)} L${x(i).toFixed(1)} ${y(pts[i]).toFixed(1)}`; } return d; };
   const fairLoRev = fairLo.map((v, i) => ({ X: x(i), Y: y(v) })).reverse();
   const band = `${path(fairHi)} L${splineXY(fairLoRev).slice(1)} Z`;
-  const qlab = (() => { const now = new Date(2026, 5, 1); const cy = now.getFullYear(), cm = now.getMonth(); const N = basePtsFull.length || 6; const out: string[] = []; for (let k = N - 1; k >= 0; k--) { const d = new Date(cy, cm - k * 3, 1); out.push(`${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, "0")}`); } return out; })();
+  const qlab = (() => { const now = refNow(); const cy = now.getFullYear(), cm = now.getMonth(); const N = basePtsFull.length || 6; const out: string[] = []; for (let k = N - 1; k >= 0; k--) { const d = new Date(cy, cm - k * 3, 1); out.push(`${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, "0")}`); } return out; })();
   const gapColor = under ? "var(--pos)" : "var(--neg)";
   const pxRev = pxPts.map((v, i) => ({ X: x(i), Y: y(v) })).reverse();
   const gapArea = `${stepPathFn(basePts)} L${splineXY(pxRev).slice(1)} Z`;
@@ -238,8 +239,8 @@ export function GapTab({
   const gapNow = (px - iv) / iv * 100;
   const MON: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
   // 내 매수(진입) 시점 → 차트 x좌표 (computeLedger 없음 → hasCF=false, 첫 매수일 사용)
-  const entryDate = (() => { if (!plan.avgPrice) return null; const buys = (plan.executions || []).filter((e) => e.side === "buy").slice().reverse(); const es = buys.length ? buys[0].date : plan.createdAt; if (!es) return null; const m = es.match(/([A-Za-z]{3})\s*(\d+)/); if (!m || MON[m[1]] == null) return null; const ref = new Date(2026, 5, 10); let d = new Date(2026, MON[m[1]], +m[2]); if (d > ref) d = new Date(2025, MON[m[1]], +m[2]); return d; })();
-  const nowDate = new Date(2026, 5, 1), firstDate = new Date(2026, 5 - (n - 1) * 3, 1);
+  const entryDate = (() => { if (!plan.avgPrice) return null; const buys = (plan.executions || []).filter((e) => e.side === "buy").slice().reverse(); const es = buys.length ? buys[0].date : plan.createdAt; if (!es) return null; const m = es.match(/([A-Za-z]{3})\s*(\d+)/); if (!m || MON[m[1]] == null) return null; const ref = refNow(); let d = new Date(REF_YEAR, MON[m[1]], +m[2]); if (d > ref) d = new Date(REF_YEAR - 1, MON[m[1]], +m[2]); return d; })();
+  const rn = refNow(); const nowDate = new Date(rn.getFullYear(), rn.getMonth(), 1), firstDate = new Date(rn.getFullYear(), rn.getMonth() - (n - 1) * 3, 1);
   const entryFrac = entryDate ? (entryDate.getTime() - firstDate.getTime()) / ((nowDate.getTime() - firstDate.getTime()) || 1) : null;
   const xEntry = entryFrac != null ? PX + (W - 2 * PX) * Math.max(0, Math.min(1, entryFrac)) : null;
   const showEntry = entryFrac != null && entryFrac >= -0.05 && entryFrac <= 1.05;
@@ -247,11 +248,11 @@ export function GapTab({
   const entryInfo = (() => { const buys = (plan.executions || []).filter((e) => e.side === "buy"); if (!buys.length || !(plan.avgPrice && plan.avgPrice > 0)) return null; const first = buys.slice().reverse()[0]; const ret = (px - plan.avgPrice) / plan.avgPrice * 100; const upToVal = (iv - plan.avgPrice) / plan.avgPrice * 100; return { entryPx: first.price, rounds: buys.length, avg: plan.avgPrice, ret, upToVal }; })();
   // 개별 체결(내 매수·매도)을 가격선 위 다이아몬드로 — "내 행동을 차트에" (date→x는 entryDate과 동일 매핑)
   const fillMarks = (() => {
-    const ref = new Date(2026, 5, 10), ko = lang === "ko";
+    const ref = refNow(), ko = lang === "ko";
     return (plan.executions || []).map((e) => {
       if (!e.date || !(e.price > 0)) return null;
       const m = e.date.match(/([A-Za-z]{3})\s*(\d+)/); if (!m || MON[m[1]] == null) return null;
-      let d = new Date(2026, MON[m[1]], +m[2]); if (d > ref) d = new Date(2025, MON[m[1]], +m[2]);
+      let d = new Date(REF_YEAR, MON[m[1]], +m[2]); if (d > ref) d = new Date(REF_YEAR - 1, MON[m[1]], +m[2]);
       const frac = (d.getTime() - firstDate.getTime()) / ((nowDate.getTime() - firstDate.getTime()) || 1);
       if (frac < -0.02 || frac > 1.04 || e.price < min || e.price > max) return null;
       const buy = e.side === "buy";
@@ -262,12 +263,12 @@ export function GapTab({
   // 논거 타임라인 이벤트 틱 — 일지 메모·룰 발동을 축 아래에 (date→x는 fillMarks와 동일)
   // notes 없음(UIPlan 미보유) → 일지 틱 없음. rules는 stubbed(last="") → 룰 틱 자연 제외.
   const eventTicks = (() => {
-    const ref = new Date(2026, 5, 10), ko = lang === "ko";
+    const ref = refNow(), ko = lang === "ko";
     const parse = (s: string | undefined) => {
       if (!s) return null;
       if (/today|오늘/i.test(s)) return new Date(ref);
       const m = s.match(/([A-Za-z]{3})\s*(\d+)/); if (!m || MON[m[1]] == null) return null;
-      let d = new Date(2026, MON[m[1]], +m[2]); if (d > ref) d = new Date(2025, MON[m[1]], +m[2]);
+      let d = new Date(REF_YEAR, MON[m[1]], +m[2]); if (d > ref) d = new Date(REF_YEAR - 1, MON[m[1]], +m[2]);
       return d;
     };
     const place = (d: Date) => { const frac = (d.getTime() - firstDate.getTime()) / ((nowDate.getTime() - firstDate.getTime()) || 1); if (frac < -0.02 || frac > 1.04) return null; const xp = PX + (W - 2 * PX) * Math.max(0, Math.min(1, frac)); return { x: xp, leftPct: Math.max(2, Math.min(80, (xp / W) * 100)), dlab: (d.getMonth() + 1) + "/" + d.getDate() }; };
@@ -339,8 +340,8 @@ export function GapTab({
             if (!entryStr) return null;
             const m = entryStr.match(/([A-Za-z]{3})\s*(\d+)/);
             if (!m || MON[m[1]] == null) return null;
-            const now = new Date(2026, 5, 10);
-            let yr = 2026; let d0 = new Date(yr, MON[m[1]], +m[2]); if (d0 > now) { yr = 2025; d0 = new Date(yr, MON[m[1]], +m[2]); }
+            const now = refNow();
+            let yr = REF_YEAR; let d0 = new Date(yr, MON[m[1]], +m[2]); if (d0 > now) { yr = REF_YEAR - 1; d0 = new Date(yr, MON[m[1]], +m[2]); }
             const days = Math.max(0, Math.round((now.getTime() - d0.getTime()) / 86400000));
             const dateLab = `${String(yr).slice(2)}.${String(MON[m[1]] + 1).padStart(2, "0")}.${String(+m[2]).padStart(2, "0")}`;
             return <div className="gap-dwell">

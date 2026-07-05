@@ -3,12 +3,13 @@
 // 실제 히스토리컬 시세는 마일스톤 6+에서 교체된다. 평단 경로/체결/전이는 실데이터 파생.
 import type { Plan } from "@keystone/core/types";
 import { planReturn } from "@keystone/core/analytics";
+import { MON_EN } from "@keystone/core/format";
+import { REF_YEAR, refNow } from "./clock";
 
 export const TRAJ_MONTHS = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"];
 
-// 궤적 창의 기준 연도 — "today"가 Jun 8(planTrajectory)로 고정된 프레임(KS_REF=2026).
-// 월인덱스(Sep~Jun)를 실 달력 날짜로 되돌릴 때 쓴다. 날짜 앵커 실제화(→ now())는 별도 태스크.
-const REF_YEAR = 2026;
+// 궤적 창의 기준 연도 = REF_YEAR(clock.ts, KS_REF 파생). 월인덱스(Sep~Jun)를 실 달력 날짜로
+// 되돌릴 때 쓴다. "today"도 KS_REF에서 파생(planTrajectory). 날짜 앵커 실제화는 별도 태스크.
 const MONTH_NUM: Record<string, number> = { Sep: 9, Oct: 10, Nov: 11, Dec: 12, Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6 };
 
 /** 실 종가(오름차순). planTrajectory에 넘기면 mock 경로 대신 실 시세로 시장가 경로를 그린다. */
@@ -77,7 +78,8 @@ export function planTrajectory(p: Plan, closes?: PriceClose[]): Trajectory {
     .filter((e): e is TrajExec => e.t != null)
     .sort((a, b) => a.t - b.t);
   const createdT = trajMonthIdx(p.createdAt) ?? 0;
-  const todayT = trajMonthIdx("Jun 8") as number;
+  // 앱 기준 '오늘' = REF_YEAR의 월/일(KS_REF). trajMonthIdx는 "Mon D" 파싱.
+  const todayT = trajMonthIdx(`${MON_EN[refNow().getMonth()]} ${refNow().getDate()}`) as number;
   let startT = execs.length ? Math.min(execs[0].t, createdT) : createdT;
   const endT = p.closedAt ? (trajMonthIdx(p.closedAt) ?? todayT) : todayT;
   // give very-recent plans a minimum visual width by stretching the START backward —

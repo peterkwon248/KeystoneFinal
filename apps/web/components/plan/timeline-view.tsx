@@ -6,9 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import type { I18nDict, Lang, PlanStatus } from "@keystone/core/types";
 import { EXEC_STRATEGIES, PLAN_STATUS, STATUS_ORDER } from "@keystone/core/reference";
 import { planReturn } from "@keystone/core/analytics";
-import { fmtMoney } from "@keystone/core/format";
+import { fmtMoney, MON_EN } from "@keystone/core/format";
 import { Flag, StatusIcon } from "@/components/icons";
 import { planTrajectory } from "@/lib/trajectory";
+import { refNow } from "@/lib/clock";
 import { orderPlans, type Grouping, type Ordering } from "./group";
 import type { PfLite } from "@/lib/pf-palette";
 import type { UIPlan } from "@/lib/plan-mapper";
@@ -18,7 +19,9 @@ const TL_MONTH_LABEL: Record<string, { en: string; ko: string }> = { Sep: { en: 
 const TL_COLW = 116;
 const TL_NAMEW = 210;
 const TL_ROWH = 56;
-const TODAY_T = 9 + 8 / 31; // Jun 8
+// 앱 기준 '오늘' 월인덱스 = KS_REF(refNow)의 TL_MONTHS 위치 + 일/31. (frozen 프레임에선 Jun)
+const _todayIdx = TL_MONTHS.indexOf(MON_EN[refNow().getMonth()]);
+const TODAY_T = (_todayIdx >= 0 ? _todayIdx : 9) + refNow().getDate() / 31;
 
 export type TlMode = "performance" | "journey";
 export type TlYMode = "price" | "pct";

@@ -3,6 +3,7 @@
 import { evalRule } from "@keystone/core/analytics";
 import { fmtMoney } from "@keystone/core/format";
 import type { DbRuleCondition, UIPlan, UIRule } from "./plan-mapper";
+import { REF_YEAR } from "./clock";
 
 type RuleEvalResult = ReturnType<typeof evalRule>;
 
@@ -45,7 +46,7 @@ function evalV2(plan: UIPlan, rule: UIRule, ko: boolean): RuleEvalResult {
   if (rule.trig === "time_due") {
     const unitDays: Record<string, number> = { day: 1, week: 7, biweek: 14, month: 30, quarter: 91, year: 365 };
     const step = Math.max(1, (c.count ?? 1) * (unitDays[c.unit ?? "week"] ?? 7));
-    const parse = (s: string): Date | null => { const m = (s || "").match(/([A-Za-z]{3})\s*(\d+)/); return (m && MON_IDX[m[1]] != null) ? new Date(2025, MON_IDX[m[1]], +m[2]) : null; };
+    const parse = (s: string): Date | null => { const m = (s || "").match(/([A-Za-z]{3})\s*(\d+)/); return (m && MON_IDX[m[1]] != null) ? new Date(REF_YEAR - 1, MON_IDX[m[1]], +m[2]) : null; };
     const fmtMD = (d: Date) => ko ? `${d.getMonth() + 1}월 ${d.getDate()}일` : `${MON_EN3[d.getMonth()]} ${d.getDate()}`;
     const buys = (plan.executions || []).filter((e) => e.side === "buy").map((e) => parse(e.date)).filter((d): d is Date => !!d).sort((a, b) => a.getTime() - b.getTime());
     if (!buys.length) return { state: "event", meta: ko ? `적립 대기 · ${step}일 주기` : `Scheduled · every ${step}d` };

@@ -10,6 +10,7 @@ import { fmtMoney, fmtCompact, fmtDate, fmtRel } from "@keystone/core/format";
 import { Lic, PanelIcon } from "@/components/icons";
 import type { UINote, UIPlan } from "@/lib/plan-mapper";
 import { closeoutSummary } from "@/lib/closeout";
+import { refNow, REF_YEAR } from "@/lib/clock";
 
 // 보유 기간: createdAt("Feb 18")부터 앱 frozen 현재(2026-06)까지 개월 수. source/DetailView.jsx:6 verbatim.
 function holdingPeriod(createdAt: string | undefined, lang: Lang): string {
@@ -17,8 +18,8 @@ function holdingPeriod(createdAt: string | undefined, lang: Lang): string {
   const MON: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
   const m = createdAt.match(/([A-Za-z]{3})\s*(\d+)/);
   if (!m || MON[m[1]] == null) return "—";
-  const now = new Date(2026, 5, 17);
-  let mo = (now.getFullYear() * 12 + now.getMonth()) - (2025 * 12 + MON[m[1]]);
+  const now = refNow();
+  let mo = (now.getFullYear() * 12 + now.getMonth()) - ((REF_YEAR - 1) * 12 + MON[m[1]]);
   if (mo < 0) mo += 12;
   if (mo < 1) return lang === "ko" ? "1개월 미만" : "<1mo";
   if (mo < 12) return mo + (lang === "ko" ? "개월" : "mo");
@@ -26,9 +27,9 @@ function holdingPeriod(createdAt: string | undefined, lang: Lang): string {
   return lang === "ko" ? (y + "년" + (rm ? " " + rm + "개월" : "")) : (y + "y" + (rm ? " " + rm + "mo" : ""));
 }
 
-// 프로토타입의 addNote 스탬프 — 앱 frozen 현재(2026-06-22)를 L10n 으로 생성. source:1154 참고.
+// 프로토타입의 addNote 스탬프 — 앱 frozen 현재(KS_REF)를 L10n 으로 생성. source:1154 참고.
 function noteStamp(): { en: string; ko: string } {
-  const d = new Date(2026, 5, 22);
+  const d = refNow();
   const monEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()];
   return { en: `${monEn} ${d.getDate()}`, ko: `${d.getMonth() + 1}월 ${d.getDate()}일` };
 }
