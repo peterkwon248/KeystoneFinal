@@ -1,58 +1,54 @@
 ---
-session_date: "2026-07-05 12:40"
+session_date: "2026-07-05 3차"
 project: "KeystoneFinal"
 working_directory: "C:/Users/user/Desktop/KeystoneFinal"
 ---
 
-## Completed Work (2026-07-05 2차 — 규칙자동화 완성 + 뷰 write-path + 마일스톤6 착수)
-3커밋 전부 push. 골든 102/102 · web tsc 0 · core 무수정 · 마이그레이션 최소 · 전부 브라우저 E2E(DB 왕복).
+## Completed Work (2026-07-05 3차 — Phase C 실데이터 전환 완료, 6커밋)
+6커밋 전부 브라우저 E2E(+ 워커는 service_role DB 조회) · 골든 102/102 · web/서버 tsc 0 · core 무수정. **push 완료.**
 
-- **`696d2fd` 규칙 자동화 스텝4 + v2**
-  - 스텝4: `createRuleAction`·`updateRuleAction`(auto→edited=true)·`deleteRuleAction` + `encodeTrig`(decodeTrig 역함수) + strategy-tab 인라인 에디터(트리거7/액션5 select) + "규칙 추가" disabled 해소 + "자동" 배지. 커스텀=편집+삭제, auto=편집만.
-  - v2(4전략 새 트리거, **전량 웹레이어**): NEW `lib/rule-trigs-v2.ts`(웹 카탈로그+findTrig) · NEW `lib/rule-eval-v2.ts`(evalRuleV2: 7개 core 위임+4개 신규 콕핏수학 미러) · plan-mapper(DbRuleCondition 확장+UIRule.cond+decode 4케이스+name도 findTrig) · rules-from-strategy(ex2 time·ex3 path·ex6 weight·ex7 trailing). v2 auto는 CORE_TRIG_IDS 게이트로 토글만.
-- **`e6a41ba` 옵션2 + B5 + 시나리오 CRUD**
-  - 옵션2 경로 오버레이: rule-eval-v2 path_gap을 항상armed→실발동(VA 모델=골든 sim futuretest value kind: desired=target_path×(round+1)·band=±4%×step) + strategy-tab isVA 콕핏 오버레이(isVR 구조 미러, 새 CSS 없음).
-  - B5 SecurityPeek: NEW `lib/security-detail-data.ts`(page 로직 공유로더)+fetchSecurityDetailAction+NEW `security-peek.tsx`(Provider+슬라이드오버, embedded는 .dt-crumb만 숨김)+app-shell 마운트+트리거4곳(watchlist/research/screener/search). create-plan/add-scenario/watch는 SecurityDetailScreen 내부배선이라 임베드만으로 해소. peek CSS 기존재.
-  - 시나리오 편집/삭제 CRUD: UIScenario에 dbId/caseT(PLAN_SELECT에 scenarios.id 추가)+updatePlanScenario·deletePlanScenario+scenario-author-modal editScenario 편집모드+scenarios-tab 카드별 편집/삭제 버튼. gap-tab UIScenario narrowing 캐스트 1줄.
-- **`b6c7650` Phase C 스키마 기반 + US 프로바이더 결정**
-  - 마이그레이션 `20260705000700`: security_price_history(OHLCV 참조데이터) + notifications(규칙발동 알림 사용자소유 RLS). db:types 재생성.
-  - `GET /api/ohlc`(app/api 첫 핸들러): ticker검증·market→currency·1d/1wk/1mo resample. 백필 전 bars=[]. resample 테스트봉 집계 E2E 검증.
-  - **US 히스토리 프로바이더 = Tiingo 결정**(조사): Finnhub 무료 candle=US 401 아웃 · AV 무료=compact 100봉+adj유료라 5년 백필 불가 · Tiingo=무료 1000/day·30년+·수정종가·Node/TS 네이티브 · yahoo-finance2는 무키 보조.
+- **`063c8e4` OHLCV 백필 파이프라인**
+  - NEW `apps/server/src/adapters/tiingo.ts`(US 일봉 `fetchTiingoDaily`, 원가격 upsert, 티커당 1콜 날짜범위) + `kis.ts` `fetchKisDaily`(KR 일봉 `inquire-daily-itemchartprice`/`FHKST03010100`, **호출당 100봉 → 100캘린더일 윈도우 페이지네이션**·중복제거) + NEW `sync-ohlc.ts` CLI(`--market/--tickers/--years`, `security_price_history` upsert source='tiingo'|'kis', 500행 청크) + `db.ts` 공통 `PriceBar`/`PriceHistoryRow` + `env.tiingoApiKey`.
+  - **14/14 5년 백필 17,339봉.** 실행: `pnpm --filter @keystone/server sync:ohlc -- --years 5`
+  - **버그수정 `/api/ohlc`**: PostgREST `max_rows=1000` 캡에 5년 일봉(~1254행) 최근분 무음 절단 → `.range()` 페이지네이션(스켈레톤 bars=[] 땐 안 드러나다 실데이터로 표면화).
+- **`8505099` trajectory 시장가 seam**: `planTrajectory(p, closes?)` — closes 있으면 월인덱스→실날짜(`monthIdxToISO`)→종가 forward-fill(`closeAt` 이진탐색), 없으면 seededWalk 폴백. `isMockPath`. NEW `lib/price-history-map.ts`(server-only 래퍼) + `UIPlan.priceCloses`. Sparkline(3곳)·PerfBand·timeline 전 표면. 축(Sep~Jun) 유지·mkt만 실 종가.
+- **`c2b9972` genSpark/mockChange seam**: `mapSecurity(…,closes?)` — 실 spark=최근40봉·change=마지막2봉 델타. NEW `lib/price-closes-query.ts`(클라이언트-세이프 `fetchClosesWith`) — **server-only 회귀수정**(securities-list가 search-modal[client]에서 import돼 server-only 유입 시 앱 500 → 클라이언트 인자 버전 분리). 로더 2곳 주입 → 관심/리서치/스크리너/검색/상세.
+- **`86c7e69` 날짜앵커 중앙화**: NEW `lib/clock.ts`(`refNow()`/`REF_YEAR` = core KS_REF 파생). 흩어진 `new Date(2026,5,*)`·"Jun 8"·`2025` 전부 통일(9파일). real-now 전환은 clock.ts 1지점으로 축소(KS_REF는 골든이라 웹 중앙화만).
+- **`85b22d7` 규칙발동 워커**: NEW `lib/rule-worker.ts`(server-only) `syncRuleFirings` — 인박스 로드 시 서버 평가, `fired && last==="Never"` 게이트 → `rules.last_fired=refNow`(기존 인박스 자동표시) + `notifications` insert(멱등). `ibxBucket`도 refNow로. E2E: 7규칙 발동→7 notifications·"오늘" 버킷·재로드 중복0.
+- **`43bd2bf` fin-history seam**: `finPriceHistory` — `plan.annualCloses`(NEW `fetchAnnualCloses`) 있으면 위치 기반 정렬(fin.is[i]→REF_YEAR-(n-1-i)년, 마지막=현재가). 라벨 파싱 회피. 밴드차트 실 연간종가.
 
 ## In Progress
-- 없음. 워킹트리 커밋됨(`.claude/.active-skill`·`.omc/notepads/`만 미추적).
+- 없음. 워킹트리 클린(`.claude/.active-skill`·`.omc/notepads/`만 미추적).
 
 ## Remaining Tasks
-- [ ] **Phase C 데이터 파이프라인** — ✅ **블로커 해소(2026-07-05 2차 후반): 루트 `.env`에 DART/Finnhub/KIS + Tiingo 키 전부 있음·실호출 검증.** 착수 순서: ①`apps/server/src/adapters/tiingo.ts`(US 일봉) + KIS 일봉(`kis.ts`에 기간별 시세) → security_price_history upsert ②`sync:ohlc` CLI ③14종목 백필 → /api/ohlc 실봉 검증 ④seam 교체(mockChange·genSpark·trajectory·gap-history·fin-history·screener-ref SEC_SEED·하드코딩 기준일 2026,5,*→today) ⑤발동 워커(rules→notifications)→inbox.
-- [ ] **adhoc 시나리오 편집/삭제** — 방금 만든 플랜 시나리오 CRUD를 종목단독(adhoc)으로 확장. scenarios/actions.ts에 update/delete 추가 + security-detail의 secScenarios 렌더에 버튼.
-- [ ] **인박스 트리아지 DB 동기화 + unread 뱃지** — 트리아지가 DB로 가야 서버계산 가능. (오래 defer됨)
-- [ ] **경로(ex3) 옵션2 심화(조건부)** — 미니멀 만족 시 시간축 트래젝터리 오버레이. 현재는 value-axis(isVR형)로 충분.
+- [ ] **실시간 WS 스트리밍** (마일스톤6 잔여, 선택) — 시세가 정적이어도 앱은 완전 동작. KIS approval_key·Finnhub WS.
+- [ ] **gap-history iv/ivHistory + screener SEC_SEED perLo/perHi** — ⚠️ **과거 재무(historical financials) 필요, DB엔 현재+시드만.** 웹 seam 아니라 **과거 재무 백필**(apps/server 어댑터, OHLCV 백필과 유사한 별도 데이터 태스크)이 선행. 지금 코드로 불가.
+- [ ] **인박스 트리아지 DB 동기화**(옵션2) — read/resolved/muted를 localStorage→DB(notifications.read_at 등). 기기간 동기화·서버 unread 뱃지. 큰 작업.
+- [ ] adhoc 시나리오 편집/삭제(오래 defer).
 
 ## Key Decisions
-- **골든 함정 = 카탈로그 배열 deep-equal**(RULE_TRIGS/RULE_ACTS/EXEC_STRATEGIES가 i18n-reference.test에서 읽기전용 source와 deep-equal) → core 추가 시 재생성 불가로 깨짐. **해법 = closeout.ts 웹레이어 래퍼 패턴**(core 감싸고 확장, 무수정).
-- **웹 확장 타입**: UIRule/UIScenario extends core 타입 + PLAN_SELECT에 id 추가 + UIPlan 배열 오버라이드. 편집/삭제엔 DB id 필수.
-- **VA 모델 정본 = 골든 sim** futuretest.jsx value kind (desired=step×period·band±4%). 옵션2 오버레이·발동 모두 이걸 미러.
-- **US 히스토리 = Tiingo**. Finnhub 보유키는 실시간/프로필용만(candle 아웃 확정).
-- 마일스톤6은 스키마 기반만 지금(키 무관·검증가능), 데이터 파이프라인은 키 준비 후.
+- **날짜앵커 = KS_REF 중앙화만.** core KS_REF는 골든 보호라 수정 불가 → 웹 레이어 clock.ts로 통일. real-now 완전 전환은 시드·trajectory 창까지 얽힌 별도 대작업.
+- **규칙 워커 = 인박스 로드 시 서버 평가**(시세 정적이라 cron 불필요) + `last_fired` 게이트로 멱등 + **기존 인박스 구동**(buildInboxNotes가 last_fired 읽음 → UI 재작성 없음). notifications는 영속 기록(옵션2 DB 트리아지 토대).
+- **fin-history = 위치 기반 정렬**(FinYearIS.y 라벨 파싱 회피 → DB/seed fin 모두 안전).
+- **워커/앵커 timestamp = refNow(KS_REF)** — 실 now() 쓰면 fmtDate inferYear가 7월을 전년(2025) 추론 → 프레임 불일치. refNow로 "6월 26일·오늘" 일관.
 
 ## Blockers / Issues
-- ~~apps/server/.env 없음~~ **정정: 키는 루트 `.env`에 있음(apps/server 아님). DART/Finnhub/KIS/EDGAR + Tiingo 전부 채워짐·실호출 검증. Phase C 착수 블로커 없음.**
-- Tiingo 토큰은 루트 `.env`의 `TIINGO_API_KEY`(무료·재발급 가능). Tiingo EOD 응답=원가격+adjClose+divCash/splitFactor.
-- 편집 중 SWC stale 에러 재발 가능(app-shell 다중편집 시) → 서버 재시작 + `.next` 삭제로 해소(디스크 파일은 정상, tsc로 확인).
+- gap-history/screener 잔여 seam = **과거 재무 부재**(데이터 블로커, 코드 아님). 과거 재무 백필이 선행돼야 실데이터화 가능.
+- (해소됨) server-only 번들 오염 회귀 — 클라이언트-세이프 모듈 분리로 해결.
 
 ## Notes for Next Session
-- **다음 착수 = Phase C 데이터 파이프라인 (블로커 해소됨, 바로 시작 가능).** 순서는 위 Remaining Tasks 참조. 첫 단계 = Tiingo/KIS 일봉 어댑터.
-- Tiingo 실호출로 미리 검증한 것: `curl "https://api.tiingo.com/tiingo/daily/AAPL/prices?startDate=2026-06-25&token=$TIINGO_API_KEY"` → OHLCV+adjClose 정상 반환.
-- 실행: `pnpm supabase start` → `node apps/web/scripts/dev-seed-plans.mjs` → preview "web". 로그인 webtest@keystone.local / web-test-password-1.
-- 검증 게이트: 골든 102(`pnpm --filter @keystone/core test`) + `cd apps/web && pnpm exec tsc --noEmit`.
-- 규칙/시나리오 CRUD·peek는 마이그레이션 없음(id 기존). Phase C만 마이그레이션 1건 추가.
-- LLM Wiki: US OHLCV 프로바이더 비교 + 골든 확장 패턴 ingest 예정(이 세션).
+- **Phase C 실데이터 전환 사실상 완료.** 다음 후보: ①실시간 WS(선택) ②인박스 트리아지 DB 동기화(옵션2, 워커가 이미 notifications 채우니 토대 있음) ③과거 재무 백필(gap/screener seam 언블록용, 별도 데이터 태스크).
+- 실행: `pnpm supabase start` → `node apps/web/scripts/dev-seed-plans.mjs` → `pnpm --filter @keystone/server sync:ohlc -- --years 5`(OHLCV 백필) → preview "web". 로그인 webtest@keystone.local / web-test-password-1.
+- 검증 게이트: 골든 102(`pnpm --filter @keystone/core test`) + `cd apps/web && pnpm exec tsc --noEmit` + `pnpm --filter @keystone/server typecheck`.
+- ⚠️ 실데이터 배선 후 앱 500이면 **server-only import trace**부터(client-reachable lib에 server-only 유입 금지 — LLM Wiki nextjs-dev/이번 raw 노트).
+- ⚠️ 시계열 엔드포인트는 **PostgREST max_rows=1000 페이지네이션** 필수(`.range()`).
+- LLM Wiki: `raw/2026-07-05-real-data-seam-pitfalls.md` 추가됨(max_rows·server-only·KIS 페이지네이션·프로즌 clock) → `/wiki-compile`로 supabase-local-dev/nextjs-dev/financial-data-apis 토픽에 폴딩 예정.
 
 ## Files Modified (이번 세션)
-- 마이그레이션(신규): `supabase/migrations/20260705000700_price_history_notifications.sql`
-- `apps/web/lib/`(신규): rule-trigs-v2·rule-eval-v2·security-detail-data; (수정): plan-mapper(UIRule.cond·UIScenario·encode/decode)·rules-from-strategy
-- `apps/web/components/`(신규): securities/security-peek; (수정): plan/strategy-tab(에디터·isVA·evalRuleV2)·plan/scenario-author-modal·plan/scenarios-tab·plan/gap-tab·plan/detail-view·securities/security-detail(embedded)·shell/app-shell·watchlist·research·screener·search
-- `apps/web/app/`(신규): api/ohlc/route; (수정): (shell)/plans/[id]/actions·(shell)/securities/[ticker]/(actions·page)
-- `packages/core/src/types/database.ts`(재생성)
-- docs: MEMORY.md·NEXT-ACTION.md
-- 개인 메모리: rules-automation-design.md(v2·옵션2 갱신)
+- 신규: `apps/server/src/adapters/tiingo.ts`·`apps/server/src/sync-ohlc.ts` · `apps/web/lib/{price-history-map,price-closes-query,clock,rule-worker}.ts`
+- 수정(server): `apps/server/src/adapters/kis.ts`·`db.ts`·`env.ts`·`package.json`
+- 수정(web lib): `trajectory·plan-mapper·security-mapper·securities-list·security-detail-data·fin-history·inbox·rule-eval-v2`
+- 수정(web 컴포넌트): `plan/{perf-band,sparkline,list-view,dashboard-view,detail-view,timeline-view,gap-tab,strategy-tab,props-sidebar}`·`journal/journal-screen`·`securities/security-detail`
+- 수정(web app): `api/ohlc/route`·`(shell)/inbox/page`·`(shell)/plans/page`·`(shell)/plans/[id]/page`
+- docs: `MEMORY.md`
+- LLM Wiki: `raw/2026-07-05-real-data-seam-pitfalls.md`(신규)
