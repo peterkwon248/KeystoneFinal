@@ -1,6 +1,11 @@
 # NEXT-ACTION
 
-## ⭐ 다음 세션 최우선 (2026-07-05 4차 갱신)
+## ⭐ 다음 세션 최우선 (2026-07-05 5차 갱신)
+**2026-07-05 5차 세션 완료 — 실시간 인프라 폴리시 + 배지 + 크론 + 위키, 4커밋 push:** ①**사이드바 unread 뱃지**(`83663cc` — 서버 `computeInboxUnread`[inbox/page 동일 파생·카운트 lang 독립] + `InboxBadgeProvider` 클라이언트 컨텍스트로 세션 중 라이브 갱신) ②**WS폴리시 provider DELETE 처리**(`ceda2d3` — `payload.old.ticker`[replica identity PK]로 맵 제거→DB last_close 폴백) ③**관심종목 헤드라인 라이브**(`ceda2d3` — `useLiveQuotes()` 전체맵 훅 추가·securities를 맨위에서 라이브 오버레이→상승/하락/평균등락·필터·정렬 라이브) ④**인트라데이 차트 라인**(`e3e8128` — **신규 `intraday_prices` 영속 시계열** 마이그레이션+워커 append·`SecurityChart` 추세/당일 토글=서버 시드+`useLiveQuote` append) ⑤**sync:daily 크론 오케스트레이터**(`69bceb8` — 거래일 가드[주말 스킵·--force]+ohlc→quotes 순차·자식은 `node --import tsx`로 DEP0190 회피) ⑥**실 거래소 틱 검증=연결·구독 레이어 확인**(KIS/Finnhub WS open+subscribe 성공; 실틱은 평일 장중 데이터 게이트) ⑦**LLM Wiki 5차 컴파일**(신규 토픽 `realtime-live-data`+첫 컨셉 `silent-failures`·4토픽 확장·raw 3건 폴딩). **전부 브라우저 E2E·골든 102·web/서버 tsc 0·core 무수정.**
+
+> **🚀 다음 세션 후보:** ①**실 거래소 틱 실검증**(평일 장중 `pnpm --filter @keystone/server stream:quotes` — 실틱 흐르는지 + intraday_prices 축적 확인) ②**공휴일 캘린더**(sync:daily 거래일 가드 정교화 — 현재 주말만 스킵·시장별 휴장일 미반영) ③**WS 폴리시 잔여**(인트라데이 실틱 축적 E2E·관심종목 헤드라인 뉴스 라이브 집계) ④**클라우드 Supabase 연결**(로컬 완성됨·마이그레이션·소셜 OAuth 4종) ⑤**마일스톤 8~9**(모바일 Expo / 월구독).
+
+## 이전: 다음 세션 최우선 (2026-07-05 4차 갱신)
 **2026-07-05 4차 세션 완료 — "정적 앱 → 살아있는 실데이터 앱", 6커밋 push, 프로덕션 빌드 ✓:** ①**날짜앵커 real-now**(frozen 6/26→실제 오늘, rolling 창 재설계로 todayT NaN 해소, `inferYearWeb`가 골든 보호 core inferYear 복제) ②**실시간 WS 스트리밍**(KIS/Finnhub WS→`stream-quotes` worker→`live_quotes`→**Supabase Realtime**→UI 라이브, 커스텀 SSE 없음) ③**마지막 mock seam 실데이터화**(gap iv/screener perLo·perHi — "백필 아니라 seam 교체"였음, 재무 5년 이미 DB) ④**인박스 트리아지 DB 동기화**(옵션2, `inbox_triage`) ⑤**adhoc 시나리오 CRUD**. **mock seam 0개 · 마일스톤 6 완료 · 워크로그 Remaining Tasks 전부 done.**
 
 > **🚀 다음 세션 후보 (백로그 소진됨 — 신규):** ①**실 거래소 틱 검증**(평일 장중 `pnpm --filter @keystone/server stream:quotes` — 오늘 일요일 장외라 시뮬레이션만 검증됨) ②**사이드바 unread 뱃지**(서버 buildInboxNotes+triage 계산, `inboxUnread` prop 준비됨) ③**WS 폴리시**(provider DELETE 이벤트 처리·인트라데이 차트 라인·관심종목 헤드라인 라이브) ④**자동 재동기화 cron**(sync:ohlc/quotes 매 거래일) ⑤**마일스톤 8~9**(모바일 Expo / 구독) ⑥**클라우드 Supabase 연결**(로컬 완성됨).
