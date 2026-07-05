@@ -63,6 +63,19 @@ export function LiveQuotesProvider({ children }: { children: React.ReactNode }) 
         "postgres_changes",
         { event: "*", schema: "public", table: "live_quotes" },
         (payload) => {
+          // DELETE: 라이브 행 제거 → 맵에서 티커를 지워 UI가 DB last_close로 폴백.
+          // old는 replica identity(PK=ticker)만 담긴다(live_quotes.sql).
+          if (payload.eventType === "DELETE") {
+            const old = payload.old as Partial<LiveQuoteRow>;
+            if (!old || typeof old.ticker !== "string") return;
+            setMap((prev) => {
+              if (!prev.has(old.ticker as string)) return prev;
+              const next = new Map(prev);
+              next.delete(old.ticker as string);
+              return next;
+            });
+            return;
+          }
           const r = payload.new as Partial<LiveQuoteRow>;
           if (!r || typeof r.ticker !== "string" || r.price == null || r.ts == null) return;
           setMap((prev) =>
@@ -93,4 +106,9 @@ export function useLiveQuote(ticker?: string): { price: number; changePct: numbe
   const q = map.get(ticker);
   if (!q) return undefined;
   return { price: q.price, changePct: q.changePct };
+}
+
+/** 전체 라이브 시세 맵 — 여러 티커를 한번에 라이브 오버레이할 때(집계 스탯 등). 미마운트면 null. */
+export function useLiveQuotes(): QuoteMap | null {
+  return useContext(LiveQuotesContext);
 }

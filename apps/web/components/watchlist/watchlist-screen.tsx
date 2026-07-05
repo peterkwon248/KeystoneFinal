@@ -11,7 +11,7 @@
 //  - SWC≠tsc: JSX 안 제네릭 앵글브래킷 캐스트 없음. cats/groups/미니 스파크 좌표는 return 이전 본문/헬퍼에서.
 "use client";
 import type { ReactNode } from "react";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { useSecurityPeek } from "@/components/securities/security-peek";
 import type { I18nDict, Lang, L10n } from "@keystone/core/types";
 import { I18N } from "@keystone/core/i18n";
@@ -25,7 +25,7 @@ import { FilterPanel, type FilterCat, type FilterAnchor } from "@/components/pla
 import { GICS_SECTORS } from "@/lib/gics";
 import type { UISecurity } from "@/lib/security-mapper";
 import type { UIPlan } from "@/lib/plan-mapper";
-import { useLiveQuote } from "@/components/live-quotes-provider";
+import { useLiveQuote, useLiveQuotes } from "@/components/live-quotes-provider";
 import { LiveDot } from "@/components/live-dot";
 
 type WlPanel = "filter" | "display" | null;
@@ -138,7 +138,16 @@ function WatchlistView({ t, lang, securities, plans, onOpenSecurity, panel, setP
     return out;
   });
 
-  const watched = securities; // 서버가 watched만 fetch(원본 SECURITIES.filter(s=>s.watched)).
+  // 서버가 watched만 fetch(원본 SECURITIES.filter(s=>s.watched)). 라이브 시세로 price/change 오버레이해
+  // 헤드라인 집계(상승·하락·평균등락)·등락 필터·정렬이 행과 동일하게 실시간을 반영하도록 한다.
+  const liveMap = useLiveQuotes();
+  const watched = useMemo(
+    () => securities.map((s) => {
+      const lq = liveMap?.get(s.ticker);
+      return lq ? { ...s, price: lq.price, change: lq.changePct ?? s.change } : s;
+    }),
+    [securities, liveMap],
+  );
   const sectorsPresent = [...new Map(watched.map((s) => [gicsOf(s).en, gicsOf(s)])).values()];
   const gicsCount: Record<string, number> = {};
   watched.forEach((s) => { const k = gicsOf(s).en; gicsCount[k] = (gicsCount[k] || 0) + 1; });
