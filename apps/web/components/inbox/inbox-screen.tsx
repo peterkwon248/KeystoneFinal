@@ -1,7 +1,8 @@
 // design_handoff_keystone/source/Inbox.jsx InboxScreen 이식 — 인박스 3-pane 트리아지 표면.
 // .inbox > .inbox-master(리스트: 헤드 탭 all/unread·마크올·그룹 today/earlier·행·처리됨 접이식·undo)
 //        + .inbox-detail(InboxReader) + InboxProps(우측 읽기전용).
-// 트리아지 상태(read/resolved/muted)는 localStorage(클라이언트 전용, lib/inbox-triage). SSR 가드: lazy init.
+// 트리아지 상태(read/resolved/muted)는 inbox_triage 테이블(옵션2: 기기간 동기화). 서버가 진실원 →
+// 초기값은 props(DB 로드값)로 받고, 변경은 setTriage/markAllRead 서버액션으로 영속(낙관적 setState 유지).
 // 서버액션 연결: 매수/매도 → addExecutionAction, 청산 → patchPlanAction(status:'closing'), 기록 → patchNotesAction.
 // 상태전이(active/closing)는 DB 트리거가 처리 → insert 후 router.refresh 로 재수화.
 "use client";
@@ -15,12 +16,20 @@ import { usePrefs } from "@/components/shell/prefs";
 import type { PfLite } from "@/lib/pf-palette";
 import type { UIPlan, UINote } from "@/lib/plan-mapper";
 import { buildInboxNotes, ibxBucket, IBX_META, type InboxNote } from "@/lib/inbox";
-import { IBX_READ_KEY, IBX_RESOLVE_KEY, IBX_MUTE_KEY, ibxSetOf, ibxSaveSet } from "@/lib/inbox-triage";
 import { addExecutionAction, patchPlanAction, patchNotesAction, type ExecInput } from "@/app/(shell)/plans/[id]/actions";
+import { setTriage, markAllRead } from "@/app/(shell)/inbox/actions";
 import { InboxReader } from "./inbox-reader";
 import { InboxProps } from "./inbox-props";
 
-export function InboxScreen({ plans, portfolios }: { plans: UIPlan[]; portfolios: PfLite[] }) {
+export function InboxScreen({
+  plans, portfolios, readKeys, resolvedKeys, mutedKeys,
+}: {
+  plans: UIPlan[];
+  portfolios: PfLite[];
+  readKeys: string[];
+  resolvedKeys: string[];
+  mutedKeys: string[];
+}) {
   const router = useRouter();
   const { lang }: { lang: Lang } = usePrefs();
   const t = I18N[lang];
@@ -28,21 +37,34 @@ export function InboxScreen({ plans, portfolios }: { plans: UIPlan[]; portfolios
 
   const notes = useMemo(() => buildInboxNotes(plans, lang), [plans, lang]);
 
-  // read/resolved/muted — localStorage 소유(클라이언트 전용). SSR 가드: lazy init 은 서버에서 빈 Set.
-  const [readSet, setReadSet] = useState<Set<string>>(() => ibxSetOf(IBX_READ_KEY));
-  const [resolvedSet, setResolvedSet] = useState<Set<string>>(() => ibxSetOf(IBX_RESOLVE_KEY));
-  const [mutedSet, setMutedSet] = useState<Set<string>>(() => ibxSetOf(IBX_MUTE_KEY));
-  // 하이드레이션 후 localStorage 재동기화(서버는 빈 Set 로 렌더했으므로).
-  useEffect(() => {
-    setReadSet(ibxSetOf(IBX_READ_KEY));
-    setResolvedSet(ibxSetOf(IBX_RESOLVE_KEY));
-    setMutedSet(ibxSetOf(IBX_MUTE_KEY));
-  }, []);
+  // read/resolved/muted — inbox_triage 테이블 소유(서버가 진실원). 초기값은 props(DB 로드값).
+  const [readSet, setReadSet] = useState<Set<string>>(() => new Set(readKeys));
+  const [resolvedSet, setResolvedSet] = useState<Set<string>>(() => new Set(resolvedKeys));
+  const [mutedSet, setMutedSet] = useState<Set<string>>(() => new Set(mutedKeys));
 
-  const markRead = (ids: string[]) =>
-    setReadSet((prev) => { const nn = new Set(prev); ids.forEach((i) => nn.add(i)); ibxSaveSet(IBX_READ_KEY, nn); return nn; });
-  const mutate = (setFn: React.Dispatch<React.SetStateAction<Set<string>>>, key: string, fn: (s: Set<string>) => void) =>
-    setFn((prev) => { const nn = new Set(prev); fn(nn); ibxSaveSet(key, nn); return nn; });
+  // 낙관적 setState + setTriage 서버액션(await) 로 영속. read 는 add-only(마킹만).
+  const markRead = (ids: string[]) => {
+    const fresh = ids.filter((i) => !readSet.has(i));
+    setReadSet((prev) => { const nn = new Set(prev); ids.forEach((i) => nn.add(i)); return nn; });
+    fresh.forEach((i) => void setTriage(i, "read", true).catch(() => {}));
+  };
+  // resolved/muted 토글 헬퍼: 낙관적 Set 갱신 + 해당 field 를 on/off 로 영속.
+  // 델타(존재 변화)는 현재 렌더의 Set(cur) 기준으로 updater 밖에서 계산 → 서버액션은 정확히 1회.
+  const mutate = (
+    setFn: React.Dispatch<React.SetStateAction<Set<string>>>,
+    field: "resolved" | "muted",
+    fn: (s: Set<string>) => void,
+  ) => {
+    const cur = field === "resolved" ? resolvedSet : mutedSet;
+    const nn = new Set(cur);
+    fn(nn);
+    // cur 대비 각 노트키의 존재 변화 → on(추가) / off(삭제) 로 영속.
+    new Set([...cur, ...nn]).forEach((k) => {
+      const was = cur.has(k), now = nn.has(k);
+      if (was !== now) void setTriage(k, field, now).catch(() => {});
+    });
+    setFn(nn);
+  };
 
   const [undo, setUndo] = useState<{ label: string; fn: () => void } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -67,7 +89,13 @@ export function InboxScreen({ plans, portfolios }: { plans: UIPlan[]; portfolios
   const sel = notes.find((n) => n.id === selId) || shown[0] || null;
 
   const select = (n: InboxNote) => { setSelId(n.id); if (!readSet.has(n.id)) markRead([n.id]); };
-  const markAll = () => markRead(notes.map((n) => n.id));
+  // 마크올(모두 읽음) — 낙관적 Set 갱신 + markAllRead 배치 upsert(신규만 영속).
+  const markAll = () => {
+    const ids = notes.map((n) => n.id);
+    const fresh = ids.filter((i) => !readSet.has(i));
+    setReadSet((prev) => { const nn = new Set(prev); ids.forEach((i) => nn.add(i)); return nn; });
+    if (fresh.length) void markAllRead(fresh).catch(() => {});
+  };
 
   // group shown notes by time bucket (ibxBucket가 웹 상대토큰/"Mon D"를 today/earlier로 분류)
   const groups = ([["today", t.ibx_today], ["earlier", t.ibx_earlier]] as const)
@@ -97,42 +125,42 @@ export function InboxScreen({ plans, portfolios }: { plans: UIPlan[]; portfolios
     const qty = ov?.qty ?? 0;
     runExec(n.plan, { side: "buy", price, quantity: qty });
     markRead([n.id]);
-    mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.add(n.id));
-    flashUndo(ko ? "매수 체결 기록됨 · 처리완료" : "Fill recorded · resolved", () => mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.delete(n.id)));
+    mutate(setResolvedSet, "resolved", (s) => s.add(n.id));
+    flashUndo(ko ? "매수 체결 기록됨 · 처리완료" : "Fill recorded · resolved", () => mutate(setResolvedSet, "resolved", (s) => s.delete(n.id)));
   };
   const doSell = (n: InboxNote, ov?: { price: number; qty: number }) => {
     const price = ov?.price ?? n.plan.currentPrice;
     const qty = ov?.qty ?? 0;
     runExec(n.plan, { side: "sell", price, quantity: qty });
     markRead([n.id]);
-    mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.add(n.id));
-    flashUndo(ko ? "매도 체결 기록됨 · 처리완료" : "Sell recorded · resolved", () => mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.delete(n.id)));
+    mutate(setResolvedSet, "resolved", (s) => s.add(n.id));
+    flashUndo(ko ? "매도 체결 기록됨 · 처리완료" : "Sell recorded · resolved", () => mutate(setResolvedSet, "resolved", (s) => s.delete(n.id)));
   };
   const doClose = (n: InboxNote) => {
     void patchPlanAction(n.plan.dbId, { status: "closing" }).then(() => router.refresh()).catch(() => {});
     markRead([n.id]);
-    mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.add(n.id));
+    mutate(setResolvedSet, "resolved", (s) => s.add(n.id));
     flashUndo(ko ? "청산중으로 전환됨" : "Moved to Closing", () => {
       void patchPlanAction(n.plan.dbId, { status: "active" }).then(() => router.refresh()).catch(() => {});
-      mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.delete(n.id));
+      mutate(setResolvedSet, "resolved", (s) => s.delete(n.id));
     });
   };
   const resolve = (n: InboxNote) => {
     markRead([n.id]);
     const next = nextAfter(n);
-    mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.add(n.id));
+    mutate(setResolvedSet, "resolved", (s) => s.add(n.id));
     if (sel && sel.id === n.id && next) setSelId(next.id);
-    flashUndo(ko ? "처리됨" : "Resolved", () => mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.delete(n.id)));
+    flashUndo(ko ? "처리됨" : "Resolved", () => mutate(setResolvedSet, "resolved", (s) => s.delete(n.id)));
   };
   const mute = (n: InboxNote) => {
     markRead([n.id]);
     const next = nextAfter(n);
-    mutate(setMutedSet, IBX_MUTE_KEY, (s) => s.add(n.id));
+    mutate(setMutedSet, "muted", (s) => s.add(n.id));
     if (sel && sel.id === n.id && next) setSelId(next.id);
-    flashUndo(ko ? "이 알림 음소거됨" : "Alert muted", () => mutate(setMutedSet, IBX_MUTE_KEY, (s) => s.delete(n.id)));
+    flashUndo(ko ? "이 알림 음소거됨" : "Alert muted", () => mutate(setMutedSet, "muted", (s) => s.delete(n.id)));
   };
-  const restore = (n: InboxNote) => { mutate(setResolvedSet, IBX_RESOLVE_KEY, (s) => s.delete(n.id)); };
-  const unmute = (n: InboxNote) => mutate(setMutedSet, IBX_MUTE_KEY, (s) => s.delete(n.id));
+  const restore = (n: InboxNote) => { mutate(setResolvedSet, "resolved", (s) => s.delete(n.id)); };
+  const unmute = (n: InboxNote) => mutate(setMutedSet, "muted", (s) => s.delete(n.id));
   const logNote = (n: InboxNote, text: string) => {
     const v = (text || "").trim();
     if (!v) return;

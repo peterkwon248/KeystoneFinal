@@ -22,5 +22,22 @@ export default async function InboxPage() {
   // 규칙 발동 동기화: 새로 fired된 규칙 → rules.last_fired + notifications. plans도 인메모리 갱신.
   if (user) await syncRuleFirings(supabase, user.id, plans);
 
-  return <InboxScreen plans={plans} portfolios={portfolios} />;
+  // 트리아지 상태 로드(옵션2: DB가 진실원). timestamp non-null인 note_key만 각 배열로.
+  const triageRes = user
+    ? await supabase.from("inbox_triage").select("note_key, read_at, resolved_at, muted_at")
+    : null;
+  const triageRows = triageRes?.data ?? [];
+  const readKeys = triageRows.filter((r) => r.read_at).map((r) => r.note_key);
+  const resolvedKeys = triageRows.filter((r) => r.resolved_at).map((r) => r.note_key);
+  const mutedKeys = triageRows.filter((r) => r.muted_at).map((r) => r.note_key);
+
+  return (
+    <InboxScreen
+      plans={plans}
+      portfolios={portfolios}
+      readKeys={readKeys}
+      resolvedKeys={resolvedKeys}
+      mutedKeys={mutedKeys}
+    />
+  );
 }

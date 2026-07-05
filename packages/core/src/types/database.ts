@@ -141,6 +141,33 @@ export type Database = {
           },
         ]
       }
+      inbox_triage: {
+        Row: {
+          muted_at: string | null
+          note_key: string
+          read_at: string | null
+          resolved_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          muted_at?: string | null
+          note_key: string
+          read_at?: string | null
+          resolved_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          muted_at?: string | null
+          note_key?: string
+          read_at?: string | null
+          resolved_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           body: string
