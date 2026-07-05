@@ -13,7 +13,7 @@
 //  - SWC≠tsc 함정 회피: JSX 안 제네릭 앵글브래킷 캐스트 없음. SVG(SecurityChart/SeasonalityHeatmap 좌표)
 //    계산은 전부 return 이전 함수 본문에서. cell/tone/withU 등 헬퍼는 hoist.
 "use client";
-import { Fragment, useEffect, useMemo, useReducer, useState } from "react";
+import { Fragment, useEffect, useMemo, useReducer, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { I18nDict, Lang } from "@keystone/core/types";
 import type { Fin } from "@keystone/core/types";
@@ -31,6 +31,7 @@ import { FinancialsTab } from "@/components/plan/financials-tab";
 import { IndicatorsTab } from "@/components/plan/indicators-tab";
 import { ValuationTab } from "@/components/plan/valuation-tab";
 import { toggleWatch, addSecNote, editSecNote, deleteSecNote } from "@/app/(shell)/securities/[ticker]/actions";
+import { deleteSecurityScenario } from "@/app/(shell)/scenarios/actions";
 import { pushSecRecent } from "@/lib/sec-recents";
 import { refNow } from "@/lib/clock";
 import { useLiveQuote } from "@/components/live-quotes-provider";
@@ -228,8 +229,11 @@ function SeasonalityHeatmap({ security, lang }: { security: UISecurity; lang: La
 }
 
 /* ---- security detail (source/SecurityView.jsx 194-314) ---- */
-/** 이 종목의 adhoc(종목단독) 시나리오 — 서버가 scenarios(plan_id null, ticker) 매핑해 전달(S2). */
+/** 이 종목의 adhoc(종목단독) 시나리오 — 서버가 scenarios(plan_id null, ticker) 매핑해 전달(S2).
+ *  dbId/caseT는 편집·삭제 액션(updateSecurityScenario/deleteSecurityScenario)에 필요(CRUD 배선). */
 export interface SecScenario {
+  dbId: string;
+  caseT: "bull" | "base" | "bear";
   label: { en: string; ko: string };
   color: string;
   target: number;
@@ -262,6 +266,9 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, 
   const [, watchForce] = useReducer((x: number) => x + 1, 0);
 
   const [scAuthor, setScAuthor] = useState(false);
+  const [editSc, setEditSc] = useState<SecScenario | null>(null);
+  const [, startScTransition] = useTransition();
+  const onDeleteSc = (id: string) => startScTransition(() => { void deleteSecurityScenario(id, s.ticker); });
   const [compose, setCompose] = useState(false);
   const linked = plans.filter(p => p.ticker === s.ticker);
   // 이 종목의 (플랜) 시나리오 — 새 fetch 없이 linked 재사용. adhoc(종목단독) 시나리오는 secScenarios(S2).
@@ -433,6 +440,10 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, 
                     <span className="scn-tag"><span className="fl-auto" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>{t.adhoc}</span></span>
                     <span className="mono" style={{ width: 92, textAlign: "right", color: "var(--fg-2)" }}>{fmtCompact(sc.target, s.cur)}</span>
                     <span className={"mono " + (ret >= 0 ? "pos" : "neg")} style={{ width: 56, textAlign: "right", fontWeight: 600 }}>{ret >= 0 ? "+" : ""}{ret.toFixed(0)}%</span>
+                    <span style={{ display: "inline-flex", gap: 4, marginLeft: 8 }}>
+                      <button className="iconbtn" onClick={() => setEditSc(sc)} title={lang === "ko" ? "수정" : "Edit"}><Lic name="pencil" size={12} /></button>
+                      <button className="iconbtn" onClick={() => onDeleteSc(sc.dbId)} title={lang === "ko" ? "삭제" : "Remove"}><Lic name="x" size={12} /></button>
+                    </span>
                   </div>
                 );
               })}
@@ -500,6 +511,9 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, 
         </Fragment>}
       </div>
       {scAuthor && <ScenarioAuthorModal adhoc={{ securities: [s], initialTicker: s.ticker, lockTicker: true }} onClose={() => setScAuthor(false)} />}
+      {editSc && <ScenarioAuthorModal adhoc={{ securities: [s], initialTicker: s.ticker, lockTicker: true }}
+        editScenario={{ id: editSc.dbId, caseT: editSc.caseT, target: editSc.target, thesis: editSc.thesis?.ko ?? editSc.thesis?.en ?? "" }}
+        onClose={() => setEditSc(null)} />}
       {compose && <ComposeModal initialTicker={s.ticker} onClose={() => setCompose(false)} />}
     </div>
   );

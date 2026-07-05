@@ -11,7 +11,7 @@
 //  - SWC 함정 회피: JSX 안 제네릭 앵글브래킷 캐스트 없음. cats/groups 계산은 return 이전 본문에서.
 "use client";
 import type { ReactNode } from "react";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { I18nDict, Lang } from "@keystone/core/types";
 import { I18N } from "@keystone/core/i18n";
@@ -25,17 +25,21 @@ import type { Scenario, ScenarioStatus } from "@keystone/core/types";
 import { DashStat, type DashTipRow } from "@/components/plan/dash-stat";
 import { FilterPanel, type FilterCat, type FilterAnchor } from "@/components/plan/filter-panel";
 import { ScenarioAuthorModal } from "@/components/plan/scenario-author-modal";
+import { deleteSecurityScenario } from "@/app/(shell)/scenarios/actions";
 import { SC_STATUS_COLOR, SCEN_ORDER, SC_CASE_ORDER, scCaseLabel } from "@/lib/scenario-ref";
 
 type ScPanel = "filter" | "display" | null;
 
-/** adhoc(종목단독) 시나리오 — 서버가 scenarios(plan_id null) + securities 조인으로 매핑해 전달(S2). */
+/** adhoc(종목단독) 시나리오 — 서버가 scenarios(plan_id null) + securities 조인으로 매핑해 전달(S2).
+ *  dbId/caseT는 편집·삭제 액션(updateSecurityScenario/deleteSecurityScenario)에 필요(CRUD 배선). */
 export interface AdhocScenario {
+  dbId: string;
   ticker: string;
   name: { en: string; ko: string };
   cur: string;
   price: number;
   label: { en: string; ko: string };
+  caseT: "bull" | "base" | "bear";
   color: string;
   target: number;
   status: ScenarioStatus;
@@ -43,6 +47,7 @@ export interface AdhocScenario {
 }
 
 // 시나리오 모니터 한 행 — plan row 유래(adhoc 생략).
+// dbId/caseT는 adhoc 행 편집·삭제(updateSecurityScenario/deleteSecurityScenario)에 필요 — plan 행은 미사용.
 interface ScMonRow {
   plan: UIPlan | null;
   sc: Scenario;
@@ -51,6 +56,8 @@ interface ScMonRow {
   price: number;
   name: { en: string; ko: string };
   adhoc: boolean;
+  dbId?: string;
+  caseT?: "bull" | "base" | "bear";
   st?: string;
   kase?: string;
 }
@@ -59,10 +66,11 @@ function scenGroupLoad(): string {
   try { return localStorage.getItem("keystone-scen-group") || "status"; } catch { return "status"; }
 }
 
-function ScenariosMonitor({ t, lang, plans, securityScenarios, onOpenPlan, onNewScenario, panel, setPanel, filterAnchor }: {
+function ScenariosMonitor({ t, lang, plans, securities, securityScenarios, onOpenPlan, onNewScenario, panel, setPanel, filterAnchor }: {
   t: I18nDict;
   lang: Lang;
   plans: UIPlan[];
+  securities: UISecurity[];
   securityScenarios: AdhocScenario[];
   onOpenPlan: (p: UIPlan) => void;
   onNewScenario: (ticker?: string) => void;
@@ -72,6 +80,9 @@ function ScenariosMonitor({ t, lang, plans, securityScenarios, onOpenPlan, onNew
 }) {
   const ko = lang === "ko";
   const [scF, setScF] = useState<Record<string, string[]>>({});
+  const [editRow, setEditRow] = useState<ScMonRow | null>(null);
+  const [, startScTransition] = useTransition();
+  const onDeleteAdhoc = (id: string, ticker: string) => startScTransition(() => { void deleteSecurityScenario(id, ticker); });
   const [grp, setGrp] = useState<string>(scenGroupLoad);
   const setGrp1 = (g: string) => { setGrp(g); try { localStorage.setItem("keystone-scen-group", g); } catch { /* ignore */ } };
   const scToggle = (type: string, value: string) => setScF(prev => {
@@ -89,6 +100,7 @@ function ScenariosMonitor({ t, lang, plans, securityScenarios, onOpenPlan, onNew
     plan: null,
     sc: { label: a.label, color: a.color, target: a.target, per: 0, status: a.status, thesis: a.thesis, isAuto: false },
     ticker: a.ticker, cur: a.cur, price: a.price, name: a.name, adhoc: true,
+    dbId: a.dbId, caseT: a.caseT,
   }));
   rows.forEach(r => { r.st = scAutoStatus(r.plan || { currentPrice: r.price }, r.sc.target); r.kase = r.sc.label.en; });
 
@@ -168,13 +180,19 @@ function ScenariosMonitor({ t, lang, plans, securityScenarios, onOpenPlan, onNew
           {g.items.map((r, i) => {
             const gap = (r.sc.target / r.price - 1) * 100;
             return (
-              <div className="plan-row" key={i} onClick={() => r.plan ? onOpenPlan(r.plan) : onNewScenario(r.ticker)}>
+              <div className="plan-row" key={i} onClick={() => r.plan ? onOpenPlan(r.plan) : undefined}>
                 <span className="scsum-dot" style={{ background: r.sc.color }} />
                 <span className="mono" style={{ width: 64, color: "var(--fg-4)", fontSize: 12 }}>{r.ticker}</span>
                 <span style={{ flex: 1, font: "var(--fw-medium) 13px var(--font-sans)", color: "var(--fg)" }}>{r.name[lang]} · <b style={{ color: r.sc.color }}>{r.sc.label[lang]}</b></span>
                 <span className="scn-tag">{r.adhoc ? <span className="fl-auto" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>{t.adhoc}</span> : <span className="fl-auto">{r.plan!.id}</span>}</span>
                 <span className="mono" style={{ width: 110, textAlign: "right", color: "var(--fg-2)" }}>{fmtCompact(r.sc.target, r.cur)}</span>
                 <span className={"mono " + (gap >= 0 ? "pos" : "neg")} style={{ width: 70, textAlign: "right", fontWeight: 600 }}>{gap >= 0 ? "+" : ""}{gap.toFixed(0)}%</span>
+                {r.adhoc && (
+                  <span style={{ display: "inline-flex", gap: 4, marginLeft: 8 }} onClick={(e) => e.stopPropagation()}>
+                    <button className="iconbtn" onClick={() => setEditRow(r)} title={ko ? "수정" : "Edit"}><Lic name="pencil" size={12} /></button>
+                    <button className="iconbtn" onClick={() => onDeleteAdhoc(r.dbId!, r.ticker)} title={ko ? "삭제" : "Remove"}><Lic name="x" size={12} /></button>
+                  </span>
+                )}
               </div>
             );
           })}
@@ -191,6 +209,9 @@ function ScenariosMonitor({ t, lang, plans, securityScenarios, onOpenPlan, onNew
           </div>
         </div>
       </Fragment>}
+      {editRow && <ScenarioAuthorModal adhoc={{ securities, initialTicker: editRow.ticker, lockTicker: true }}
+        editScenario={{ id: editRow.dbId!, caseT: editRow.caseT!, target: editRow.sc.target, thesis: editRow.sc.thesis?.ko ?? editRow.sc.thesis?.en ?? "" }}
+        onClose={() => setEditRow(null)} />}
     </div>
   );
 }
@@ -231,7 +252,7 @@ export function ScenariosScreen({ plans, securities, securityScenarios }: {
         </div>
       </div>
       <div className="body-row">
-        <ScenariosMonitor t={t} lang={lang} plans={plans} securityScenarios={securityScenarios} onOpenPlan={onOpenPlan} onNewScenario={onNewScenario} panel={panel} setPanel={setPanel} filterAnchor={filterAnchor} />
+        <ScenariosMonitor t={t} lang={lang} plans={plans} securities={securities} securityScenarios={securityScenarios} onOpenPlan={onOpenPlan} onNewScenario={onNewScenario} panel={panel} setPanel={setPanel} filterAnchor={filterAnchor} />
       </div>
       {author && <ScenarioAuthorModal adhoc={{ securities, initialTicker: author.ticker }} onClose={() => setAuthor(null)} />}
     </div>

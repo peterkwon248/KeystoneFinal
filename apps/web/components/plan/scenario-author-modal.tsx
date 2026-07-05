@@ -15,7 +15,7 @@ import type { UIPlan } from "@/lib/plan-mapper";
 import type { UISecurity } from "@/lib/security-mapper";
 import { SecurityPicker } from "@/components/securities/security-picker";
 import { addPlanScenario, updatePlanScenario } from "@/app/(shell)/plans/[id]/actions";
-import { addSecurityScenario } from "@/app/(shell)/scenarios/actions";
+import { addSecurityScenario, updateSecurityScenario } from "@/app/(shell)/scenarios/actions";
 
 const SC_CASES: { key: "bull" | "base" | "bear"; enKey: "Bull" | "Base" | "Bear"; color: string }[] = [
   { key: "bull", enKey: "Bull", color: "var(--r-bull)" },
@@ -57,6 +57,7 @@ export function ScenarioAuthorModal({ plan, adhoc, editScenario, onClose }: {
     startSaving(async () => {
       if (plan && editScenario) await updatePlanScenario(plan.dbId, editScenario.id, { caseT, target: tgtNum, thesis });
       else if (plan) await addPlanScenario(plan.dbId, { caseT, target: tgtNum, thesis });
+      else if (adhoc && editScenario && activeTicker) await updateSecurityScenario(editScenario.id, { ticker: activeTicker, caseT, target: tgtNum, thesis });
       else if (activeTicker) await addSecurityScenario({ ticker: activeTicker, caseT, target: tgtNum, thesis });
       router.refresh();
       onClose();

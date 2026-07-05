@@ -48,7 +48,7 @@ export async function loadSecurityDetail(ticker: string): Promise<SecurityDetail
     // adhoc(종목단독) 시나리오: plan_id=null, ticker 스코프 — RLS로 소유자 것만(S2).
     user
       ? supabase.from("scenarios")
-          .select("label,color,target,thesis")
+          .select("id,label,case_t,color,target,thesis")
           .eq("ticker", ticker).is("plan_id", null)
           .order("sort", { ascending: true })
       : Promise.resolve({ data: null }),
@@ -92,6 +92,8 @@ export async function loadSecurityDetail(ticker: string): Promise<SecurityDetail
   // adhoc 시나리오(secScenarios) → SecScenario[]. status pending→tracking 불필요(표시엔 label/target만).
   const scenRows = (scenRes as { data: DbSecScenarioRow[] | null }).data ?? [];
   const secScenarios: SecScenario[] = scenRows.map((r) => ({
+    dbId: r.id,
+    caseT: r.case_t,
     label: r.label ?? { en: "Base", ko: "중간" },
     color: r.color || "var(--r-base)",
     target: Number(r.target),
@@ -102,7 +104,9 @@ export async function loadSecurityDetail(ticker: string): Promise<SecurityDetail
 }
 
 interface DbSecScenarioRow {
+  id: string;
   label: { en: string; ko: string } | null;
+  case_t: "bull" | "base" | "bear";
   color: string | null;
   target: number;
   thesis: { en: string; ko: string } | null;

@@ -9,8 +9,10 @@ import type { L10n, ScenarioStatus } from "@keystone/core/types";
 
 /** adhoc scenarios(plan_id null) select 결과 행 — securities 조인. */
 interface DbAdhocRow {
+  id: string;
   ticker: string | null;
   label: L10n | null;
+  case_t: "bull" | "base" | "bear";
   target: number;
   thesis: L10n | null;
   status: ScenarioStatus;
@@ -27,7 +29,7 @@ export default async function ScenariosPage() {
       .is("deleted_at", null).is("archived_at", null)
       .order("updated_at", { ascending: false }),
     supabase.from("scenarios")
-      .select("ticker, label, target, thesis, status, color, securities(name, currency, last_close)")
+      .select("id, ticker, label, case_t, target, thesis, status, color, securities(name, currency, last_close)")
       .is("plan_id", null)
       .order("sort", { ascending: true }),
     fetchAllSecurities(supabase, user?.id ?? null),
@@ -43,11 +45,13 @@ export default async function ScenariosPage() {
       const sec = a.securities!;
       const cur = sec.currency === "KRW" ? "KRW" : "USD";
       return {
+        dbId: a.id,
         ticker: a.ticker!,
         name: sec.name,
         cur,
         price: Number(sec.last_close ?? 0),
         label: a.label ?? { en: "Base", ko: "중간" },
+        caseT: a.case_t,
         color: a.color || "var(--r-base)",
         target: Number(a.target),
         status: (a.status === "pending" ? "tracking" : a.status) as ScenarioStatus,

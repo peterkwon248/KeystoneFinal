@@ -42,3 +42,37 @@ export async function addSecurityScenario(input: AddSecurityScenarioInput) {
   revalidatePath("/scenarios");
   revalidatePath(`/securities/${input.ticker}`);
 }
+
+/** adhoc(종목단독) 시나리오 편집 — case_t/label/target/thesis/color 갱신. label/color는 caseT에서 파생
+ *  (addSecurityScenario 동치). plans/[id]/actions.ts updatePlanScenario 미러하되 planId 없음(ticker로 revalidate).
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. RLS(plan_id null → user_id 본인)로 소유자만. */
+export async function updateSecurityScenario(scenarioId: string, input: AddSecurityScenarioInput) {
+  const supabase = await supabaseServer();
+  const caseLabel = {
+    bull: { en: "Bull", ko: "상단" },
+    base: { en: "Base", ko: "중간" },
+    bear: { en: "Bear", ko: "하단" },
+  }[input.caseT];
+  const color = { bull: "var(--r-bull)", base: "var(--r-base)", bear: "var(--r-bear)" }[input.caseT];
+
+  const { error } = await supabase.from("scenarios").update({
+    case_t: input.caseT,
+    label: caseLabel,
+    target: input.target,
+    thesis: input.thesis ? { en: input.thesis, ko: input.thesis } : null,
+    color,
+  }).eq("id", scenarioId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/scenarios");
+  revalidatePath(`/securities/${input.ticker}`);
+}
+
+/** adhoc(종목단독) 시나리오 삭제 — 행 제거. RLS로 소유자 것만.
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. */
+export async function deleteSecurityScenario(scenarioId: string, ticker: string) {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.from("scenarios").delete().eq("id", scenarioId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/scenarios");
+  revalidatePath(`/securities/${ticker}`);
+}
