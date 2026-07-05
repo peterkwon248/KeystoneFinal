@@ -23,7 +23,7 @@ working_directory: "C:/Users/user/Desktop/KeystoneFinal"
 - 없음. 워킹트리 커밋됨(`.claude/.active-skill`·`.omc/notepads/`만 미추적).
 
 ## Remaining Tasks
-- [ ] **Phase C 데이터 파이프라인** — 🔴 블록: `apps/server/.env` 없음 + Tiingo 미가입. 키 준비 후: KIS일봉·Tiingo 어댑터 → `sync:ohlc` 백필 → seam 교체(mockChange·genSpark·trajectory·gap-history·fin-history·screener-ref SEC_SEED·하드코딩 기준일 2026,5,*→today) → 발동 워커(rules 평가→notifications insert) → inbox가 notifications 표시.
+- [ ] **Phase C 데이터 파이프라인** — ✅ **블로커 해소(2026-07-05 2차 후반): 루트 `.env`에 DART/Finnhub/KIS + Tiingo 키 전부 있음·실호출 검증.** 착수 순서: ①`apps/server/src/adapters/tiingo.ts`(US 일봉) + KIS 일봉(`kis.ts`에 기간별 시세) → security_price_history upsert ②`sync:ohlc` CLI ③14종목 백필 → /api/ohlc 실봉 검증 ④seam 교체(mockChange·genSpark·trajectory·gap-history·fin-history·screener-ref SEC_SEED·하드코딩 기준일 2026,5,*→today) ⑤발동 워커(rules→notifications)→inbox.
 - [ ] **adhoc 시나리오 편집/삭제** — 방금 만든 플랜 시나리오 CRUD를 종목단독(adhoc)으로 확장. scenarios/actions.ts에 update/delete 추가 + security-detail의 secScenarios 렌더에 버튼.
 - [ ] **인박스 트리아지 DB 동기화 + unread 뱃지** — 트리아지가 DB로 가야 서버계산 가능. (오래 defer됨)
 - [ ] **경로(ex3) 옵션2 심화(조건부)** — 미니멀 만족 시 시간축 트래젝터리 오버레이. 현재는 value-axis(isVR형)로 충분.
@@ -36,11 +36,13 @@ working_directory: "C:/Users/user/Desktop/KeystoneFinal"
 - 마일스톤6은 스키마 기반만 지금(키 무관·검증가능), 데이터 파이프라인은 키 준비 후.
 
 ## Blockers / Issues
-- **apps/server/.env 없음** → 실 sync/백필 이 머신에서 불가. 사용자가 DART/Finnhub/KIS + Tiingo 키 입력해야 Phase C 데이터 착수.
+- ~~apps/server/.env 없음~~ **정정: 키는 루트 `.env`에 있음(apps/server 아님). DART/Finnhub/KIS/EDGAR + Tiingo 전부 채워짐·실호출 검증. Phase C 착수 블로커 없음.**
+- Tiingo 토큰은 루트 `.env`의 `TIINGO_API_KEY`(무료·재발급 가능). Tiingo EOD 응답=원가격+adjClose+divCash/splitFactor.
 - 편집 중 SWC stale 에러 재발 가능(app-shell 다중편집 시) → 서버 재시작 + `.next` 삭제로 해소(디스크 파일은 정상, tsc로 확인).
 
 ## Notes for Next Session
-- 다음 착수: (키 있으면) Phase C 데이터 파이프라인 / (키 없으면) adhoc 시나리오 편집·삭제 또는 인박스 트리아지 DB 동기화.
+- **다음 착수 = Phase C 데이터 파이프라인 (블로커 해소됨, 바로 시작 가능).** 순서는 위 Remaining Tasks 참조. 첫 단계 = Tiingo/KIS 일봉 어댑터.
+- Tiingo 실호출로 미리 검증한 것: `curl "https://api.tiingo.com/tiingo/daily/AAPL/prices?startDate=2026-06-25&token=$TIINGO_API_KEY"` → OHLCV+adjClose 정상 반환.
 - 실행: `pnpm supabase start` → `node apps/web/scripts/dev-seed-plans.mjs` → preview "web". 로그인 webtest@keystone.local / web-test-password-1.
 - 검증 게이트: 골든 102(`pnpm --filter @keystone/core test`) + `cd apps/web && pnpm exec tsc --noEmit`.
 - 규칙/시나리오 CRUD·peek는 마이그레이션 없음(id 기존). Phase C만 마이그레이션 1건 추가.

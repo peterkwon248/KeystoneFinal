@@ -1,7 +1,9 @@
 # NEXT-ACTION
 
 ## ⭐ 다음 세션 최우선 (2026-07-05 2차 갱신)
-**2026-07-05 2차 세션 완료(전부 브라우저 E2E, core 무수정, 골든 102 유지):** 규칙 자동화 스텝4(CRUD+작성폼+자동배지) · 규칙 자동화 v2(4전략 새 트리거, 웹레이어) · 밸류애버리징 경로 오버레이(옵션2) · B5 SecurityPeek(전체상세 슬라이드오버) · **시나리오 인라인 편집/삭제 CRUD**(updatePlanScenario·deletePlanScenario, UIScenario에 dbId/caseT, 마이그레이션 없음). 커밋 상태: 스텝4+v2는 `696d2fd`로 푸시됨. **옵션2·B5·시나리오CRUD는 미커밋(다음 커밋 대기).**
+**2026-07-05 2차 세션 완료(전부 브라우저 E2E, core 무수정, 골든 102 유지):** 규칙 자동화 스텝4(CRUD+작성폼+자동배지) · 규칙 자동화 v2(4전략 새 트리거, 웹레이어) · 밸류애버리징 경로 오버레이(옵션2) · B5 SecurityPeek(전체상세 슬라이드오버) · **시나리오 인라인 편집/삭제 CRUD**(updatePlanScenario·deletePlanScenario, UIScenario에 dbId/caseT, 마이그레이션 없음) · **Phase C 스키마 기반**(price_history·notifications 마이그레이션 + /api/ohlc) + **Tiingo 키 발급·검증**. 4커밋 전부 push(`696d2fd`·`e6a41ba`·`b6c7650`·`6ff1bb7`).
+
+> **🚀 다음 세션 즉시 착수 = Phase C 데이터 파이프라인** (아래 5번 항목 "🎯 다음 세션 착수 순서"). **블로커 전부 해소**: 루트 `.env`에 DART/Finnhub/KIS + Tiingo 키 전부 있고 실호출 검증됨. security_price_history 테이블·/api/ohlc 엔드포인트도 준비됨. → **Tiingo/KIS 일봉 어댑터 + sync:ohlc CLI + 14종목 백필**부터 시작하면 됨.
 
 ## 이전 세션 완료 (2026-07-05 1차)
 이번 세션 완료(전부 E2E 검증, 단일 `session:` 커밋 푸시): **S1/S2 스키마 · 17 보관함(A4) · B9 adhoc 시나리오 · B8 플랜 생성 위저드 · 전략 드롭다운 버그수정 · 규칙 자동화 v1(스텝1-3)**. → 마일스톤 7 Phase A·B 사실상 완료.
@@ -13,9 +15,16 @@
 4. ✅ **B5 SecurityPeek 팝오버 완료(2026-07-05 2차)** — 우측 슬라이드오버가 기존 `SecurityDetailScreen`을 `embedded`로 임베드(전체 4탭·차트·계절성·관심토글). **핵심: create-plan/add-scenario/watch는 SecurityDetailScreen이 이미 내부 배선** → 임베드만으로 늘어진 콜백 해소. peek CSS도 web reticle.css에 기존재. NEW `lib/security-detail-data.ts`(page.tsx 로직 추출·공유 로더) + `securities/[ticker]/actions.ts` fetchSecurityDetailAction + NEW `security-peek.tsx`(SecurityPeekProvider 컨텍스트+슬라이드오버, Escape/라우트변경 닫기, expand→풀페이지) + app-shell 마운트 + 트리거 4곳(watchlist/research/screener/search) onOpenSecurity→openPeek. embedded는 `.dt-crumb`만 숨김. E2E: watchlist/research 클릭→peek, 플랜생성(ComposeModal z60>peek56 프리필), expand→풀페이지+닫힘, tsc0·골든102·콘솔0(캐시클리어 후). ⚠️ 편집 중 SWC stale 에러는 서버재시작+`.next`삭제로 해소(디스크 파일은 항상 정상).
 5. **Phase C 실데이터 (마일스톤 6)** — 시세 워커(규칙 실제 발동 = 알림) + 히스토리 백필. mock seam 교체.
    - ✅ **스키마 기반 완료(2026-07-05 2차)**: 마이그레이션 `20260705000700_price_history_notifications.sql` = `security_price_history`(OHLCV 일봉, 참조데이터 전역읽기·서비스롤쓰기) + `notifications`(규칙 발동 알림, 사용자소유 RLS). `GET /api/ohlc` Route Handler(app/api 첫 핸들러 — ticker검증·market→currency·1d/1wk/1mo resample, 백필 전까지 bars=[]). db:types 재생성·tsc0·골든102. E2E: 빈bars·400·resample(테스트봉 집계 정확) 검증.
-   - ✅ **US 프로바이더 결정 = Tiingo(2026-07-05 조사)**: 무료 50/hr·1000/day·500종목/월, 30년+ 일봉, OHLCV+수정종가(adjClose·divCash·splitFactor), 공식 REST/JSON(Node/TS 네이티브, Python 불필요). 티커당 1콜=5년 → 5~8종목 백필 총 5~8콜. **Finnhub 무료 candle=US 401 아웃 확정**(보유키는 실시간/프로필용만). Alpha Vantage 무료=compact 100봉만+adj유료라 5년 백필 불가. yahoo-finance2(npm)는 무키 크로스체크 보조로만(비공식·ToS). **사용자 액션: tiingo.com 무료가입 → 토큰 → apps/server/.env.**
-   - 🔴 **남은 블로커(이 머신):** ①`apps/server/.env` 없음 → 실 sync 불가(DART/Finnhub/KIS + **Tiingo** 키 입력 필요) ②알림 UI(inbox가 notifications 읽기) 미구현.
-   - **남은 구현(키 준비 후):** KIS 일봉 어댑터 + US provider 어댑터 → `sync:ohlc` CLI 백필 → seam 교체(trajectory/gap-history/fin-history/screener-ref SEC_SEED + mockChange + 하드코딩 기준일 2026,5,*→today) → 규칙 발동 워커(rules 평가 → notifications insert) → inbox가 notifications 표시.
+   - ✅ **US 프로바이더 = Tiingo, 토큰 발급·실호출 검증 완료(2026-07-05 2차)**: 무료 50/hr·1000/day·500종목/월, 30년+ 일봉, 티커당 1콜=5년(5~8종목 백필 총 5~8콜). **Finnhub 무료 candle=US 401 아웃 확정**(보유키는 실시간/프로필용만). AV 무료=compact 100봉+adj유료라 불가. yahoo-finance2는 무키 보조.
+     - **엔드포인트:** `GET https://api.tiingo.com/tiingo/daily/{ticker}/prices?startDate=YYYY-MM-DD&token={TIINGO_API_KEY}` (Content-Type: application/json).
+     - **응답 형태(실측):** `[{date, open, high, low, close, volume, adjClose, adjHigh, adjLow, adjOpen, adjVolume, divCash, splitFactor}, …]`. AAPL로 검증됨. **원가격(open/high/low/close)을 security_price_history에 넣으면 됨**(수정종가 adjClose는 분할/배당 반영 — 차트 기준 정할 때 선택).
+   - ✅ **키 준비 완료(정정 — 이전 "apps/server/.env 없음"은 경로 오판):** 시크릿은 **루트 `.env`**(apps/server 아님)에 있고 **DART/Finnhub/KIS/EDGAR + TIINGO_API_KEY 전부 채워짐**(전부 실호출/발급 확인). `.env.example`에도 TIINGO 문서화. **→ Phase C 데이터 파이프라인 이 머신에서 바로 착수 가능.**
+   - **🎯 다음 세션 착수 순서(구현):**
+     1. **어댑터** `apps/server/src/adapters/`: `tiingo.ts`(US 일봉, 위 엔드포인트) + KIS 일봉(`kis.ts`에 국내주식 기간별 시세 `/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice` 추가) → 둘 다 `security_price_history` upsert(source='tiingo'|'kis'). 기존 어댑터(dart/edgar/finnhub/fx) 패턴·db.ts upsert 재사용.
+     2. **`sync:ohlc` CLI**(`apps/server/src/sync-ohlc.ts` + package.json script): `--market KR|US`·`--tickers`·`--years 5`. 14종목 백필 실행.
+     3. **검증:** `/api/ohlc?ticker=…`가 실봉 반환 + Studio에서 security_price_history 행 확인.
+     4. **seam 교체(web):** trajectory/gap-history/fin-history/screener-ref SEC_SEED + mockChange/genSpark + 하드코딩 기준일(2026,5,*→today)이 security_price_history(또는 /api/ohlc) 읽게.
+     5. **(별도) 규칙 발동 워커:** rules 평가 → notifications insert → inbox 표시.
 
 **핵심 결정(이번 세션):** ①보관=archived_at 별개축(방식2, 청산과 무관) ②scenarios plan_id nullable → RLS에 user_id 소유권 경로 추가 필수 ③플랜 compose는 전략(execId), 관점 아님(프로토타입 mislabel 수정) ④규칙=materialize+파라메트릭저장, is_auto/edited로 안전 재생성, 발동=알림(자동매매 아님).
 
