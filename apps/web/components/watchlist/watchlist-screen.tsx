@@ -25,6 +25,8 @@ import { FilterPanel, type FilterCat, type FilterAnchor } from "@/components/pla
 import { GICS_SECTORS } from "@/lib/gics";
 import type { UISecurity } from "@/lib/security-mapper";
 import type { UIPlan } from "@/lib/plan-mapper";
+import { useLiveQuote } from "@/components/live-quotes-provider";
+import { LiveDot } from "@/components/live-dot";
 
 type WlPanel = "filter" | "display" | null;
 
@@ -71,6 +73,40 @@ function NPlansBadge({ plans, ticker, lang, t, onOpenPlan }: {
         })}
       </span>
     </span>
+  );
+}
+
+// 미니 스파크라인 — SWC 함정 회피 위해 좌표 계산을 헬퍼로 hoist(JSX 안 계산 없음).
+function miniSpark(s: UISecurity): ReactNode {
+  const sp = s.spark.slice(-18);
+  const min = Math.min(...sp), max = Math.max(...sp);
+  const pts = sp.map((v, i) => `${(i / (sp.length - 1) * 64).toFixed(1)},${(18 - (v - min) / (max - min || 1) * 15 - 1).toFixed(1)}`).join(" ");
+  return <svg width="64" height="18" style={{ flex: "none" }}><polyline points={pts} fill="none" stroke={s.change >= 0 ? "var(--pos)" : "var(--neg)"} strokeWidth="1.5" /></svg>;
+}
+
+// 관심종목 행 — 실시간 override: live 값이 있으면 price/change를 덮어쓴다(훅은 컴포넌트에서만).
+function WlRow({ s: base, plans, lang, t, onOpenSecurity }: {
+  s: UISecurity; plans: UIPlan[]; lang: Lang; t: I18nDict; onOpenSecurity: (ticker: string) => void;
+}) {
+  const lq = useLiveQuote(base.ticker);
+  const s: UISecurity = lq
+    ? { ...base, price: lq.price, change: lq.changePct ?? base.change }
+    : base;
+  const up = s.change >= 0;
+  return (
+    <div className="plan-row" onClick={() => onOpenSecurity(s.ticker)}>
+      <Lic name="star" size={14} cls="icon-sm" color="var(--r-base)" />
+      <span className="mono" style={{ width: 64, color: "var(--fg-4)", fontSize: 12 }}>{s.ticker}</span>
+      <span className="pr-tk" style={{ width: 220 }}>
+        <span className="pr-name"><Flag market={s.market} size={14} /> {s.name[lang]}</span>
+        <span className="pr-ticker">{s.sector[lang]}</span>
+      </span>
+      <span className="pr-spacer" />
+      <NPlansBadge plans={plans} ticker={s.ticker} lang={lang} t={t} />
+      {miniSpark(s)}
+      <span className="mono" style={{ width: 96, textAlign: "right", color: "var(--fg)", display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: 5 }}>{lq && <LiveDot />}{fmtCompact(s.price, s.cur)}</span>
+      <span className={"mono " + (up ? "pos" : "neg")} style={{ width: 70, textAlign: "right", fontWeight: 600 }}>{up ? "+" : ""}{s.change.toFixed(2)}%</span>
+    </div>
   );
 }
 
@@ -136,31 +172,9 @@ function WatchlistView({ t, lang, securities, plans, onOpenSecurity, panel, setP
     return v;
   };
 
-  // 미니 스파크라인 — SWC 함정 회피 위해 좌표 계산을 헬퍼로 hoist(JSX 안 계산 없음).
-  const mini = (s: UISecurity) => {
-    const sp = s.spark.slice(-18);
-    const min = Math.min(...sp), max = Math.max(...sp);
-    const pts = sp.map((v, i) => `${(i / (sp.length - 1) * 64).toFixed(1)},${(18 - (v - min) / (max - min || 1) * 15 - 1).toFixed(1)}`).join(" ");
-    return <svg width="64" height="18" style={{ flex: "none" }}><polyline points={pts} fill="none" stroke={s.change >= 0 ? "var(--pos)" : "var(--neg)"} strokeWidth="1.5" /></svg>;
-  };
-  const rowEl = (s: UISecurity) => {
-    const up = s.change >= 0;
-    return (
-      <div className="plan-row" key={s.ticker} onClick={() => onOpenSecurity(s.ticker)}>
-        <Lic name="star" size={14} cls="icon-sm" color="var(--r-base)" />
-        <span className="mono" style={{ width: 64, color: "var(--fg-4)", fontSize: 12 }}>{s.ticker}</span>
-        <span className="pr-tk" style={{ width: 220 }}>
-          <span className="pr-name"><Flag market={s.market} size={14} /> {s.name[lang]}</span>
-          <span className="pr-ticker">{s.sector[lang]}</span>
-        </span>
-        <span className="pr-spacer" />
-        <NPlansBadge plans={plans} ticker={s.ticker} lang={lang} t={t} />
-        {mini(s)}
-        <span className="mono" style={{ width: 96, textAlign: "right", color: "var(--fg)" }}>{fmtCompact(s.price, s.cur)}</span>
-        <span className={"mono " + (up ? "pos" : "neg")} style={{ width: 70, textAlign: "right", fontWeight: 600 }}>{up ? "+" : ""}{s.change.toFixed(2)}%</span>
-      </div>
-    );
-  };
+  const rowEl = (s: UISecurity) => (
+    <WlRow key={s.ticker} s={s} plans={plans} lang={lang} t={t} onOpenSecurity={onOpenSecurity} />
+  );
 
   let groups: WlGroup[] | null = null;
   if (grp === "market") groups = MARKETS.filter((m) => list.some((s) => s.market === m.key)).map((m) => ({ key: m.key, headIcon: <Flag market={m.key as "KR" | "US"} size={13} />, title: (m.label as L10n)[lang], items: list.filter((s) => s.market === m.key) }));

@@ -1915,6 +1915,9 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   .live-pill.conn-connecting .live-dot { animation: livePulse 0.8s ease-in-out infinite; }
 }
 @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+/* live quote indicator — 실시간 시세 override가 적용된 가격 옆의 미세한 pulse dot */
+.live-quote-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--r-active, #4C8DFF); flex: none; display: inline-block; box-shadow: 0 0 0 2px color-mix(in srgb, var(--r-active, #4C8DFF) 22%, transparent); }
+@media (prefers-reduced-motion: no-preference) { .live-quote-dot { animation: livePulse 1.6s ease-in-out infinite; } }
 /* tick flash: starts at full status color + slight lift, settles to natural style */
 .tick-up { animation: tickUp 1.1s ease-out; }
 .tick-down { animation: tickDown 1.1s ease-out; }

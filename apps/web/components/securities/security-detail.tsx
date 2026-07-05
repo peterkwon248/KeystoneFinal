@@ -33,6 +33,8 @@ import { ValuationTab } from "@/components/plan/valuation-tab";
 import { toggleWatch, addSecNote, editSecNote, deleteSecNote } from "@/app/(shell)/securities/[ticker]/actions";
 import { pushSecRecent } from "@/lib/sec-recents";
 import { refNow } from "@/lib/clock";
+import { useLiveQuote } from "@/components/live-quotes-provider";
+import { LiveDot } from "@/components/live-dot";
 
 /* ---- placeholder price chart (source/SecurityView.jsx 4-75) — mock spark, 실데이터 마일스톤6 ---- */
 function SecurityChart({ security, height = 190 }: { security: UISecurity; height?: number }) {
@@ -246,7 +248,11 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, 
   const { lang }: { lang: Lang } = usePrefs();
   const t: I18nDict = I18N[lang];
   const router = useRouter();
-  const s = security;
+  // 실시간 override: live 값이 있으면 헤더 현재가·등락을 덮어쓴다.
+  const lq = useLiveQuote(security.ticker);
+  const s: UISecurity = lq
+    ? { ...security, price: lq.price, change: lq.changePct ?? security.change }
+    : security;
 
   // 프로토타입 App.jsx:471 openSecurityFull의 pushSecRecent(ticker) 대응 — 종목상세 진입 시 최근본종목 기록.
   useEffect(() => { pushSecRecent(s.ticker); }, [s.ticker]);
@@ -368,7 +374,7 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, 
             </div>
             <h1 className="dt-title" style={{ margin: "8px 0 6px" }}>{s.name[lang]}</h1>
             <div className="sec-price-row">
-              <span className="sec-price mono">{fmtMoney(s.price, s.cur)}</span>
+              <span className="sec-price mono" style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>{fmtMoney(s.price, s.cur)}{lq && <LiveDot />}</span>
               <span className={"sec-change mono " + (up ? "pos" : "neg")}>{up ? "▲" : "▼"} {Math.abs(s.change).toFixed(2)}%</span>
             </div>
           </div>

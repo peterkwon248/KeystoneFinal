@@ -24,13 +24,18 @@ import { InsightsTab } from "./insights-tab";
 import { PropsSidebar } from "./props-sidebar";
 import type { UINote, UIPlan } from "@/lib/plan-mapper";
 import type { PfLite } from "@/lib/pf-palette";
+import { useLiveQuote } from "@/components/live-quotes-provider";
+import { LiveDot } from "@/components/live-dot";
 import { applyValuationTargetsAction, archivePlan, createRuleAction, deleteRuleAction, patchNotesAction, patchPlanAction, setGoalAction, softDeletePlan, toggleRuleAction, updateRuleAction, type PlanGoal, type RuleInput } from "@/app/(shell)/plans/[id]/actions";
 
 interface TabDef { key: string; label: string; num?: number; tip?: { ko: string[]; en: string[] } }
 
-export function PlanDetail({ plan, portfolios, fin }: {
+export function PlanDetail({ plan: basePlan, portfolios, fin }: {
   plan: UIPlan; portfolios: PfLite[]; fin: Fin | null;
 }) {
+  // 실시간 override: live 값이 있으면 헤더 현재가·등락·평가손익을 실시간 재계산.
+  const lq = useLiveQuote(basePlan.ticker);
+  const plan = lq ? { ...basePlan, currentPrice: lq.price } : basePlan;
   const { lang } = usePrefs();
   const t: I18nDict = I18N[lang];
   const router = useRouter();
@@ -140,7 +145,7 @@ export function PlanDetail({ plan, portfolios, fin }: {
               <div className="metric"><div className="metric-lab">{t.realizedPL}</div><div className={"metric-val " + ((plan.realizedPL ?? 0) >= 0 ? "pos" : "neg")}>{((plan.realizedPL ?? 0) >= 0 ? "+" : "") + fmtCompact(plan.realizedPL ?? 0, plan.cur)}</div></div>
               <div className="metric"><div className="metric-lab">{t.avg}</div><div className="metric-val sm">{plan.avgPrice != null ? fmtMoney(plan.avgPrice, plan.cur) : "—"}</div></div>
             </> : <>
-              <div className="metric" title={t.tip_current}><div className="metric-lab">{t.current}</div><div className="metric-val">{fmtMoney(plan.currentPrice, plan.cur)}</div></div>
+              <div className="metric" title={t.tip_current}><div className="metric-lab">{t.current}</div><div className="metric-val" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>{fmtMoney(plan.currentPrice, plan.cur)}{lq && <LiveDot />}</div></div>
               <div className="metric" title={t.tip_avgCost}><div className="metric-lab">{t.avg}</div><div className="metric-val sm">{plan.avgPrice != null ? fmtMoney(plan.avgPrice, plan.cur) : "—"}</div></div>
               <div className="metric" title={t.tip_retRate}><div className="metric-lab">{t.retRate}</div><div className={"metric-val " + (ret ? (ret.rate >= 0 ? "pos" : "neg") : "")}>{ret ? (ret.rate >= 0 ? "+" : "") + ret.rate.toFixed(1) + "%" : "—"}</div></div>
               <div className="metric metric--tip"><div className="metric-lab">{t.retAmt}</div><div className={"metric-val sm " + (ret ? (ret.amt >= 0 ? "pos" : "neg") : "")}>{ret ? fmtCompact(ret.amt, plan.cur) : (plan.realizedPL ? "+" + fmtCompact(plan.realizedPL, plan.cur) : "—")}</div>

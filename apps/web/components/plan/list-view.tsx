@@ -12,10 +12,15 @@ import { Sparkline } from "./sparkline";
 import { groupConfig, orderPlans, type Grouping, type Ordering } from "./group";
 import type { PfLite } from "@/lib/pf-palette";
 import type { UIPlan } from "@/lib/plan-mapper";
+import { useLiveQuote } from "@/components/live-quotes-provider";
+import { LiveDot } from "@/components/live-dot";
 
-function PlanRow({ plan, lang, onOpen, focused, props }: {
+function PlanRow({ plan: base, lang, onOpen, focused, props }: {
   plan: UIPlan; lang: Lang; onOpen: (p: UIPlan) => void; focused?: boolean; props: string[];
 }) {
+  // 실시간 override: live 값이 있으면 currentPrice를 덮어써 planReturn(등락)을 실시간 재계산.
+  const lq = useLiveQuote(base.ticker);
+  const plan = lq ? { ...base, currentPrice: lq.price } : base;
   const strat = EXEC_STRATEGIES.find((s) => s.id === plan.execId);
   const ret = planReturn(plan);
   const fill = plan.divisions ? Math.round(((plan.round ?? 0) / plan.divisions) * 100) : null;
@@ -33,6 +38,7 @@ function PlanRow({ plan, lang, onOpen, focused, props }: {
       {show("spark") && <span className="pr-spark"><Sparkline plan={plan} closes={plan.priceCloses} /></span>}
       {show("gauge") && <span className="pr-gauge"><ScenarioGauge plan={plan} lang={lang} /></span>}
       {show("return") && <span className={"pr-return" + (ret ? (ret.rate >= 0 ? " tint-pos" : " tint-neg") : "")}>
+        {lq && <LiveDot />}
         {ret ? <>
           <span className={"pr-ret-pct mono " + (ret.rate >= 0 ? "pos" : "neg")}>{ret.rate >= 0 ? "+" : ""}{ret.rate.toFixed(1)}%</span>
           <span className="pr-ret-amt mono">{ret.amt >= 0 ? "+" : "−"}{fmtCompact(Math.abs(ret.amt), plan.cur)}</span>
