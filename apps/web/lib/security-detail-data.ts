@@ -3,6 +3,7 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import { mapDbPlan, PLAN_SELECT, type DbPlanRow } from "@/lib/plan-mapper";
 import { buildPlanFin, type DbFinRow } from "@/lib/fin-mapper";
+import { fetchClosesWith } from "@/lib/price-closes-query";
 import {
   mapSecurity, secPlanOf, SECURITY_SELECT, SECURITY_FIN_SELECT,
   type DbSecurityRow, type DbSecurityFinRow, type DbSecNoteRow, type SecNote,
@@ -64,11 +65,13 @@ export async function loadSecurityDetail(ticker: string): Promise<SecurityDetail
   // 여러 플랜이면 첫(최신 updated_at) 것. 플랜 없는 종목은 null 폴백(진짜 데이터 없음 — 문서화된 seam).
   const epsFromPlan = plans.find((p) => p.ticker === ticker && p.eps > 0)?.eps ?? null;
 
+  const closesMap = await fetchClosesWith(supabase, [ticker]); // 실 스파크·등락률(없으면 mock 폴백)
   const security = mapSecurity(
     secRow as unknown as DbSecurityRow,
     (finRows ?? []) as unknown as DbSecurityFinRow[],
     watched,
     epsFromPlan,
+    closesMap[ticker],
   );
   const secPlan = secPlanOf(security);
 

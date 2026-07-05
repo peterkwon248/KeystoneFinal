@@ -8,6 +8,7 @@ import {
   mapSecurity, SECURITY_SELECT,
   type DbSecurityRow, type UISecurity,
 } from "@/lib/security-mapper";
+import { fetchClosesWith } from "@/lib/price-closes-query";
 
 /**
  * securities 전체 + 유저 watchlist로 watched 플래그 세팅 (리서치 화면용).
@@ -23,7 +24,8 @@ export async function fetchAllSecurities(
   ]);
   const watched = new Set(((watchRes.data ?? []) as { ticker: string }[]).map((r) => r.ticker));
   const rows = (secRes.data ?? []) as unknown as DbSecurityRow[];
-  return rows.map((r) => mapSecurity(r, [], watched.has(r.ticker)));
+  const closesMap = await fetchClosesWith(supabase, rows.map((r) => r.ticker)); // 실 스파크·등락률(없으면 mock 폴백)
+  return rows.map((r) => mapSecurity(r, [], watched.has(r.ticker), null, closesMap[r.ticker]));
 }
 
 /** watchlist join securities select 절 — securities 컬럼은 SECURITY_SELECT와 동형(중첩 관계). */
@@ -52,7 +54,7 @@ export async function fetchWatchedSecurities(
     .order("sort", { ascending: true });
 
   const rows = (data ?? []) as unknown as WatchlistJoinRow[];
-  return rows
-    .filter((r) => r.securities != null)
-    .map((r) => mapSecurity(r.securities, [], true));
+  const present = rows.filter((r) => r.securities != null);
+  const closesMap = await fetchClosesWith(supabase, present.map((r) => r.securities.ticker));
+  return present.map((r) => mapSecurity(r.securities, [], true, null, closesMap[r.securities.ticker]));
 }

@@ -4,6 +4,7 @@
 // ARCHITECTURE §7: 뷰/계산 로직은 그대로 — 데이터 소스만 교체하는 이음새.
 import type { Currency, L10n, Market } from "@keystone/core/types";
 import type { UIPlan, UINote } from "@/lib/plan-mapper";
+import type { PriceClose } from "@/lib/trajectory";
 
 /** securities 테이블 한 행 (select 결과) — SECURITY_SELECT와 짝. */
 export interface DbSecurityRow {
@@ -70,6 +71,18 @@ function sparkSeedOf(ticker: string): number {
   return h;
 }
 
+/** 실 종가(오름차순)에서 스파크 = 최근 n봉 종가. genSpark mock 대체(마일스톤6). */
+function sparkFromCloses(closes: PriceClose[], n = 40): number[] {
+  return closes.slice(-n).map((c) => c.close);
+}
+/** 실 종가에서 일일 등락률(%) = 마지막 2봉 델타. mockChange 대체(마일스톤6). */
+function changeFromCloses(closes: PriceClose[]): number | null {
+  if (closes.length < 2) return null;
+  const last = closes[closes.length - 1].close, prev = closes[closes.length - 2].close;
+  if (!prev) return null;
+  return Math.round((last / prev - 1) * 10000) / 100;
+}
+
 /**
  * DB 행 → UISecurity. currency(KRW→KR/USD→US)로 market/cur 파생.
  * @param financialsRows fiscal_year desc 정렬 가정(최신이 [0]) — eps는 스키마 미저장이라 대개 null.
@@ -82,6 +95,7 @@ export function mapSecurity(
   financialsRows: DbSecurityFinRow[],
   watched: boolean,
   epsFromPlan?: number | null,
+  closes?: PriceClose[],
 ): UISecurity {
   const cur = (row.currency === "KRW" ? "KRW" : "USD") as Currency;
   const market: Market = cur === "KRW" ? "KR" : "US";
@@ -94,7 +108,11 @@ export function mapSecurity(
   const epsFin = latestFin && latestFin.eps != null ? Number(latestFin.eps) : null;
   const eps = epsFin ?? (epsFromPlan != null && epsFromPlan > 0 ? Number(epsFromPlan) : null);
   const sector: L10n = row.sector ?? row.gics ?? { en: "—", ko: "—" };
-  const spark = genSpark(sparkSeedOf(row.ticker), price > 0 ? price : 1);
+  // 실 종가(closes)가 2봉 이상이면 실 스파크·실 등락률, 없으면 mock 폴백(genSpark/mockChange).
+  const useReal = !!(closes && closes.length >= 2);
+  const realSpark = useReal ? sparkFromCloses(closes!) : null;
+  const realChange = useReal ? changeFromCloses(closes!) : null;
+  const spark = realSpark && realSpark.length >= 2 ? realSpark : genSpark(sparkSeedOf(row.ticker), price > 0 ? price : 1);
   return {
     ticker: row.ticker,
     name: row.name,
@@ -109,7 +127,7 @@ export function mapSecurity(
     // 티커 시드 기반 결정적 등락률([-4.5%, +5.0%], 종목마다 다름·부호 섞임).
     // genSpark는 pts[n-1]=base로 엔드포인트를 고정해 마지막 구간 델타가 거의 항상 큰 양수 →
     // 예전 sparkChange가 전 종목을 +5.00%로 saturate하던 버그를 제거한다.
-    change: mockChange(row.ticker),
+    change: realChange != null ? realChange : mockChange(row.ticker),
     watched,
     spark,
     journal: [],
