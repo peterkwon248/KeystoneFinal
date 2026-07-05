@@ -233,13 +233,14 @@ export interface SecScenario {
   thesis?: { en: string; ko: string };
 }
 
-export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, secScenarios = [] }: {
+export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, secScenarios = [], embedded = false }: {
   security: UISecurity;
   secPlan: UIPlan;
   fin: Fin | null;
   plans: UIPlan[];
   secNotes: SecNote[];
   secScenarios?: SecScenario[];
+  embedded?: boolean;
 }) {
   const { lang }: { lang: Lang } = usePrefs();
   const t: I18nDict = I18N[lang];
@@ -347,12 +348,14 @@ export function SecurityDetailScreen({ security, secPlan, fin, plans, secNotes, 
   return (
     <div className="detail-main">
       <div className="detail-inner">
-        <div className="dt-crumb">
-          <span className="c-link" onClick={() => router.back()}><Lic name="chevron-left" size={13} cls="icon-sm" color="inherit" /></span>
-          <span className="c-link" onClick={() => router.push("/insights")}>{t.securities}</span>
-          <Lic name="chevron-right" size={12} cls="icon-sm" color="var(--fg-4)" />
-          <span className="mono">{s.ticker}</span>
-        </div>
+        {!embedded && (
+          <div className="dt-crumb">
+            <span className="c-link" onClick={() => router.back()}><Lic name="chevron-left" size={13} cls="icon-sm" color="inherit" /></span>
+            <span className="c-link" onClick={() => router.push("/insights")}>{t.securities}</span>
+            <Lic name="chevron-right" size={12} cls="icon-sm" color="var(--fg-4)" />
+            <span className="mono">{s.ticker}</span>
+          </div>
+        )}
 
         <div className="sec-head">
           <div className="sec-head-l">

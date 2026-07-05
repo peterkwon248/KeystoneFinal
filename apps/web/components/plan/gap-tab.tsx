@@ -76,7 +76,7 @@ function PlanValueBar({
   const dragRef = useRef<{ idx: number; lo: number; hi: number } | null>(null);
   const startDrag = (sc: Scenario) => (e: React.PointerEvent) => {
     if (!onUpdateScenario || !barRef.current || !g) return;
-    const idx = plan.scenarios.indexOf(sc);
+    const idx = (plan.scenarios as Scenario[]).indexOf(sc);
     if (idx < 0) return;
     e.preventDefault();
     dragRef.current = { idx, lo: g.lo, hi: g.hi };

@@ -23,6 +23,7 @@ import { getSecRecents } from "@/lib/sec-recents";
 import { mapDbPlan, PLAN_SELECT, type DbPlanRow, type UIPlan } from "@/lib/plan-mapper";
 import type { UISecurity } from "@/lib/security-mapper";
 import { useRouter } from "next/navigation";
+import { useSecurityPeek } from "@/components/securities/security-peek";
 
 export function SearchModal({ userId, onClose }: { userId: string; onClose: () => void }) {
   const { lang } = usePrefs();
@@ -50,8 +51,9 @@ export function SearchModal({ userId, onClose }: { userId: string; onClose: () =
   const [mkt, setMkt] = useState("all");
   const ql = q.toLowerCase();
 
+  const { openPeek } = useSecurityPeek();
   const onOpenPlan = (p: UIPlan) => router.push(`/plans/${p.dbId}`);
-  const onOpenSecurity = (ticker: string) => router.push(`/securities/${ticker}`);
+  const onOpenSecurity = openPeek;
   const onOpenStrategy = (id: string) => router.push(`/strategy/${id}`);
 
   const plansForTicker = (list: UIPlan[], ticker: string) => list.filter((p) => p.ticker === ticker);

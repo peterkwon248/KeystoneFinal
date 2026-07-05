@@ -12,7 +12,7 @@
 "use client";
 import type { ReactNode } from "react";
 import { Fragment, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSecurityPeek } from "@/components/securities/security-peek";
 import type { I18nDict, Lang, L10n } from "@keystone/core/types";
 import { I18N } from "@keystone/core/i18n";
 import { MARKETS } from "@keystone/core/reference";
@@ -217,13 +217,13 @@ function WatchlistView({ t, lang, securities, plans, onOpenSecurity, panel, setP
 }
 
 export function WatchlistScreen({ securities, plans }: { securities: UISecurity[]; plans: UIPlan[] }) {
-  const router = useRouter();
   const { lang }: { lang: Lang } = usePrefs();
   const t = I18N[lang];
   const [panel, setPanel] = useState<WlPanel>(null);
   const [filterAnchor, setFilterAnchor] = useState<FilterAnchor | null>(null);
 
-  const onOpenSecurity = (ticker: string) => router.push(`/securities/${ticker}`);
+  const { openPeek } = useSecurityPeek();
+  const onOpenSecurity = openPeek;
 
   const openFilter = (e: React.MouseEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();

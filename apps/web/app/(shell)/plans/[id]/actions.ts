@@ -176,6 +176,28 @@ export async function addPlanScenario(planId: string, input: AddScenarioInput) {
   revalidatePath(`/plans/${planId}`);
 }
 
+/** 플랜 시나리오 편집 — case_t/label/target/thesis/color 갱신. label/color는 caseT에서 파생(addPlanScenario 동치).
+ *  supabase-js 빌더는 lazy thenable 이라 반드시 await. RLS로 소유 플랜의 시나리오만. */
+export async function updatePlanScenario(planId: string, scenarioId: string, input: AddScenarioInput) {
+  const supabase = await supabaseServer();
+  const caseLabel = { bull: { en: "Bull", ko: "상단" }, base: { en: "Base", ko: "중간" }, bear: { en: "Bear", ko: "하단" } }[input.caseT];
+  const color = { bull: "var(--r-bull)", base: "var(--r-base)", bear: "var(--r-bear)" }[input.caseT];
+  const { error } = await supabase.from("scenarios").update({
+    case_t: input.caseT, label: caseLabel, target: input.target,
+    thesis: input.thesis ? { en: input.thesis, ko: input.thesis } : null, color,
+  }).eq("id", scenarioId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${planId}`);
+}
+
+/** 플랜 시나리오 삭제 — 행 제거. RLS로 소유 플랜의 시나리오만. supabase-js 빌더는 lazy thenable 이라 반드시 await. */
+export async function deletePlanScenario(planId: string, scenarioId: string) {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.from("scenarios").delete().eq("id", scenarioId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/plans/${planId}`);
+}
+
 /** 플랜 보관(archive) — archived_at=now(). 청산(status)과 별개 축이라 상태는 건드리지 않는다.
  *  프로토타입 archivePlan은 status=closed였으나(방식1), 웹은 archived_at 분리(방식2)로 미실현 플랜도 보관 가능.
  *  supabase-js 빌더는 lazy thenable 이라 반드시 await. RLS 로 소유자만. */

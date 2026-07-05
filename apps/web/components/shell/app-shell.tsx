@@ -10,6 +10,7 @@ import { PrefsProvider } from "./prefs";
 import { SidebarConfigProvider } from "./sidebar-config";
 import { SearchModal } from "@/components/search/search-modal";
 import { ComposeModal } from "@/components/plan/compose-modal";
+import { SecurityPeekProvider } from "@/components/securities/security-peek";
 
 export function AppShell({
   userId, sidebarPrefs, portfolios, plansTotal, activeCount, views, banner, signOutAction, children,
@@ -47,6 +48,7 @@ export function AppShell({
   return (
     <PrefsProvider>
      <SidebarConfigProvider userId={userId} initial={sidebarPrefs}>
+      <SecurityPeekProvider>
       {/* 프로토타입 App.jsx 구조: .app(세로) > banner + .app-row(가로) > 사이드바 + 메인 */}
       <div className="app" style={{ background: "var(--bg-app)" }}>
         {banner}
@@ -84,6 +86,7 @@ export function AppShell({
         {search && <SearchModal userId={userId} onClose={() => setSearch(false)} />}
         {compose && <ComposeModal userId={userId} onClose={() => setCompose(false)} />}
       </div>
+      </SecurityPeekProvider>
      </SidebarConfigProvider>
     </PrefsProvider>
   );

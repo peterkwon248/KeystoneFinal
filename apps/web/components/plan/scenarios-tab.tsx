@@ -4,13 +4,14 @@
 // 표시 우선: 목표가/논거 인라인 편집(EditableNum/contentEditable)과 add/remove는 후속에서 서버 액션으로.
 "use client";
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { I18nDict, Lang } from "@keystone/core/types";
 import { STRATEGIES } from "@keystone/core/reference";
 import { scAutoStatus } from "@keystone/core/analytics";
 import { fmtMoney, fmtCompact, toDispCur } from "@keystone/core/format";
 import { Lic } from "@/components/icons";
 import type { UIPlan } from "@/lib/plan-mapper";
+import { deletePlanScenario } from "@/app/(shell)/plans/[id]/actions";
 import { GapTab } from "./gap-tab";
 import { ScenarioAuthorModal } from "./scenario-author-modal";
 
@@ -85,6 +86,9 @@ function ConvergenceTest({ plan, lang }: { plan: UIPlan; lang: Lang }) {
 export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lang: Lang }) {
   const ko = lang === "ko";
   const [modalOpen, setModalOpen] = useState(false);
+  const [editSc, setEditSc] = useState<UIPlan["scenarios"][number] | null>(null);
+  const [, startTransition] = useTransition();
+  const onDeleteSc = (id: string) => startTransition(() => { void deletePlanScenario(plan.dbId, id); });
   const fw = STRATEGIES.find((s) => s.id === plan.strategyId);
   const swingField = fw && fw.fields ? fw.fields.find((f) => f.swing) : null;
   const swingLab = swingField ? swingField.label[lang] : ko ? "가정 PER" : "Assumed P/E";
@@ -110,7 +114,7 @@ export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lan
           const st = scAutoStatus(plan, s.target);
           const c = SC_STATUS_COLOR[st];
           return (
-            <div className="sc-card" key={i}>
+            <div className="sc-card" key={s.dbId}>
               <div className="sc-card-bar" style={{ background: s.color }} />
               <div className="sc-card-head">
                 {isCore
@@ -119,6 +123,10 @@ export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lan
                 {s.isAuto && <span className="sc-auto" title={t.scAutoTip}>{t.scAuto}</span>}
                 <span className="sc-ministatus-wrap">
                   <span className="sc-ministatus" style={{ background: c.bg, color: c.fg }} title={t.scAutoStatusTip || t.scEditStatus}>{t["sc_" + st]}</span>
+                </span>
+                <span className="sc-card-actions" style={{ marginLeft: "auto", display: "inline-flex", gap: 4 }}>
+                  <button className="iconbtn" onClick={() => setEditSc(s)} title={ko ? "수정" : "Edit"}><Lic name="pencil" size={12} /></button>
+                  <button className="iconbtn" onClick={() => onDeleteSc(s.dbId)} title={ko ? "삭제" : "Remove"}><Lic name="x" size={12} /></button>
                 </span>
               </div>
               <div className="sc-thesis">{s.thesis?.[lang]}</div>
@@ -172,7 +180,9 @@ export function ScenariosTab({ plan, t, lang }: { plan: UIPlan; t: I18nDict; lan
       <GapTab plan={plan} t={t} lang={lang} part="head" />
       <ConvergenceTest plan={plan} lang={lang} />
 
-      {modalOpen && <ScenarioAuthorModal plan={plan} onClose={() => setModalOpen(false)} />}
+      {(modalOpen || editSc) && <ScenarioAuthorModal plan={plan}
+        editScenario={editSc ? { id: editSc.dbId, caseT: editSc.caseT, target: editSc.target, thesis: editSc.thesis?.ko ?? editSc.thesis?.en ?? "" } : undefined}
+        onClose={() => { setModalOpen(false); setEditSc(null); }} />}
     </div>
   );
 }

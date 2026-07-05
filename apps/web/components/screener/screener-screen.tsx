@@ -13,7 +13,7 @@
 //  - SWC≠tsc: JSX 안 제네릭 캐스트·IIFE 없음. 아이콘/라벨 맵·좌표 계산은 본문 헬퍼/const.
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSecurityPeek } from "@/components/securities/security-peek";
 import type { I18nDict, Lang } from "@keystone/core/types";
 import { I18N } from "@keystone/core/i18n";
 import { STRATEGIES, MARKETS } from "@keystone/core/reference";
@@ -194,7 +194,6 @@ function viewLoad(): { fwId?: string; sortKey?: SortKey; groupBy?: GroupBy; layo
 }
 
 export function ScreenerScreen({ securities, plans }: { securities: UISecurity[]; plans: UIPlan[] }) {
-  const router = useRouter();
   const { lang }: { lang: Lang } = usePrefs();
   const t = I18N[lang];
   const ko = lang === "ko";
@@ -394,7 +393,8 @@ export function ScreenerScreen({ securities, plans }: { securities: UISecurity[]
     return SCV_INDLAB(k, ko) + " " + (th.dir === "low" ? "≤" : "≥") + th.good + (SCV_PCT_KEYS.includes(k) ? "%" : "");
   };
 
-  const onOpenSecurity = (ticker: string) => router.push(`/securities/${ticker}`);
+  const { openPeek } = useSecurityPeek();
+  const onOpenSecurity = openPeek;
   const openFilterAt = (e: React.MouseEvent<HTMLElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     setFilterAnchor({ left: Math.max(8, Math.min(r.left, window.innerWidth - 470)), top: r.bottom + 6 });

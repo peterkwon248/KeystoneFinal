@@ -22,6 +22,8 @@ export interface UIPlan extends Plan {
   sector: { en: string; ko: string } | null;
   // 규칙은 웹 확장(UIRule) — isAuto/ruleSource 부가.
   rules: UIRule[];
+  // 시나리오는 웹 확장(UIScenario) — dbId/caseT 부가(편집·삭제 타겟팅).
+  scenarios: UIScenario[];
 }
 
 /* DB scenario case → 프로토타입 시나리오 라벨/색.
@@ -76,12 +78,15 @@ export interface DbPlanRow {
   updated_at: string;
   securities: { name: L10n; market: string; last_close: number | null; shares_out: number | null; sector: L10n | null } | null;
   scenarios: {
-    case_t: string; label: L10n | null; target: number; thesis: L10n | null;
+    id: string; case_t: string; label: L10n | null; target: number; thesis: L10n | null;
     status: ScenarioStatus; color: string | null; is_auto: boolean; sort: number;
   }[];
   executions: { side: "buy" | "sell"; exec_date: string; price: number; quantity: number | null; amount: number | null; round_no: number | null }[];
   rules: { id: string; enabled: boolean; condition: DbRuleCondition | null; action: DbRuleAction | null; last_fired: string | null; is_auto: boolean; edited: boolean; source: string | null }[];
 }
+
+/** 웹 확장 Scenario — core Scenario(골든)에 DB id/caseT 부가(편집·삭제 타겟팅). UIRule 패턴. */
+export interface UIScenario extends Scenario { dbId: string; caseT: "bull" | "base" | "bear"; }
 
 /** 웹 확장 Rule — core Rule(골든)에 물질화 플래그(isAuto/ruleSource) 부가. UINote 패턴. */
 export interface UIRule extends Rule {
@@ -157,7 +162,7 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
 
   // 시나리오: case_t 기준 Bull→Base→Bear 순 정렬 (프로토타입 배열 순서)
   const order = ["bull", "base", "bear"];
-  const scenarios: Scenario[] = (row.scenarios ?? [])
+  const scenarios: UIScenario[] = (row.scenarios ?? [])
     .slice()
     .sort((a, b) => order.indexOf(a.case_t) - order.indexOf(b.case_t))
     .map((s) => {
@@ -172,6 +177,8 @@ export function mapDbPlan(row: DbPlanRow, now: Date = new Date()): UIPlan {
         status: s.status === "pending" ? "tracking" : s.status,
         thesis: s.thesis ?? undefined,
         isAuto: s.is_auto,
+        dbId: s.id,
+        caseT: s.case_t as "bull" | "base" | "bear",
       };
     });
   // 내재가치(iv) 시드 = 기준(Base) 시나리오 target (source/data.jsx:809 문서화된 시드 의도).
@@ -268,7 +275,7 @@ export const PLAN_SELECT = `
   id, human_id, portfolio_id, ticker, currency, name, status, strategy_id, exec_id,
   eps, shares_out, realized_pl, custom_fields, closed_at, created_at, updated_at,
   securities(name, market, last_close, shares_out, sector),
-  scenarios(case_t, label, target, thesis, status, color, is_auto, sort),
+  scenarios(id, case_t, label, target, thesis, status, color, is_auto, sort),
   executions(side, exec_date, price, quantity, amount, round_no),
   rules(id, enabled, condition, action, last_fired, is_auto, edited, source)
 `;

@@ -3,6 +3,12 @@
 // RLS로 소유자(user_id)만. 낙관적 UI는 클라이언트가, 영속은 여기가 담당.
 import { supabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { loadSecurityDetail, type SecurityDetailData } from "@/lib/security-detail-data";
+
+/** SecurityPeek용 종목 상세 데이터 페치 — 페이지와 동일 로더 공유. RLS로 소유 데이터만. */
+export async function fetchSecurityDetailAction(ticker: string): Promise<SecurityDetailData | null> {
+  return loadSecurityDetail(ticker);
+}
 
 /** watchlist에 (user_id,ticker)가 있으면 delete, 없으면 insert. 반환 = 토글 후 watched 상태. */
 export async function toggleWatch(ticker: string): Promise<boolean> {

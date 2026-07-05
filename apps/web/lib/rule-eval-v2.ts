@@ -54,11 +54,17 @@ function evalV2(plan: UIPlan, rule: UIRule, ko: boolean): RuleEvalResult {
     return { state: "event", meta: ko ? `다음 적립 ${fmtMD(nextBuy)} · ${step}일 주기` : `Next ${fmtMD(nextBuy)} · every ${step}d` };
   }
 
-  // path_gap — 미니멀: 평가액 vs 목표 가치 경로(target_path). 발동 임계 미정의라 상태는 armed(경고 아님), gap 방향만 표시.
-  const V = c.value ?? 0;
+  // path_gap — 밸류애버리징: 평가액이 목표 가치경로(valueStep × period) ±4% 밴드를 벗어나면 발동.
+  // 골든 sim(futuretest.jsx value kind) 미러: desired = step × (round+1), band = step×0.04.
+  const step = c.value ?? 0;
+  if (!(step > 0)) return { state: "armed", meta: ko ? "가치 경로 미설정" : "No value path" };
+  const period = (plan.round || 0) + 1;
+  const desired = step * period;
+  const band = step * 0.04;
   const value = (plan.totalShares || 0) * px;
-  if (!(value > 0) || !(V > 0)) return { state: "armed", meta: ko ? "진입 전 · 가치 경로" : "Not started · value path" };
-  const gap = (value - V) / V * 100;
-  const dir = value < V ? (ko ? "경로 아래·매수" : "below·add") : value > V ? (ko ? "경로 위·매도" : "above·trim") : (ko ? "경로 일치" : "on path");
-  return { state: "armed", meta: (ko ? "평가액 " : "Value ") + fmtMoney(value, cur) + " vs " + fmtMoney(V, cur) + ` (${gap >= 0 ? "+" : ""}${gap.toFixed(1)}%) · ${dir}` };
+  if (!(value > 0)) return { state: "fired", meta: ko ? `진입 전 · 첫 목표 ${fmtMoney(desired, cur)} 매수` : `Not started · buy ${fmtMoney(desired, cur)}` };
+  const gap = value - desired;
+  const below = gap < -band, above = gap > band;
+  const dir = below ? (ko ? `부족 ${fmtMoney(-gap, cur)} · 매수` : `short ${fmtMoney(-gap, cur)} · add`) : above ? (ko ? `초과 ${fmtMoney(gap, cur)} · 매도` : `over ${fmtMoney(gap, cur)} · trim`) : (ko ? "경로 안 · 유지" : "on path · hold");
+  return { state: (below || above) ? "fired" : "armed", meta: (ko ? "평가액 " : "Value ") + fmtMoney(value, cur) + (ko ? " vs 목표 " : " vs target ") + fmtMoney(desired, cur) + ` · ${dir}` };
 }

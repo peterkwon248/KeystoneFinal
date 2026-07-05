@@ -113,7 +113,8 @@ export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal, onCreateRu
         const bull = tOf("Bull"), bear = tOf("Bear");
         const hasGrid = (ex.fields || []).some((f) => f.key === "grids");
         const hasMom = (ex.fields || []).some((f) => f.key === "stop") && (ex.fields || []).some((f) => f.key === "lookback");
-        const isPrice = !hasGrid && !hasMom && (locPx != null || (ex.fields || []).some((f) => ["upper", "lower", "target_path"].includes(f.key)));
+        const isVA = !hasGrid && !hasMom && (ex.fields || []).some((f) => f.key === "target_path");
+        const isPrice = !hasGrid && !hasMom && !isVA && (locPx != null || (ex.fields || []).some((f) => ["upper", "lower"].includes(f.key)));
         const isGrid = hasGrid;
         const isMomentum = hasMom;
         const isVR = (ex.fields || []).some((f) => f.key === "vr_vline") && !isPrice;
@@ -290,6 +291,45 @@ export function StrategyTab({ plan, t, lang, onToggleRule, onSetGoal, onCreateRu
                 <div className={"sc-waxis-now " + zoneTone} style={{ left: wp(px) + "%" }}><span className="sc-waxis-now-dot" /><span className="sc-waxis-now-lab mono">{fmtMoney(px, plan.cur)}</span>{mkTip(ko ? "현재가" : "Price", [[ko ? "현재가" : "Price", fmtMoney(px, plan.cur)], [ko ? "스탑까지" : "To stop", (toStop >= 0 ? "+" : "") + toStop.toFixed(1) + "%", toStop >= 0 ? "pos" : "neg"], [ko ? "현재 상태" : "Zone", zoneLab]], zone === "pre" ? (ko ? "아직 진입 전 — 추세 상향 돌파 시 진입합니다." : "Armed — enters on an up-cross.") : zone === "trim" ? (ko ? "스탑 이탈 — 청산 신호." : "Stop hit — exit.") : (ko ? "추세 유지 중 — 스탑이 고점을 따라 올라갑니다." : "Holding — stop trails the peak."))}</div>
               </div>
               <div className="sc-waxis-foot">{ko ? `${started ? `고점 ${fmtMoney(refHigh, plan.cur)} 대비 −${stopPct}% 스탑 · 현재 ${toStop >= 0 ? "+" : ""}${toStop.toFixed(1)}% 여유` : `진입 후 고점 대비 −${stopPct}%에서 청산`} — 추세를 따라가다 꺾이면 빠집니다.` : `Trail −${stopPct}% below the peak — ride the trend, exit on reversal.`}</div>
+            </div>
+          );
+        } else if (isVA) {
+          const step = fnum("target_path", 600000)!;              // 월 목표 증가액(valueStep)
+          const period = (round || 0) + 1;                         // 현재 체크포인트
+          const desired = step * period;                          // 목표 경로값
+          const band = step * 0.04;                               // ±4% 데드존
+          const value = (plan.totalShares || 0) * px;             // 현재 평가액
+          const loW = desired - band, hiW = desired + band;
+          const started = value > 0;
+          const gap = started ? value - desired : null;
+          const axMin = Math.max(0, desired - step * 1.4), axMax = desired + step * 1.4, axSp = (axMax - axMin) || 1;
+          const wp = (v: number) => Math.max(0, Math.min(100, (v - axMin) / axSp * 100));
+          const zone = !started ? "pre" : (value > hiW ? "trim" : value < loW ? "add" : "in");
+          const zoneLab = { pre: ko ? "진입 전" : "Not started", in: ko ? "경로 안 · 유지" : "On path · hold", trim: ko ? "경로 초과 · 매도" : "Above · trim", add: ko ? "경로 미달 · 매수" : "Below · add" }[zone];
+          const zoneTone = { pre: "wait", in: "hold", trim: "sell", add: "buy" }[zone];
+          const mkTip = (h: string, rows: [string, string, string?][], note: string) => <span className="sc-axis-tip sc-waxis-tip"><b>{h}</b>{rows.map((r, j) => <span className="sc-axis-tip-row" key={j}><span>{r[0]}</span><b className={"mono" + (r[2] ? " " + r[2] : "")}>{r[1]}</b></span>)}{note && <span className="sc-axis-tip-note">{note}</span>}</span>;
+          // next-action
+          act = zone === "pre"
+            ? { tone: "wait", icon: "trending-up", label: ko ? "경로 추종 시작" : "Path armed", detail: ko ? `진입하면 이번 달 목표 ${fmtMoney(desired, plan.cur)}까지 매수합니다.` : `On entry, buy up to ${fmtMoney(desired, plan.cur)}.` }
+            : zone === "add"
+            ? { tone: "buy", icon: "arrow-down-left", label: ko ? "경로 미달 · 매수" : "Below path · add", detail: ko ? `목표 ${fmtMoney(desired, plan.cur)} 대비 ${fmtMoney(-(gap as number), plan.cur)} 부족 — 부족분 매수 알림` : `${fmtMoney(-(gap as number), plan.cur)} short of ${fmtMoney(desired, plan.cur)}` }
+            : zone === "trim"
+            ? { tone: "sell", icon: "arrow-up-right", label: ko ? "경로 초과 · 매도" : "Above path · trim", detail: ko ? `목표 ${fmtMoney(desired, plan.cur)} 대비 ${fmtMoney(gap as number, plan.cur)} 초과 — 초과분 매도 검토` : `${fmtMoney(gap as number, plan.cur)} over ${fmtMoney(desired, plan.cur)}` }
+            : { tone: "wait", icon: "activity", label: ko ? "경로 위 · 유지" : "On path · hold", detail: ko ? `평가액이 이번 달 목표 밴드 안입니다.` : "Value within this month's band." };
+          overlay = (
+            <div className="sc-axis-card">
+              <div className="sc-axis-cap">{ko ? "가치 경로 대비 현재 평가액" : "Value vs target path"}<span className={"sc-waxis-zone " + zoneTone}>{zoneLab}</span></div>
+              <div className="sc-waxis">
+                <div className="sc-waxis-track" />
+                <div className="sc-waxis-band" style={{ left: wp(loW) + "%", width: (wp(hiW) - wp(loW)) + "%" }} />
+                <div className="sc-waxis-target" style={{ left: wp(desired) + "%" }}><span className="sc-waxis-target-lab"><span className="wx-word">{ko ? "목표" : "Target"}</span><span className="wx-val">{fmtMoney(desired, plan.cur)}</span></span>{mkTip(ko ? "이번 달 목표 경로" : "Target on path", [[ko ? "월 목표 증가" : "Growth/mo", fmtMoney(step, plan.cur)], [ko ? "누적 회차" : "Period", String(period)], [ko ? "= 목표 경로값" : "= target", fmtMoney(desired, plan.cur)]], ko ? "매월 이 목표만큼 평가액이 커지도록 부족하면 더, 넘으면 덜 매수합니다." : "Value should grow to this each month; buy the shortfall, sell the excess.")}</div>
+                <div className="sc-waxis-tick add" style={{ left: wp(loW) + "%" }}><span className="sc-waxis-tick-lab"><span className="wx-word">{ko ? "하단" : "Lower"}</span><span className="wx-val">−4%</span></span>{mkTip(ko ? "매수 경계 −4%" : "Buy band −4%", [[ko ? "하단" : "Lower", fmtMoney(loW, plan.cur)]], ko ? "평가액이 이 아래면 부족분을 매수합니다." : "Below this, buy the shortfall.")}</div>
+                <div className="sc-waxis-tick trim" style={{ left: wp(hiW) + "%" }}><span className="sc-waxis-tick-lab"><span className="wx-word">{ko ? "상단" : "Upper"}</span><span className="wx-val">+4%</span></span>{mkTip(ko ? "매도 경계 +4%" : "Trim band +4%", [[ko ? "상단" : "Upper", fmtMoney(hiW, plan.cur)]], ko ? "평가액이 이 위면 초과분을 매도합니다." : "Above this, sell the excess.")}</div>
+                {started && gap != null && <div className={"sc-waxis-now " + zoneTone} style={{ left: wp(value) + "%" }}><span className="sc-waxis-now-dot" /><span className="sc-waxis-now-lab mono">{(gap >= 0 ? "+" : "") + fmtMoney(gap, plan.cur)}</span>{mkTip(ko ? "현재 평가액" : "Current value", [[ko ? "평가액" : "Value", fmtMoney(value, plan.cur)], [ko ? "목표 대비" : "vs target", (gap >= 0 ? "+" : "") + fmtMoney(gap, plan.cur), gap >= 0 ? "pos" : "neg"], [ko ? "현재 상태" : "Zone", zoneLab]], zone === "add" ? (ko ? "경로 미달 — 부족분 매수 구간." : "Below path — buy zone.") : zone === "trim" ? (ko ? "경로 초과 — 매도 구간." : "Above path — trim zone.") : (ko ? "밴드 안 — 유지." : "In band — hold."))}</div>}
+              </div>
+              <div className="sc-waxis-foot">{!started
+                ? (ko ? `아직 진입 전입니다. 진입하면 이번 달 목표 ${fmtMoney(desired, plan.cur)}까지 매수합니다.` : `Not started. On entry, buy up to ${fmtMoney(desired, plan.cur)}.`)
+                : (ko ? `← 경로 아래면 부족분 매수 · 위면 초과분 매도 →  매월 +${fmtMoney(step, plan.cur)} 성장` : `← add below · trim above →  grows +${fmtMoney(step, plan.cur)}/mo`)}</div>
             </div>
           );
         } else if (isPrice) {

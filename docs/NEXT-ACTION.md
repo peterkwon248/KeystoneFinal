@@ -1,13 +1,16 @@
 # NEXT-ACTION
 
-## ⭐ 다음 세션 최우선 (2026-07-05 갱신)
+## ⭐ 다음 세션 최우선 (2026-07-05 2차 갱신)
+**2026-07-05 2차 세션 완료(전부 브라우저 E2E, core 무수정, 골든 102 유지):** 규칙 자동화 스텝4(CRUD+작성폼+자동배지) · 규칙 자동화 v2(4전략 새 트리거, 웹레이어) · 밸류애버리징 경로 오버레이(옵션2) · B5 SecurityPeek(전체상세 슬라이드오버) · **시나리오 인라인 편집/삭제 CRUD**(updatePlanScenario·deletePlanScenario, UIScenario에 dbId/caseT, 마이그레이션 없음). 커밋 상태: 스텝4+v2는 `696d2fd`로 푸시됨. **옵션2·B5·시나리오CRUD는 미커밋(다음 커밋 대기).**
+
+## 이전 세션 완료 (2026-07-05 1차)
 이번 세션 완료(전부 E2E 검증, 단일 `session:` 커밋 푸시): **S1/S2 스키마 · 17 보관함(A4) · B9 adhoc 시나리오 · B8 플랜 생성 위저드 · 전략 드롭다운 버그수정 · 규칙 자동화 v1(스텝1-3)**. → 마일스톤 7 Phase A·B 사실상 완료.
 
 **다음 착수 후보 (권장순):**
 1. ✅ **규칙 자동화 스텝 4 완료(2026-07-05 2차)** — 규칙 편집/삭제 CRUD + "규칙 추가" 인라인 작성폼(트리거 7종/액션 5종 select, hasValue 시 값 입력) + auto "자동" 배지. 커스텀=편집+삭제, auto=편집만(토글로 끔). 편집 시 edited=true(재생성 보존). `plan-mapper.encodeTrig`(decodeTrig 역함수)+`actions.ts` create/update/deleteRuleAction+strategy-tab 인라인 에디터. **브라우저 E2E 전부 검증**(추가→편집(edited=true)→삭제→목표설정 시 자동배지 3개, 콘솔0, tsc0, 골든102). 마이그레이션 불필요(RLS 기존).
 2. ✅ **규칙 자동화 v2 완료(2026-07-05 2차)** — 4전략 새 트리거 타입 물질화, **전부 웹 레이어**(골든 무손상). ex7 모멘텀→trailing·ex2 정액분할→time·ex6 6:4→weight·ex3 밸류애버리징→path(미니멀). **핵심 제약: 골든 함정은 evalRule이 아니라 `RULE_TRIGS`** — `i18n-reference.test:39`가 core RULE_TRIGS를 읽기전용 source 골든과 deep-equal → core 추가 시 재생성 불가로 깨짐. 해법=`closeout.ts` 패턴: NEW `lib/rule-trigs-v2.ts`(웹 트리거 카탈로그+findTrig)·`lib/rule-eval-v2.ts`(7개 core는 evalRule 위임, 4개 신규는 콕핏 수학 미러)·plan-mapper(DbRuleCondition 확장+cond 필드+decode)·rules-from-strategy(4 필드주도 브랜치). UI: v2 auto=토글만(편집 없음), core-trig auto=편집, custom=편집+삭제. **E2E 4전략 전검증**(materialize jsonb·findTrig 라벨·evalV2 상태[trailing/weight=armed·time=event·path=armed]·콘솔0·tsc0·골든102). ⚠️ 경로(ex3)는 미니멀 notify — 콕핏 오버레이 없음. **사용자 결정: 미니멀 만족스러우면 정식 경로 오버레이(옵션2)로 확장.**
-3. **경로(ex3) 정식 오버레이 (옵션2, 조건부)** — v2 미니멀 path가 만족스러우면 밸류애버리징 전용 가치경로 밴드차트 오버레이 + 발동 임계 정의. (미니멀은 target_path 통화 불일치 약점 있음 — 실 ex3 플랜에서 사용자 설정 전제.)
-4. **B5 SecurityPeek 팝오버** — 소규모.
+3. ✅ **경로(ex3) 정식 오버레이 완료(2026-07-05 2차, 옵션2)** — 밸류애버리징 전용 `isVA` 콕핏 오버레이(가치경로 밴드차트, isVR 구조 미러) + path 실발동. **VA 모델은 골든 sim(`futuretest.jsx:114-121` value kind) 미러**: `desired=target_path×(round+1)`(월 목표증가액×회차), `band=±4%×step`, 평가액 경로 아래/위(>4%)면 부족분 매수/초과분 매도. `rule-eval-v2` path_gap을 항상-armed → **실발동(fired)**으로 교체. `strategy-tab`에 isVA 감지(isPrice에서 target_path 제외) + 오버레이 + next-action. E2E: PLN-001 ex3(60주/12회차)→목표 ₩7.8M·갭 +₩9.36M·"경로 초과·매도" fired 확인, tsc0·골든102·콘솔0·core무수정. ⚠️ 극단값(평가액≫경로)에선 now마커 우측 클램프(isVR/isWeight와 동일 거동) — 실 VA 플랜(경로 근처)에선 정상.
+4. ✅ **B5 SecurityPeek 팝오버 완료(2026-07-05 2차)** — 우측 슬라이드오버가 기존 `SecurityDetailScreen`을 `embedded`로 임베드(전체 4탭·차트·계절성·관심토글). **핵심: create-plan/add-scenario/watch는 SecurityDetailScreen이 이미 내부 배선** → 임베드만으로 늘어진 콜백 해소. peek CSS도 web reticle.css에 기존재. NEW `lib/security-detail-data.ts`(page.tsx 로직 추출·공유 로더) + `securities/[ticker]/actions.ts` fetchSecurityDetailAction + NEW `security-peek.tsx`(SecurityPeekProvider 컨텍스트+슬라이드오버, Escape/라우트변경 닫기, expand→풀페이지) + app-shell 마운트 + 트리거 4곳(watchlist/research/screener/search) onOpenSecurity→openPeek. embedded는 `.dt-crumb`만 숨김. E2E: watchlist/research 클릭→peek, 플랜생성(ComposeModal z60>peek56 프리필), expand→풀페이지+닫힘, tsc0·골든102·콘솔0(캐시클리어 후). ⚠️ 편집 중 SWC stale 에러는 서버재시작+`.next`삭제로 해소(디스크 파일은 항상 정상).
 5. **Phase C 실데이터 (마일스톤 6)** — 시세 워커(규칙 실제 발동 = 알림) + 히스토리 백필. mock seam 교체.
 
 **핵심 결정(이번 세션):** ①보관=archived_at 별개축(방식2, 청산과 무관) ②scenarios plan_id nullable → RLS에 user_id 소유권 경로 추가 필수 ③플랜 compose는 전략(execId), 관점 아님(프로토타입 mislabel 수정) ④규칙=materialize+파라메트릭저장, is_auto/edited로 안전 재생성, 발동=알림(자동매매 아님).

@@ -9,7 +9,7 @@
 //  - onOpenSecurity = router.push(`/securities/${ticker}`).
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSecurityPeek } from "@/components/securities/security-peek";
 import type { Lang } from "@keystone/core/types";
 import { I18N } from "@keystone/core/i18n";
 import { fmtCompact } from "@keystone/core/format";
@@ -26,7 +26,6 @@ function plansForTicker(plans: UIPlan[], ticker: string): UIPlan[] {
 }
 
 export function ResearchScreen({ securities, plans }: { securities: UISecurity[]; plans: UIPlan[] }) {
-  const router = useRouter();
   const { lang }: { lang: Lang } = usePrefs();
   const t = I18N[lang];
   const ko = lang === "ko";
@@ -34,7 +33,8 @@ export function ResearchScreen({ securities, plans }: { securities: UISecurity[]
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
   useEffect(() => { setRecentTickers(getSecRecents()); }, []);
 
-  const onOpenSecurity = (ticker: string) => router.push(`/securities/${ticker}`);
+  const { openPeek } = useSecurityPeek();
+  const onOpenSecurity = openPeek;
 
   const secMap = new Map(securities.map((s) => [s.ticker, s]));
   const recents = recentTickers.map((tk) => secMap.get(tk)).filter((s): s is UISecurity => Boolean(s));

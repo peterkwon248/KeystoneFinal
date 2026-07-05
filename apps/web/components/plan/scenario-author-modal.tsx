@@ -14,7 +14,7 @@ import { usePrefs } from "@/components/shell/prefs";
 import type { UIPlan } from "@/lib/plan-mapper";
 import type { UISecurity } from "@/lib/security-mapper";
 import { SecurityPicker } from "@/components/securities/security-picker";
-import { addPlanScenario } from "@/app/(shell)/plans/[id]/actions";
+import { addPlanScenario, updatePlanScenario } from "@/app/(shell)/plans/[id]/actions";
 import { addSecurityScenario } from "@/app/(shell)/scenarios/actions";
 
 const SC_CASES: { key: "bull" | "base" | "bear"; enKey: "Bull" | "Base" | "Bear"; color: string }[] = [
@@ -23,18 +23,19 @@ const SC_CASES: { key: "bull" | "base" | "bear"; enKey: "Bull" | "Base" | "Bear"
   { key: "bear", enKey: "Bear", color: "var(--r-bear)" },
 ];
 
-export function ScenarioAuthorModal({ plan, adhoc, onClose }: {
+export function ScenarioAuthorModal({ plan, adhoc, editScenario, onClose }: {
   plan?: UIPlan;
   // adhoc: 종목 선택형(picker). lockTicker=true면 종목 고정(종목상세에서 진입 — picker 숨김).
   adhoc?: { securities: UISecurity[]; initialTicker?: string | null; lockTicker?: boolean };
+  editScenario?: { id: string; caseT: "bull" | "base" | "bear"; target: number; thesis: string };
   onClose: () => void;
 }) {
   const { lang } = usePrefs();
   const t = I18N[lang];
   const router = useRouter();
-  const [caseT, setCaseT] = useState<"bull" | "base" | "bear">("base");
-  const [target, setTarget] = useState("");
-  const [thesis, setThesis] = useState("");
+  const [caseT, setCaseT] = useState<"bull" | "base" | "bear">(editScenario?.caseT ?? "base");
+  const [target, setTarget] = useState(editScenario ? String(editScenario.target) : "");
+  const [thesis, setThesis] = useState(editScenario?.thesis ?? "");
   const [saving, startSaving] = useTransition();
   // adhoc 모드 종목 선택 상태(plan 모드에선 미사용).
   const [ticker, setTicker] = useState<string | null>(adhoc?.initialTicker ?? null);
@@ -54,7 +55,8 @@ export function ScenarioAuthorModal({ plan, adhoc, onClose }: {
   const save = () => {
     if (!canSave) return;
     startSaving(async () => {
-      if (plan) await addPlanScenario(plan.dbId, { caseT, target: tgtNum, thesis });
+      if (plan && editScenario) await updatePlanScenario(plan.dbId, editScenario.id, { caseT, target: tgtNum, thesis });
+      else if (plan) await addPlanScenario(plan.dbId, { caseT, target: tgtNum, thesis });
       else if (activeTicker) await addSecurityScenario({ ticker: activeTicker, caseT, target: tgtNum, thesis });
       router.refresh();
       onClose();
@@ -66,7 +68,7 @@ export function ScenarioAuthorModal({ plan, adhoc, onClose }: {
       <div className="modal" onClick={(e) => e.stopPropagation()} style={{ width: 480 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
           <Lic name="target" size={17} color="var(--accent)" />
-          <span style={{ font: "var(--fw-semi) 15px var(--font-sans)", color: "var(--fg)" }}>{t.newScenario}</span>
+          <span style={{ font: "var(--fw-semi) 15px var(--font-sans)", color: "var(--fg)" }}>{editScenario ? (lang === "ko" ? "시나리오 편집" : "Edit scenario") : t.newScenario}</span>
           <span style={{ marginLeft: "auto" }} className="iconbtn" onClick={onClose}><Lic name="x" size={16} /></span>
         </div>
         <div className="modal-body">
