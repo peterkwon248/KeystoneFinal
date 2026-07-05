@@ -13,17 +13,17 @@ import { pfColor } from "@/lib/pf-palette";
 import { OPTIONAL_DESTS, mergedKeys } from "@/lib/sidebar-config";
 import { usePrefs } from "./prefs";
 import { useSidebarConfig } from "./sidebar-config";
+import { useInboxBadge } from "./inbox-badge";
 
 export interface SidebarPortfolio { id: string; name: string; count: number }
 export interface SidebarView { id: string; name: string }
 
 export function Sidebar({
-  portfolios, plansTotal, activeCount, inboxUnread = 0, views, onWsMenu, onCollapse, onSearch, onNewPlan,
+  portfolios, plansTotal, activeCount, views, onWsMenu, onCollapse, onSearch, onNewPlan,
 }: {
   portfolios: SidebarPortfolio[];
   plansTotal: number;
   activeCount: number;
-  inboxUnread?: number;
   views: SidebarView[];
   onWsMenu: () => void;
   onCollapse: () => void;
@@ -35,6 +35,8 @@ export function Sidebar({
   const searchParams = useSearchParams();
   const { lang } = usePrefs();
   const { cfg, order, pinned } = useSidebarConfig();
+  // 인박스 배지 — 서버 계산값 시드 + 인박스 트리아지 낙관적 갱신을 라이브 반영(useInboxBadge).
+  const { unread: inboxUnread } = useInboxBadge();
   const t = I18N[lang];
   const view = pathname.split("/")[1] || "plans";
   const activePf = view === "plans" ? searchParams.get("pf") : null;

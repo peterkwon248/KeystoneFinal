@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { AppShell } from "@/components/shell/app-shell";
 import { VerifyBanner } from "@/components/verify-banner";
+import { computeInboxUnread } from "@/lib/inbox-unread";
 import { signOut } from "@/app/actions";
 
 export default async function ShellLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,9 @@ export default async function ShellLayout({ children }: { children: React.ReactN
     count: plansList.filter((p) => p.portfolio_id === pf.id).length,
   }));
 
+  // 사이드바 인박스 배지 — 서버측 안읽음 카운트(규칙 발동 동기화 포함).
+  const inboxUnread = await computeInboxUnread(supabase, user.id);
+
   const showVerify = !profile.email_verified && !user.email_confirmed_at;
 
   return (
@@ -36,6 +40,7 @@ export default async function ShellLayout({ children }: { children: React.ReactN
       portfolios={sbPortfolios}
       plansTotal={plansList.length}
       activeCount={plansList.filter((p) => p.status === "active").length}
+      inboxUnread={inboxUnread}
       views={views ?? []}
       banner={showVerify ? <VerifyBanner email={user.email ?? ""} /> : undefined}
       signOutAction={signOut}

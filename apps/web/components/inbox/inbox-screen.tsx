@@ -13,6 +13,7 @@ import { I18N } from "@keystone/core/i18n";
 import { fmtRel, MON_EN } from "@keystone/core/format";
 import { Lic } from "@/components/icons";
 import { usePrefs } from "@/components/shell/prefs";
+import { useInboxBadge } from "@/components/shell/inbox-badge";
 import type { PfLite } from "@/lib/pf-palette";
 import type { UIPlan, UINote } from "@/lib/plan-mapper";
 import { buildInboxNotes, ibxBucket, IBX_META, type InboxNote } from "@/lib/inbox";
@@ -87,6 +88,10 @@ export function InboxScreen({
   const unreadCount = live.filter((n) => !readSet.has(n.id)).length;
   const shown = tab === "unread" ? live.filter((n) => !readSet.has(n.id)) : live;
   const sel = notes.find((n) => n.id === selId) || shown[0] || null;
+
+  // 사이드바 배지 라이브 브리지 — 트리아지(읽음/처리완료/음소거)로 unreadCount 가 바뀌면 즉시 배지 갱신.
+  const { setUnread: setBadgeUnread } = useInboxBadge();
+  useEffect(() => { setBadgeUnread(unreadCount); }, [unreadCount, setBadgeUnread]);
 
   const select = (n: InboxNote) => { setSelId(n.id); if (!readSet.has(n.id)) markRead([n.id]); };
   // 마크올(모두 읽음) — 낙관적 Set 갱신 + markAllRead 배치 upsert(신규만 영속).

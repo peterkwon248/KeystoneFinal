@@ -8,19 +8,21 @@ import { CustomizeModal } from "./customize-modal";
 import { PanelIcon } from "@/components/icons";
 import { PrefsProvider } from "./prefs";
 import { SidebarConfigProvider } from "./sidebar-config";
+import { InboxBadgeProvider } from "./inbox-badge";
 import { SearchModal } from "@/components/search/search-modal";
 import { ComposeModal } from "@/components/plan/compose-modal";
 import { SecurityPeekProvider } from "@/components/securities/security-peek";
 import { LiveQuotesProvider } from "@/components/live-quotes-provider";
 
 export function AppShell({
-  userId, sidebarPrefs, portfolios, plansTotal, activeCount, views, banner, signOutAction, children,
+  userId, sidebarPrefs, portfolios, plansTotal, activeCount, inboxUnread, views, banner, signOutAction, children,
 }: {
   userId: string;
   sidebarPrefs: unknown;
   portfolios: SidebarPortfolio[];
   plansTotal: number;
   activeCount: number;
+  inboxUnread?: number;
   views: SidebarView[];
   banner?: React.ReactNode;
   signOutAction: () => Promise<void>;
@@ -49,6 +51,7 @@ export function AppShell({
   return (
     <PrefsProvider>
      <SidebarConfigProvider userId={userId} initial={sidebarPrefs}>
+      <InboxBadgeProvider initial={inboxUnread ?? 0}>
       <SecurityPeekProvider>
       <LiveQuotesProvider>
       {/* 프로토타입 App.jsx 구조: .app(세로) > banner + .app-row(가로) > 사이드바 + 메인 */}
@@ -90,6 +93,7 @@ export function AppShell({
       </div>
       </LiveQuotesProvider>
       </SecurityPeekProvider>
+      </InboxBadgeProvider>
      </SidebarConfigProvider>
     </PrefsProvider>
   );
