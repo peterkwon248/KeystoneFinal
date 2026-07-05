@@ -36,3 +36,30 @@ export async function fetchClosesWith(
   for (const r of rows) (out[r.ticker] ??= []).push({ date: r.date, close: Number(r.close) });
   return out;
 }
+
+/** 단일 티커의 연간 종가 = {연도(YYYY): 그 해 마지막 거래일 종가}. 멀티플 밴드 차트(fin-history)용. */
+export async function fetchAnnualCloses(
+  supabase: SupabaseClient<Database>,
+  ticker: string,
+  fromYear: number,
+): Promise<Record<string, number>> {
+  const from = `${fromYear}-01-01`;
+  const PAGE = 1000;
+  const rows: { date: string; close: number }[] = [];
+  for (let f = 0; ; f += PAGE) {
+    const { data, error } = await supabase
+      .from("security_price_history")
+      .select("date, close")
+      .eq("ticker", ticker)
+      .gte("date", from)
+      .order("date", { ascending: true })
+      .range(f, f + PAGE - 1);
+    if (error) throw error;
+    const page = (data ?? []) as { date: string; close: number }[];
+    rows.push(...page);
+    if (page.length < PAGE) break;
+  }
+  const byYear: Record<string, number> = {};
+  for (const r of rows) byYear[r.date.slice(0, 4)] = Number(r.close); // 오름차순 → 연도별 마지막이 최종
+  return byYear;
+}

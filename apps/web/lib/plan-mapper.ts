@@ -29,6 +29,8 @@ export interface UIPlan extends Plan {
   // 서버에서 loadPriceCloses로 채워 첨부. 없으면 seededWalk 폴백(마일스톤6 seam).
   // (core Plan.priceHistory는 PricePoint{q,v} 별개 필드라 이름 분리.)
   priceCloses?: PriceClose[];
+  // 연간 종가(YYYY→종가) — 멀티플 밴드 차트(fin-history)가 실 연간 주가로 쓴다. 없으면 mock 폴백.
+  annualCloses?: Record<string, number>;
 }
 
 /* DB scenario case → 프로토타입 시나리오 라벨/색.

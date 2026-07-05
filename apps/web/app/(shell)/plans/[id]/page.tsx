@@ -5,6 +5,8 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { mapDbPlan, PLAN_SELECT, type DbPlanRow } from "@/lib/plan-mapper";
 import { buildPlanFin, type DbFinRow } from "@/lib/fin-mapper";
 import { loadPriceCloses } from "@/lib/price-history-map";
+import { fetchAnnualCloses } from "@/lib/price-closes-query";
+import { REF_YEAR } from "@/lib/clock";
 import { pfColor, type PfLite } from "@/lib/pf-palette";
 import { PlanDetail } from "@/components/plan/detail-view";
 
@@ -19,13 +21,15 @@ export default async function PlanDetailPage({ params }: { params: Promise<{ id:
 
   const plan = mapDbPlan(row as unknown as DbPlanRow);
 
-  // 포트폴리오 + 재무(security_financials) + 실 종가: ticker를 알아야 fetch하므로 plan 매핑 뒤 병렬로.
-  const [{ data: pfRows }, { data: finRows }, closesMap] = await Promise.all([
+  // 포트폴리오 + 재무(security_financials) + 실 종가(궤적창·연간): plan 매핑 뒤 병렬로.
+  const [{ data: pfRows }, { data: finRows }, closesMap, annualCloses] = await Promise.all([
     supabase.from("portfolios").select("id, name, sort").order("sort"),
     supabase.from("security_financials").select("*").eq("ticker", plan.ticker).order("fiscal_year"),
     loadPriceCloses([plan.ticker]),
+    fetchAnnualCloses(supabase, plan.ticker, REF_YEAR - 6),
   ]);
   plan.priceCloses = closesMap[plan.ticker]; // 있으면 PerfBand가 실 시세 경로, 없으면 mock 폴백
+  plan.annualCloses = annualCloses; // 멀티플 밴드 차트 실 연간 주가(fin-history), 없으면 mock 폴백
 
   const portfolios: PfLite[] = (pfRows ?? []).map((p, i) => ({ id: p.id, name: p.name, color: pfColor(i) }));
   // DB 우선·시드 폴백 — DART sync 시 자동 실데이터화 (lib/fin-mapper).

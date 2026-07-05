@@ -13,6 +13,7 @@
 // 항상 유의미한 곡선을 그리도록 한다.
 import type { Fin, PricePoint } from "@keystone/core/types";
 import type { UIPlan } from "@/lib/plan-mapper";
+import { REF_YEAR } from "@/lib/clock";
 
 // gap-history.ts TUNE 과 같은 정신: 종목별 가격 궤적 튜닝(진폭·추세). 없으면 완만한 기본값.
 // trend = 과거 첫 해 대비 현재가까지의 누적 추세(가격이 어디서 출발했나), vol = 연도별 흔들림.
@@ -46,6 +47,19 @@ export function finPriceHistory(plan: UIPlan, fin: Fin | null): PricePoint[] {
   const years = fin?.is ?? [];
   const n = years.length;
   if (!n || !(px > 0)) return [];
+
+  // 실 연간 종가(annualCloses)가 있으면 위치 기반 정렬로 실 주가 시계열을 쓴다(마일스톤6 seam 교체).
+  // fin.is는 오름차순(오래된→최신), 마지막 = 현행 회계연도 → REF_YEAR. i번째 = REF_YEAR-(n-1-i)년 종가.
+  // 마지막 점은 라이브 현재가. 해당 연도 실종가 없으면 현재가 폴백.
+  const ac = plan.annualCloses;
+  if (ac && Object.keys(ac).length) {
+    return years.map((_, i) => {
+      if (i === n - 1) return { q: i, v: px };
+      const c = ac[String(REF_YEAR - (n - 1 - i))];
+      return { q: i, v: c != null && c > 0 ? c : px };
+    });
+  }
+
   const tu = PX_TUNE[plan.ticker] || { trend: 0.08, vol: 0.05 };
   const start = px / (1 + tu.trend);
   const rnd = seeded(plan.ticker);
