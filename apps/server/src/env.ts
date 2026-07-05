@@ -22,4 +22,5 @@ export const env = {
   kisAppKey: () => req("KIS_APP_KEY"),
   kisAppSecret: () => req("KIS_APP_SECRET"),
   kisEnv: () => (process.env.KIS_ENV === "vts" ? "vts" : "real") as "real" | "vts",
+  tiingoApiKey: () => req("TIINGO_API_KEY"),
 };

@@ -6,6 +6,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { env } from "../env.js";
 import type { Quote } from "./finnhub.js";
+import type { PriceBar } from "../db.js";
 
 const DOMAINS = {
   real: "https://openapi.koreainvestment.com:9443",
@@ -108,4 +109,90 @@ export async function fetchKisQuote(stockCode: string, retries = 2): Promise<Quo
     prevClose: Number(body.output.stck_sdpr) || null, // 기준가(전일 종가)
     changePct: Number(body.output.prdy_ctrt) || null,
   };
+}
+
+// ─── 국내주식 기간별 시세 일봉 (마일스톤 6 — KR 과거 OHLCV 백필) ────────────────
+// inquire-daily-itemchartprice(FHKST03010100)는 호출당 최대 100봉만 반환하므로,
+// 종료일에서 과거로 100일 캘린더 윈도우를 밀며 페이지네이션한다(100캘린더일 ≈ 70거래일 < 100 캡).
+const YMD = (ymd: string) => ymd.replace(/-/g, ""); // YYYY-MM-DD → YYYYMMDD
+/** YYYYMMDD에 days를 더한 YYYYMMDD (음수 가능). UTC 기준. */
+function addDaysYmd(ymd: string, days: number): string {
+  const dt = new Date(Date.UTC(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8)));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10).replace(/-/g, "");
+}
+
+interface KisDailyRow {
+  stck_bsop_date: string; // YYYYMMDD
+  stck_oprc: string;
+  stck_hgpr: string;
+  stck_lwpr: string;
+  stck_clpr: string;
+  acml_vol: string;
+}
+
+/** 단일 윈도우(≤100봉) 조회. from/to = YYYYMMDD. 원주가(fid_org_adj_prc=0). */
+async function kisDailyWindow(token: string, stockCode: string, from: string, to: string, retries = 2): Promise<KisDailyRow[]> {
+  const qs = new URLSearchParams({
+    fid_cond_mrkt_div_code: "J",
+    fid_input_iscd: stockCode,
+    fid_input_date_1: from,
+    fid_input_date_2: to,
+    fid_period_div_code: "D", // 일봉
+    fid_org_adj_prc: "0", // 0=원주가, 1=수정주가
+  });
+  let body: { rt_cd: string; msg_cd?: string; msg1?: string; output2?: KisDailyRow[] } | undefined;
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`${base()}/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice?${qs}`, {
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        authorization: `Bearer ${token}`,
+        appkey: env.kisAppKey(),
+        appsecret: env.kisAppSecret(),
+        tr_id: "FHKST03010100",
+        custtype: "P",
+      },
+    });
+    if (res.ok) {
+      body = (await res.json()) as typeof body;
+      if (body!.rt_cd === "0" || body!.msg_cd !== "EGW00201") break;
+    } else if (attempt >= retries) {
+      throw new Error(`KIS daily HTTP ${res.status} (${stockCode})`);
+    }
+    if (attempt >= retries) break;
+    await sleep(400 * (attempt + 1));
+  }
+  if (!body || body.rt_cd !== "0") throw new Error(`KIS daily ${stockCode}: ${body?.msg1 ?? "no output"}`);
+  // 빈 구간(휴장·상장 전)은 output2 없음 → 빈 배열. 유효행만(가격·날짜 존재).
+  return (body.output2 ?? []).filter((r) => r?.stck_bsop_date && Number(r.stck_clpr) > 0);
+}
+
+/** KR 일봉 히스토리. startDate/endDate = YYYY-MM-DD(포함). 100봉 페이지네이션·중복제거·오름차순. */
+export async function fetchKisDaily(stockCode: string, startDate: string, endDate: string): Promise<PriceBar[]> {
+  const token = await kisToken();
+  const START = YMD(startDate);
+  const bars = new Map<string, PriceBar>();
+  let cursorEnd = YMD(endDate);
+  for (let guard = 0; guard < 80; guard++) {
+    if (cursorEnd < START) break;
+    const winStart = addDaysYmd(cursorEnd, -99) < START ? START : addDaysYmd(cursorEnd, -99);
+    const rows = await kisDailyWindow(token, stockCode, winStart, cursorEnd);
+    if (!rows.length) break;
+    for (const r of rows) {
+      const d = r.stck_bsop_date;
+      bars.set(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`, {
+        date: `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`,
+        open: Number(r.stck_oprc) || null,
+        high: Number(r.stck_hgpr) || null,
+        low: Number(r.stck_lwpr) || null,
+        close: Number(r.stck_clpr),
+        volume: Number(r.acml_vol) || null,
+      });
+    }
+    const earliest = rows.reduce((m, r) => (r.stck_bsop_date < m ? r.stck_bsop_date : m), rows[0].stck_bsop_date);
+    if (earliest <= START) break;
+    cursorEnd = addDaysYmd(earliest, -1);
+    await sleep(300);
+  }
+  return [...bars.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
 }

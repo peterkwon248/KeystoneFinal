@@ -54,11 +54,26 @@ export async function GET(req: NextRequest) {
 
   const now = new Date();
   const start = rangeStart(range, now);
-  let q = supabase.from("security_price_history").select("date, open, high, low, close, volume").eq("ticker", ticker).order("date", { ascending: true });
-  if (start) q = q.gte("date", start.toISOString().slice(0, 10));
-  const { data, error } = await q;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const startStr = start ? start.toISOString().slice(0, 10) : null;
+  // PostgREST는 요청당 max_rows(기본 1000)로 잘라서 반환한다 — 5년 일봉(~1254행)은 한 번에 다 못 옴.
+  // .range()로 페이지네이션해 전체 히스토리를 모은다(1페이지 < PAGE면 마지막).
+  const PAGE = 1000;
+  const rows: Row[] = [];
+  for (let from = 0; ; from += PAGE) {
+    let q = supabase
+      .from("security_price_history")
+      .select("date, open, high, low, close, volume")
+      .eq("ticker", ticker)
+      .order("date", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (startStr) q = q.gte("date", startStr);
+    const { data, error } = await q;
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const page = (data ?? []) as unknown as Row[];
+    rows.push(...page);
+    if (page.length < PAGE) break;
+  }
 
-  const bars = resample((data ?? []) as unknown as Row[], interval);
+  const bars = resample(rows, interval);
   return NextResponse.json({ ticker, currency, interval, bars });
 }
